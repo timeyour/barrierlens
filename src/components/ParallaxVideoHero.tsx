@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import AssetImage from "@/components/AssetImage";
-import Interactive3DScene from "./Interactive3DScene";
+import ProductPreview from "@/components/ProductPreview";
 import { HERO_IMAGE_CLASS } from "@/config/imageDisplay";
 import { UI_ASSETS } from "@/config/uiAssets";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef } from "react";
 
 const TAGS = [
   "Gemma 4 Hackathon",
@@ -12,136 +13,138 @@ const TAGS = [
   "Accessibility Feedback",
 ];
 
-const VIDEO_SRC =
-  "https://videos.pexels.com/video-files/855414/855414-sd_640_360_30fps.mp4";
-
 export default function ParallaxVideoHero() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoReady, setVideoReady] = useState(false);
-  const [videoFailed, setVideoFailed] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const containerRef = useRef<HTMLElement>(null);
+  const { overlay } = UI_ASSETS;
 
-  const { hero } = UI_ASSETS;
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"],
+  });
 
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-
-  useEffect(() => {
-    if (isMobile) setVideoFailed(true);
-  }, [isMobile]);
-
-  useEffect(() => {
-    const section = sectionRef.current;
-    const video = videoRef.current;
-    if (!section || !video || !videoReady || videoFailed || isMobile) return;
-
-    const prefersReduced = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-
-    if (prefersReduced) {
-      video.pause();
-      return;
-    }
-
-    const onScroll = () => {
-      const rect = section.getBoundingClientRect();
-      const scrollRange = section.offsetHeight - window.innerHeight;
-      if (scrollRange <= 0 || !video.duration) return;
-
-      const progress = Math.min(1, Math.max(0, -rect.top / scrollRange));
-      if (Math.abs(video.currentTime - progress * video.duration) > 0.08) {
-        video.currentTime = progress * video.duration;
-      }
-    };
-
-    const onLoaded = () => {
-      video.pause();
-      onScroll();
-    };
-
-    video.addEventListener("loadedmetadata", onLoaded);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-
-    return () => {
-      video.removeEventListener("loadedmetadata", onLoaded);
-      window.removeEventListener("scroll", onScroll);
-    };
-  }, [videoReady, videoFailed, isMobile]);
-
-  const showVideo = videoReady && !videoFailed && !isMobile;
+  const clearOpacity = useTransform(scrollYProgress, [0, 0.45, 0.75], [1, 0.35, 0]);
+  const blockedOpacity = useTransform(scrollYProgress, [0.25, 0.55, 1], [0, 0.65, 1]);
+  const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.12]);
+  const textY = useTransform(scrollYProgress, [0, 0.85], [0, -140]);
+  const textOpacity = useTransform(scrollYProgress, [0, 0.55], [1, 0]);
+  const overlayDark = useTransform(scrollYProgress, [0, 0.5, 1], [0.45, 0.55, 0.72]);
+  const glowOpacity = useTransform(scrollYProgress, [0, 1], [1, 0.3]);
+  const scrollHintOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
 
   return (
-    <header
-      ref={sectionRef}
-      className="relative min-h-[72vh] overflow-hidden border-b border-blue-900/20 sm:min-h-[88vh] lg:min-h-[92vh]"
-    >
-      <div className="absolute inset-0">
-        <AssetImage
-          src={hero.src}
-          fallback={hero.fallback}
-          alt={hero.alt}
-          fill
-          className={HERO_IMAGE_CLASS}
-          priority
-        />
-        {!isMobile && !videoFailed && (
-          <video
-            ref={videoRef}
-            className={`hero-video absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
-              showVideo ? "opacity-100" : "opacity-0"
-            }`}
-            src={VIDEO_SRC}
-            muted
-            playsInline
-            preload="metadata"
-            onLoadedData={() => setVideoReady(true)}
-            onError={() => setVideoFailed(true)}
+    <header ref={containerRef} className="relative h-[180vh] sm:h-[200vh]">
+      <div className="sticky top-0 h-screen overflow-hidden">
+        <motion.div
+          className="absolute inset-0 will-change-transform"
+          style={{ scale: bgScale }}
+        >
+          <motion.div className="absolute inset-0" style={{ opacity: clearOpacity }}>
+            <AssetImage
+              src={overlay.back.src}
+              fallback={overlay.back.fallback}
+              alt={overlay.back.alt}
+              fill
+              className={HERO_IMAGE_CLASS}
+              priority
+            />
+          </motion.div>
+          <motion.div className="absolute inset-0" style={{ opacity: blockedOpacity }}>
+            <AssetImage
+              src={overlay.front.src}
+              fallback={overlay.front.fallback}
+              alt={overlay.front.alt}
+              fill
+              className={HERO_IMAGE_CLASS}
+              priority
+            />
+          </motion.div>
+          <motion.div
+            className="absolute inset-0 bg-slate-950"
+            style={{ opacity: overlayDark }}
           />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/55 via-slate-950/45 to-slate-950/85 sm:from-slate-950/70 sm:via-blue-950/55 sm:to-slate-950/90" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_80%,rgba(37,99,235,0.25),transparent_60%)]" />
-      </div>
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/30 via-transparent to-slate-950/90" />
+          <motion.div
+            className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_30%,rgba(37,99,235,0.35),transparent_55%)]"
+            style={{ opacity: glowOpacity }}
+          />
+          <div className="noise-overlay absolute inset-0" />
+        </motion.div>
 
-      <div className="relative mx-auto flex min-h-[72vh] max-w-6xl flex-col justify-end px-4 pb-10 pt-24 sm:min-h-[88vh] sm:justify-center sm:px-6 sm:py-16 lg:min-h-[92vh] lg:flex-row lg:items-center lg:gap-12 lg:pb-16">
-        <div className="max-w-2xl animate-fade-up">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/15 px-3 py-1 text-[11px] font-medium text-emerald-100 backdrop-blur-sm sm:mb-4 sm:text-xs">
-            Gemma 4 开发者大赛 2026 · 赛道 D
-          </div>
-          <h1 className="text-[2rem] font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
-            无碍{" "}
-            <span className="bg-gradient-to-r from-blue-300 to-emerald-300 bg-clip-text text-transparent">
-              BarrierLens
-            </span>
-          </h1>
-          <p className="mt-3 text-base leading-snug text-blue-50 sm:mt-4 sm:text-xl">
-            让无障碍问题被看见、被记录、被反馈
-          </p>
-          <p className="mt-1.5 text-xs text-slate-300 sm:mt-2 sm:text-sm">
-            基于 Gemma 4 的公众无障碍反馈生成工具
-          </p>
-          <div className="mt-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:mt-6 sm:flex-wrap sm:overflow-visible [&::-webkit-scrollbar]:hidden">
-            {TAGS.map((tag) => (
-              <span
-                key={tag}
-                className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-medium text-white backdrop-blur-md sm:text-xs"
-              >
-                {tag}
+        <div className="relative mx-auto flex h-full max-w-6xl items-end px-4 pb-20 pt-28 sm:items-center sm:px-6 sm:pb-16 sm:pt-16 lg:gap-10">
+          {/* 左侧文案 — 单独淡出 */}
+          <motion.div
+            className="max-w-xl flex-1 lg:max-w-2xl"
+            style={{ y: textY, opacity: textOpacity }}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+              className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-medium text-emerald-100 backdrop-blur-md sm:text-xs"
+            >
+              Gemma 4 开发者大赛 2026 · 赛道 D
+            </motion.div>
+            <motion.h1
+              initial={{ opacity: 0, y: 32 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.85, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+              className="text-[2rem] font-bold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-6xl"
+            >
+              无碍{" "}
+              <span className="bg-gradient-to-r from-blue-300 via-cyan-200 to-emerald-300 bg-clip-text text-transparent">
+                BarrierLens
               </span>
-            ))}
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className="mt-3 text-base text-blue-50/95 sm:mt-4 sm:text-xl"
+            >
+              让无障碍问题被看见、被记录、被反馈
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.35 }}
+              className="mt-2 text-xs text-slate-300 sm:text-sm"
+            >
+              向下滚动 · 见证盲道从畅通到占用
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.45 }}
+              className="mt-5 hidden flex-wrap gap-2 sm:flex"
+            >
+              {TAGS.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur-md"
+                >
+                  {tag}
+                </span>
+              ))}
+            </motion.div>
+          </motion.div>
+
+          {/* 手机预览 — 独立动画，小屏隐藏避免挤压 */}
+          <div className="hidden sm:block">
+            <ProductPreview scrollProgress={scrollYProgress} />
           </div>
         </div>
 
-        <div className="hidden animate-fade-up-delayed lg:flex lg:shrink-0">
-          <Interactive3DScene />
-        </div>
+        <motion.div
+          className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 text-white/60"
+          style={{ opacity: scrollHintOpacity }}
+        >
+          <span className="text-[10px] uppercase tracking-[0.2em]">Scroll</span>
+          <motion.span
+            animate={{ y: [0, 8, 0] }}
+            transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
+            className="block h-8 w-px bg-gradient-to-b from-white/0 via-white/70 to-white/0"
+          />
+        </motion.div>
       </div>
     </header>
   );
