@@ -1,40 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
   <rect width="800" height="600" fill="#E2E8F0"/>
   <rect y="380" width="800" height="220" fill="#94A3B8"/>
-  <rect x="0" y="400" width="800" height="8" fill="#64748B"/>
-  <!-- sidewalk -->
   <rect x="40" y="320" width="720" height="120" fill="#CBD5E1"/>
-  <!-- tactile paving - yellow -->
-  <g>
-    <rect x="80" y="340" width="640" height="80" fill="#FBBF24" rx="2"/>
-    <g fill="#F59E0B">
-      <rect x="100" y="355" width="16" height="50" rx="2"/>
-      <rect x="140" y="355" width="16" height="50" rx="2"/>
-      <rect x="180" y="355" width="16" height="50" rx="2"/>
-      <rect x="220" y="355" width="16" height="50" rx="2"/>
-      <rect x="260" y="355" width="16" height="50" rx="2"/>
-      <rect x="300" y="355" width="16" height="50" rx="2"/>
-      <rect x="340" y="355" width="16" height="50" rx="2"/>
-      <rect x="380" y="355" width="16" height="50" rx="2"/>
-      <rect x="420" y="355" width="16" height="50" rx="2"/>
-      <rect x="460" y="355" width="16" height="50" rx="2"/>
-      <rect x="500" y="355" width="16" height="50" rx="2"/>
-      <rect x="540" y="355" width="16" height="50" rx="2"/>
-      <rect x="580" y="355" width="16" height="50" rx="2"/>
-      <rect x="620" y="355" width="16" height="50" rx="2"/>
-      <rect x="660" y="355" width="16" height="50" rx="2"/>
-    </g>
+  <rect x="80" y="340" width="640" height="80" fill="#FBBF24" rx="2"/>
+  <g fill="#F59E0B">
+    <rect x="100" y="355" width="16" height="50" rx="2"/>
+    <rect x="180" y="355" width="16" height="50" rx="2"/>
+    <rect x="260" y="355" width="16" height="50" rx="2"/>
+    <rect x="340" y="355" width="16" height="50" rx="2"/>
+    <rect x="420" y="355" width="16" height="50" rx="2"/>
+    <rect x="500" y="355" width="16" height="50" rx="2"/>
+    <rect x="580" y="355" width="16" height="50" rx="2"/>
+    <rect x="660" y="355" width="16" height="50" rx="2"/>
   </g>
-  <!-- metro entrance hint -->
-  <rect x="560" y="180" width="180" height="140" fill="#1E40AF" rx="8"/>
-  <rect x="620" y="240" width="60" height="80" fill="#1E3A8A" rx="4"/>
-  <text x="650" y="230" text-anchor="middle" fill="white" font-family="system-ui,sans-serif" font-size="14" font-weight="600">0¡„</text>
-  <!-- trees -->
   <circle cx="120" cy="260" r="40" fill="#059669"/>
-  <rect x="110" y="260" width="20" height="60" fill="#78350F"/>
-  <circle cx="200" cy="280" r="32" fill="#10B981"/>
-  <rect x="192" y="280" width="16" height="40" fill="#78350F"/>
-  <!-- clear path label -->
   <rect x="300" y="290" width="120" height="28" fill="white" fill-opacity="0.9" rx="14"/>
-  <text x="360" y="309" text-anchor="middle" fill="#059669" font-family="system-ui,sans-serif" font-size="13" font-weight="600">ÚSE</text>
+  <text x="360" y="309" text-anchor="middle" fill="#059669" font-family="system-ui,sans-serif" font-size="13" font-weight="600">CLEAR</text>
 </svg>

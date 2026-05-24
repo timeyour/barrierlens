@@ -3,6 +3,7 @@ interface SectionHeaderProps {
   title: string;
   description?: string;
   align?: "left" | "center";
+  descriptionClassName?: string;
 }
 
 export default function SectionHeader({
@@ -10,6 +11,7 @@ export default function SectionHeader({
   title,
   description,
   align = "left",
+  descriptionClassName = "",
 }: SectionHeaderProps) {
   const alignClass = align === "center" ? "text-center mx-auto max-w-2xl" : "";
 
@@ -20,7 +22,9 @@ export default function SectionHeader({
         {title}
       </h2>
       {description && (
-        <p className="mt-2 text-sm leading-relaxed text-slate-600 sm:text-base">
+        <p
+          className={`mt-2 text-sm leading-relaxed text-slate-600 sm:text-base ${descriptionClassName}`}
+        >
           {description}
         </p>
       )}

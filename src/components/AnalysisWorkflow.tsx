@@ -4,10 +4,19 @@ import SectionHeader from "@/components/SectionHeader";
 import { useCallback, useState } from "react";
 import ImageUploader from "@/components/ImageUploader";
 import TargetSelector from "@/components/TargetSelector";
+import ModeSelector from "@/components/ModeSelector";
+import LocationInput from "@/components/LocationInput";
 import AnalysisResultView from "@/components/AnalysisResult";
 import ReportCard from "@/components/ReportCard";
 import { downloadMarkdownReport } from "@/lib/exportMarkdown";
-import type { AnalysisResult, TargetDepartment } from "@/types/analysis";
+import { saveRecord } from "@/lib/recordStore";
+import type {
+  AnalysisResult,
+  RecordMode,
+  StoredRecord,
+  TargetDepartment,
+} from "@/types/analysis";
+import { RECORD_MODES } from "@/types/analysis";
 
 type WorkflowStatus = "idle" | "loading" | "success" | "error";
 
@@ -16,11 +25,14 @@ export default function AnalysisWorkflow() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [targetDepartment, setTargetDepartment] =
     useState<TargetDepartment>("物业");
+  const [recordMode, setRecordMode] = useState<RecordMode>("public");
+  const [location, setLocation] = useState("");
   const [status, setStatus] = useState<WorkflowStatus>("idle");
   const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [mockMode, setMockMode] = useState(true);
+  const [mockMode, setMockMode] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [savedNotice, setSavedNotice] = useState(false);
 
   const handleImageSelect = useCallback((selected: File, url: string) => {
     setFile(selected);
@@ -28,6 +40,7 @@ export default function AnalysisWorkflow() {
     setResult(null);
     setStatus("idle");
     setErrorMessage(null);
+    setSavedNotice(false);
   }, []);
 
   const handleReset = useCallback(() => {
@@ -38,7 +51,21 @@ export default function AnalysisWorkflow() {
     setStatus("idle");
     setErrorMessage(null);
     setCopySuccess(false);
+    setSavedNotice(false);
   }, [previewUrl]);
+
+  const persistRecord = (data: AnalysisResult) => {
+    const stored: StoredRecord = {
+      ...data,
+      id: crypto.randomUUID(),
+      location: data.location || location.trim() || "地点未标注",
+      recordMode: data.recordMode ?? recordMode,
+      recordedAt: data.recordedAt ?? new Date().toISOString(),
+    };
+    saveRecord(stored);
+    window.dispatchEvent(new Event("barrierlens-record-saved"));
+    setSavedNotice(true);
+  };
 
   const handleAnalyze = async () => {
     if (!file) {
@@ -49,10 +76,13 @@ export default function AnalysisWorkflow() {
     setStatus("loading");
     setErrorMessage(null);
     setResult(null);
+    setSavedNotice(false);
 
     const formData = new FormData();
     formData.append("image", file);
     formData.append("targetDepartment", targetDepartment);
+    formData.append("recordMode", recordMode);
+    if (location.trim()) formData.append("location", location.trim());
 
     try {
       const response = await fetch("/api/analyze", {
@@ -66,9 +96,11 @@ export default function AnalysisWorkflow() {
         throw new Error(data.error ?? "分析失败");
       }
 
-      setResult(data as AnalysisResult);
+      const analysis = data as AnalysisResult;
+      setResult(analysis);
       setMockMode(Boolean(data.mockMode));
       setStatus("success");
+      persistRecord(analysis);
     } catch (error) {
       setStatus("error");
       setErrorMessage(
@@ -90,21 +122,26 @@ export default function AnalysisWorkflow() {
 
   const handleExport = () => {
     if (!result) return;
-    const date = new Date().toISOString().slice(0, 10);
-    downloadMarkdownReport(result, `无碍-反馈报告-${date}.md`);
+    downloadMarkdownReport(result, undefined, recordMode);
   };
 
   const isLoading = status === "loading";
   const canGenerate = Boolean(file) && !isLoading;
+  const reportTitle =
+    recordMode === "inspection" ? "巡查整改单" : "公众倡导摘要";
 
   return (
     <div className="space-y-8">
       <div className="glass-card p-4 sm:p-6 lg:p-8">
         <SectionHeader
           eyebrow="Tool"
-          title="上传并分析"
-          description="上传盲道占用现场照片，选择反馈对象，一键生成结构化报告"
+          title="记录无障碍问题"
+          description="拍照上传 → AI 结构化标注 → 归档到本地时间线，并可导出倡导摘要或自查整改单"
+          descriptionClassName="hidden md:block"
         />
+        <p className="-mt-4 mb-2 text-sm text-slate-600 md:hidden">
+          拍照上传，AI 帮你结构化记录并归档
+        </p>
 
         <div className="-mt-2 space-y-6">
           <ImageUploader
@@ -113,11 +150,42 @@ export default function AnalysisWorkflow() {
             disabled={isLoading}
           />
 
-          <TargetSelector
-            value={targetDepartment}
-            onChange={setTargetDepartment}
+          <ModeSelector
+            value={recordMode}
+            onChange={setRecordMode}
             disabled={isLoading}
           />
+
+          <details className="rounded-xl border border-slate-200/80 bg-slate-50/40 md:hidden">
+            <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-slate-700">
+              选填：地点 · 场景归类
+            </summary>
+            <div className="space-y-4 border-t border-slate-200/80 px-4 pb-4 pt-3">
+              <LocationInput
+                value={location}
+                onChange={setLocation}
+                disabled={isLoading}
+              />
+              <TargetSelector
+                value={targetDepartment}
+                onChange={setTargetDepartment}
+                disabled={isLoading}
+              />
+            </div>
+          </details>
+
+          <div className="hidden space-y-6 md:block">
+            <LocationInput
+              value={location}
+              onChange={setLocation}
+              disabled={isLoading}
+            />
+            <TargetSelector
+              value={targetDepartment}
+              onChange={setTargetDepartment}
+              disabled={isLoading}
+            />
+          </div>
 
           <button
             type="button"
@@ -128,10 +196,10 @@ export default function AnalysisWorkflow() {
             {isLoading ? (
               <>
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                正在生成反馈报告…
+                正在分析并归档…
               </>
             ) : (
-              "生成反馈报告"
+              `生成${RECORD_MODES[recordMode].label}`
             )}
           </button>
 
@@ -143,26 +211,32 @@ export default function AnalysisWorkflow() {
         </div>
       </div>
 
-      {mockMode && (
+      {mockMode && status === "success" && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <strong>演示模式：</strong>
           未配置 GEMMA_API_KEY，当前使用 Mock 数据模拟 Gemma 4
-          结构化分析结果。配置环境变量后将自动切换为真实 API。
+          结构化分析。配置环境变量后将自动切换为真实 API。
+        </div>
+      )}
+
+      {savedNotice && status === "success" && (
+        <div className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+          已归档到本机<strong>问题记录时间线</strong>，可在下方查看汇总。
         </div>
       )}
 
       {result && status === "success" && (
         <div className="space-y-6">
           <div className="glass-card p-4 sm:p-6 lg:p-8">
-            <h2 className="text-lg font-semibold text-slate-900">分析结果</h2>
+            <h2 className="text-lg font-semibold text-slate-900">结构化记录</h2>
             <p className="mt-1 text-sm text-slate-500">
-              Gemma 4 无障碍场景理解与结构化反馈
+              Gemma 4 无障碍场景理解 · {RECORD_MODES[recordMode].label}
             </p>
             <div className="mt-6">
-              <AnalysisResultView result={result} />
+              <AnalysisResultView result={result} recordMode={recordMode} />
             </div>
             <div className="mt-6">
-              <ReportCard reportText={result.reportText} />
+              <ReportCard title={reportTitle} reportText={result.reportText} />
             </div>
           </div>
 
@@ -172,7 +246,7 @@ export default function AnalysisWorkflow() {
               onClick={handleCopy}
               className="btn-primary flex-1 rounded-xl px-5 py-3 text-sm font-semibold text-white sm:flex-none sm:min-w-[140px]"
             >
-              {copySuccess ? "已复制 ✓" : "复制反馈文本"}
+              {copySuccess ? "已复制 ✓" : `复制${reportTitle}`}
             </button>
             <button
               type="button"
@@ -186,7 +260,7 @@ export default function AnalysisWorkflow() {
               onClick={handleReset}
               className="btn-secondary flex-1 rounded-xl px-5 py-3 text-sm font-semibold text-slate-700 sm:flex-none sm:min-w-[140px]"
             >
-              重新上传
+              继续记录
             </button>
           </div>
         </div>

@@ -5,8 +5,9 @@ import { useEffect, useState } from "react";
 
 const LINKS = [
   { href: "#story", label: "故事" },
-  { href: "#tool", label: "工具" },
-  { href: "#metrics", label: "目标" },
+  { href: "#tool", label: "记录" },
+  { href: "#records", label: "时间线" },
+  { href: "#metrics", label: "参赛" },
 ];
 
 export default function SiteNav() {
@@ -59,7 +60,7 @@ export default function SiteNav() {
               : "bg-white/15 text-white ring-1 ring-white/25 hover:bg-white/25"
           }`}
         >
-          开始反馈
+          开始记录
         </a>
       </div>
     </motion.header>

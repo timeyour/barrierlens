@@ -1,5 +1,5 @@
 import { mockAnalyze } from "@/lib/mockAnalysis";
-import type { AnalysisRequest, AnalysisResult } from "@/types/analysis";
+import type { AnalysisRequest, AnalysisResult, RecordMode } from "@/types/analysis";
 
 async function callGemmaApi(
   request: AnalysisRequest,
@@ -32,7 +32,11 @@ async function callGemmaApi(
           content: [
             {
               type: "text",
-              text: buildAnalysisPrompt(request.targetDepartment),
+              text: buildAnalysisPrompt(
+                request.targetDepartment,
+                request.recordMode,
+                request.location,
+              ),
             },
             {
               type: "image_url",
@@ -57,29 +61,51 @@ async function callGemmaApi(
     throw new Error("Gemma API returned empty content");
   }
 
-  const parsed = JSON.parse(content) as AnalysisResult;
+  const parsed = JSON.parse(content) as Omit<
+    AnalysisResult,
+    "targetDepartment" | "recordMode" | "location" | "recordedAt"
+  >;
+  const recordedAt = new Date().toISOString();
+  const reportText =
+    request.recordMode === "inspection"
+      ? parsed.inspectionText
+      : parsed.advocacyText;
+
   return {
     ...parsed,
+    reportText,
     targetDepartment: request.targetDepartment,
+    recordMode: request.recordMode,
+    location: request.location,
+    recordedAt,
   };
 }
 
-function buildAnalysisPrompt(targetDepartment: string): string {
-  return `你是无障碍场景分析助手。请分析照片中的盲道占用情况，输出 JSON：
+function buildAnalysisPrompt(
+  targetDepartment: string,
+  recordMode: RecordMode,
+  location?: string,
+): string {
+  const place = location?.trim() || "未标注地点";
+  return `你是无障碍环境问题记录助手。请分析照片中的盲道占用情况，输出 JSON：
 {
   "issueType": "盲道占用",
   "riskLevel": "低|中|高",
   "affectedGroups": ["视障人士", ...],
-  "sceneDescription": "现场描述",
-  "suggestion": "整改建议",
-  "targetDepartment": "${targetDepartment}",
-  "reportText": "面向${targetDepartment}的标准化反馈文本"
+  "sceneDescription": "客观现场描述",
+  "suggestion": "整改或关注建议",
+  "advocacyText": "面向公众/公益组织的倡导摘要（含地点 ${place}，场景归类 ${targetDepartment}）",
+  "inspectionText": "面向物业/商场的内部巡查整改单（含巡查点位 ${place}）"
 }
+
+当前记录模式：${recordMode === "inspection" ? "物业自查" : "公众记录"}
+地点：${place}
+场景归类：${targetDepartment}
 
 风险等级规则：
 - 低：轻微占用，仍有明显绕行空间
 - 中：盲道连续性被阻断，影响正常通行
-- 高：盲道完全被阻断，且位于地铁口、医院、商场出入口等高人流区域`;
+- 高：盲道完全被阻断，且位于高人流区域`;
 }
 
 export async function analyzeImage(
@@ -96,6 +122,8 @@ export async function analyzeImage(
   return mockAnalyze(
     request.imageBase64,
     request.targetDepartment,
+    request.recordMode,
+    request.location,
     request.fileName,
   );
 }

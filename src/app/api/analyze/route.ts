@@ -1,16 +1,18 @@
 import { analyzeImage } from "@/lib/gemma";
 import { NextResponse } from "next/server";
-import type { TargetDepartment } from "@/types/analysis";
+import type { RecordMode, TargetDepartment } from "@/types/analysis";
 
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const image = formData.get("image") as File | null;
     const targetDepartment = formData.get("targetDepartment") as TargetDepartment;
+    const recordMode = (formData.get("recordMode") as RecordMode) || "public";
+    const location = (formData.get("location") as string) || undefined;
 
     if (!image || !targetDepartment) {
       return NextResponse.json(
-        { error: "缺少图片或反馈对象" },
+        { error: "缺少图片或场景归类" },
         { status: 400 },
       );
     }
@@ -22,6 +24,8 @@ export async function POST(request: Request) {
     const result = await analyzeImage({
       imageBase64,
       targetDepartment,
+      recordMode,
+      location,
       fileName: image.name,
     });
 

@@ -1,30 +1,34 @@
 /**
  * UI 素材路径配置
- * 将 Gemini 生成的图片放入 public/images/ 对应文件名即可自动生效
- * 若文件不存在或加载失败，会回退到 SVG 占位图
+ * 桌面对比区：畅通/占用实拍；手机 mockup 特写用 scene-blocked-close.png
  */
+const V = "?v=8";
+const STREET_V = "?v=2";
+
+export const HERO_VIDEO = `/videos/hero-demo.mp4?v=1`;
+
 export const UI_ASSETS = {
   hero: {
-    src: "/images/hero-bg.png",
-    fallback: "/images/hero-poster.svg",
-    alt: "城市街景与盲道无障碍环境",
+    src: `/images/hero-poster.svg${V}`,
+    fallback: `/images/hero-poster.svg${V}`,
+    alt: "无障碍盲道环境示意图（虚构场景）",
     width: 1920,
     height: 1080,
   },
   overlay: {
     back: {
-      src: "/images/scene-clear.png",
-      fallback: "/images/blindpath-clear.svg",
-      alt: "地铁口附近畅通的盲道",
-      width: 1200,
-      height: 900,
+      src: `/images/scene-clear-street.png${STREET_V}`,
+      fallback: `/images/scene-clear-street.png${STREET_V}`,
+      alt: "盲道畅通街景实拍示意",
+      width: 1024,
+      height: 559,
     },
     front: {
-      src: "/images/scene-blocked.png",
-      fallback: "/images/blindpath-blocked.svg",
-      alt: "盲道被共享单车和电动车占用",
-      width: 1200,
-      height: 900,
+      src: `/images/scene-blocked-street.png${STREET_V}`,
+      fallback: `/images/scene-blocked-street.png${STREET_V}`,
+      alt: "盲道被占用街景实拍示意",
+      width: 1024,
+      height: 559,
     },
   },
 } as const;
@@ -84,7 +88,7 @@ export const GEMINI_PROMPTS = {
 
 风格：真实摄影感；示意图，不对应任何真实物理位置。`,
 
-  optionalMobile: `设计一张移动端 App 展示用 UI  mockup 配图，9:16 竖版，1080×1920（可选）。
+  optionalMobile: `设计一张移动端 App 展示用 UI mockup 配图，9:16 竖版，1080×1920（可选）。
 
 产品界面概念：「无碍 BarrierLens」
 - 顶部：上传现场照片区域
@@ -94,17 +98,18 @@ export const GEMINI_PROMPTS = {
 
 风格：
 - 简洁白底，蓝色 #2563EB + 绿色 #059669 主色
-- 像真实上线产品，不要 Material Design _demo 感
+- 像真实上线产品，不要 Material Design demo 感
 - 中文界面
 - 干净圆角卡片，移动端优先
 
 不要真实品牌 Logo，产品名用「无碍 BarrierLens」。`,
 } as const;
 
-/** 复制给 Gemini 的一键清单 */
+/** 复制给 Gemini 的一键清单（若将来替换 PNG，须无地标） */
 export const GEMINI_FILE_CHECKLIST = [
-  "public/images/hero-bg.png       ← Hero 背景（16:9）",
-  "public/images/scene-clear.png   ← 对比图·畅通（4:3）",
-  "public/images/scene-blocked.png ← 对比图·占用（4:3）",
-  "public/images/mobile-ui.png     ← 可选，移动端 UI mockup（9:16）",
+  "public/images/hero-poster.svg    ← Hero 背景（当前使用 SVG 示意图）",
+  "public/images/scene-clear-street.png   ← 对比图·畅通（用户实拍）",
+  "public/images/scene-blocked-street.png  ← 对比图·占用（用户实拍）",
+  "public/images/scene-blocked-close.png ← 手机 mockup 特写（用户实拍）",
+  "public/videos/hero-demo.mp4         ← 桌面 Hero 背景循环（用户剪辑）",
 ] as const;

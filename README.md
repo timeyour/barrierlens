@@ -2,123 +2,155 @@
 
 > 让无障碍问题被看见、被记录、被反馈
 
-**无碍 BarrierLens** 是一个基于 Gemma 4 的公众无障碍反馈生成工具，帮助普通人将现场照片快速转化为结构化、专业化、可提交的整改反馈报告。
+**Gemma 4 开发者大赛 2026 · 上海站 · 团队「小马过河」· 赛道 D · AI for Social Good**
 
-**参赛背景：** Gemma 4 开发者大赛 2026 上海站 · 团队「小马过河」· 赛道 D · AI for Social Good
+无碍 BarrierLens 是基于 **Gemma 4 多模态理解** 的无障碍环境问题 **记录与证据平台**。用户上传盲道占用现场照片，Gemma 4 输出结构化标注（问题类型、风险、影响群体、建议），并归档到本地时间线，支持 **公众倡导摘要** 与 **物业自查整改单** 双模式导出。
+
+官网报名项目名：无碍｜让无障碍问题被看见、被记录、被反馈  
+Hackathon 官网：https://hackathon.googdg.cn
+
+---
+
+## 赛道与评审对齐
+
+| 评审维度 | 权重 | 本项目如何对应 |
+|---------|------|---------------|
+| 真实社会影响 | 30% | 盲道占用高频场景；服务志愿者、残联、物业自查；公民证据库路径 |
+| 技术深度 | 25% | **Gemma 4** 视觉 + JSON 结构化生成；Prompt 工程；Mock/API 双模式 |
+| 完整度 | 20% | 上传→分析→时间线→导出；移动端；公网 Demo |
+| 创新 | 15% | 从单次投诉转向可汇总证据；参考 Project Sidewalk 范式 |
+| 呈现质量 | 10% | 在线 Demo + 仓库 + 视频 + 技术报告 |
+
+### 赛制合规
+
+- **核心模型**：Gemma 4（任意规格，见 `src/lib/gemma.ts`）
+- **赛道**：D · AI for Social Good · 无障碍（同时涉及 B · Multimodal 视觉理解）
+- **数据合规**：无用户账号；照片仅用于当次分析；Mock 不持久化原图；训练数据可披露为「Gemma 4 预训练 + 项目 Prompt，无额外微调」
+- **提交截止**：2026-06-08 23:59
+
+### 最终提交四件套
+
+| 材料 | 状态 | 说明 |
+|------|------|------|
+| 代码仓库 | ✅ | GitHub `timeyour/barrierlens` |
+| 在线 Demo URL | ✅ | Vercel 部署 |
+| Demo 视频 ≤ 5 分钟 | ⬜ | 待录制 |
+| 技术报告 | ⬜ | 待撰写（见下方大纲） |
 
 ---
 
 ## 我们解决的问题
 
-很多人看到无障碍问题，但不知道怎么描述、归谁管、怎么反馈。
+单次微信发图或 12345 投诉，往往 **治标不治本**——问题会反复出现，且难以汇总成系统性证据。
 
-普通表达：「这里过不去。」
+无碍的做法：
 
-系统生成：「该处盲道连续性被共享单车阻断，影响视障人士连续、安全通行。建议责任方及时清理占用物，并加强该点位日常巡查。」
+1. **记录**：Gemma 4 将照片结构化为可检索条目  
+2. **归档**：本地时间线累积（公民科学 / 证据库）  
+3. **输出**：公众倡导摘要（给公益组织/媒体）或物业自查整改单（给有动力整改的机构）
 
-**BarrierLens is not designed to replace regulation, but to lower the barrier for public participation in accessibility feedback.**
-
-**中文：** 无碍不是替代监管，而是降低公众参与无障碍反馈的门槛。它让一次普通的发现，变成一份可能推动整改的报告。
-
----
-
-## 为什么第一版只做「盲道占用」
-
-- 场景高频：地铁口、商场、小区、医院附近普遍存在
-- 问题清晰：占用物可见、责任边界相对明确
-- 反馈路径成熟：物业 / 社区 / 商场 / 城管均有对应渠道
-- MVP 原则：一个场景做深做透，比多场景浅尝辄止更有说服力
+普通发现 → 结构化证据 → 可被看见、被汇总、被用于倡导或自查。
 
 ---
 
-## Gemma 4 的作用
+## Gemma 4 的作用（非简单识图）
 
-Gemma 4 负责**无障碍场景理解与结构化反馈生成**，而非单纯识图：
+```
+现场照片 ──→ Gemma 4 多模态 API ──→ 结构化 JSON
+                                      ├── issueType / riskLevel
+                                      ├── affectedGroups
+                                      ├── sceneDescription / suggestion
+                                      ├── advocacyText（公众记录）
+                                      └── inspectionText（物业自查）
+```
 
-1. 理解照片中是否存在盲道占用
-2. 判断风险等级（低 / 中 / 高）
-3. 判断影响人群
-4. 根据反馈对象生成不同风格的正式反馈文本
-5. 输出结构化 JSON 报告
+1. 理解照片中是否存在盲道占用  
+2. 评估风险等级（低 / 中 / 高）  
+3. 识别影响人群  
+4. 生成客观现场描述与整改/关注建议  
+5. 按记录模式输出不同文体（倡导 vs 自查）
+
+未配置 `GEMMA_API_KEY` 时自动 Mock，字段与真实 API 一致，便于 Demo。
 
 ---
 
 ## 功能清单
 
 - [x] 图片上传与预览
-- [x] 反馈对象选择（物业 / 社区 / 商场 / 城管）
-- [x] Mock / Gemma 分析（无 API Key 时自动 Mock）
-- [x] 结构化结果展示（问题类型、风险等级、影响群体、现场描述、整改建议）
-- [x] 标准化反馈文本生成
-- [x] 复制反馈文本
-- [x] 导出 Markdown 报告
-- [x] 移动端优先响应式布局
+- [x] 地点标注 + 场景归类（物业/社区/商场/城管）
+- [x] 双记录模式：公众记录 / 物业自查
+- [x] Gemma 4 分析（Mock / API）
+- [x] 问题记录时间线（localStorage）
+- [x] 公众倡导摘要 / 巡查整改单导出（Markdown）
+- [x] 移动端响应式 + Hero 滚动叙事
+- [x] 参赛对齐说明区块（评审维度 / 提交清单）
+
+---
+
+## 为什么第一版聚焦「盲道占用」
+
+- 场景高频、问题可见、MVP 可验证  
+- 与报名邮件一致，可扩展至坡道/门槛等（架构已预留 JSON 字段）  
+- 量化测试集可快速构建（≥30 张）
 
 ---
 
 ## 技术架构
 
 ```
-Next.js 16 (App Router) + TypeScript + Tailwind CSS
-├── src/app/page.tsx              # 首页（Hero / 问题说明 / 工作流 / 量化目标）
-├── src/app/api/analyze/route.ts  # 分析 API（Gemma / Mock）
-├── src/components/               # UI 组件
-│   ├── ImageUploader.tsx
-│   ├── TargetSelector.tsx
-│   ├── AnalysisResult.tsx
-│   ├── ReportCard.tsx
-│   ├── MetricCard.tsx
-│   └── AnalysisWorkflow.tsx
-├── src/lib/
-│   ├── gemma.ts                  # Gemma 4 API 集成（预留）
-│   ├── mockAnalysis.ts           # Mock 分析逻辑
-│   └── exportMarkdown.ts         # Markdown 导出
-└── src/types/analysis.ts         # 类型定义
+Next.js 16 + TypeScript + Tailwind CSS 4 + framer-motion
+├── src/app/api/analyze/route.ts     # Gemma 4 / Mock 分析 API
+├── src/lib/gemma.ts                 # Gemma 4 集成（JSON 结构化输出）
+├── src/lib/mockAnalysis.ts          # Mock 双模式文本
+├── src/lib/recordStore.ts           # 本地时间线
+├── src/lib/exportMarkdown.ts        # 倡导 / 整改单导出
+├── src/components/
+│   ├── AnalysisWorkflow.tsx         # 主工作流
+│   ├── RecordTimeline.tsx           # 证据时间线
+│   ├── HackathonBrief.tsx           # 参赛对齐说明
+│   └── ...
+└── src/types/analysis.ts
 ```
-
-**部署目标：** Vercel
 
 ---
 
-## 公网部署（Vercel，推荐）
+## 量化目标（技术报告用）
 
-本项目是 Next.js App Router，**最适合一键部署到 Vercel**，部署后自动获得公网 URL（如 `https://barrierlens.vercel.app`）。
+| 指标 | 目标 |
+|------|------|
+| 测试照片 | ≥ 30 张 |
+| 盲道占用识别准确率 | ≥ 85% |
+| 结构化生成成功率 | ≥ 95% |
+| 平均分析耗时 | ≤ 8 秒 |
+| 用户操作步骤 | ≤ 4 步 |
+| Demo 视频 | ≤ 5 分钟 |
+| 路演 | ≤ 3 分钟 |
 
-### 方式一：GitHub + Vercel 网页（推荐）
+---
 
-1. 把 `barrierlens` 目录推送到 GitHub 仓库
-2. 打开 [vercel.com](https://vercel.com) 并登录
-3. **Add New Project** → 导入该 GitHub 仓库
-4. 框架会自动识别为 Next.js，保持默认即可
-5. 点击 **Deploy**，约 1–2 分钟后获得公网地址
+## 技术报告大纲（6/8 提交）
 
-**环境变量（可选）：** 在 Vercel 项目 Settings → Environment Variables 中添加：
+1. **摘要**：赛道 D、问题、Gemma 4 方案、社会影响  
+2. **背景**：盲道占用现状 + 单次投诉局限 + 公民证据库范式  
+3. **Gemma 4 用法**：模型规格、Prompt、JSON schema、多模态输入  
+4. **架构**：Next.js、API Route、Mock 降级、隐私设计  
+5. **评估**：测试集规模、准确率、耗时、案例截图  
+6. **局限与展望**：地图、多问题识别、端侧 Gemma（AI Edge Gallery）  
+7. **团队**：小马过河 · 成员与分工  
+8. **合规**：数据来源、无 PII 存储、Gemma 4 为核心模型声明  
 
-| 变量 | 必填 | 说明 |
-|------|------|------|
-| `GEMMA_API_KEY` | 否 | 不填则公网也走 Mock 演示模式 |
-| `GEMMA_API_BASE_URL` | 否 | Gemma API 地址 |
-| `GEMMA_MODEL_NAME` | 否 | 默认 `gemma-4` |
+---
 
-### 方式二：Vercel CLI 直接部署
+## Demo 视频脚本（≤ 5 分钟）
 
-```bash
-cd barrierlens
-npm i -g vercel
-vercel login
-vercel          # 首次：按提示创建项目
-vercel --prod   # 发布到生产环境公网 URL
-```
-
-### 自定义域名（可选）
-
-Vercel 项目 → **Settings → Domains** → 绑定自己的域名（如 `wiai.example.com`），按提示配置 DNS 即可。
-
-### 部署注意
-
-- **Mock 模式可直接 Demo**：未配置 `GEMMA_API_KEY` 时，公网访问与本地一样可用
-- **API Route**：`/api/analyze` 会作为 Serverless Function 运行，无需额外后端
-- **免费额度**：Hackathon Demo 流量通常足够；超出后可升级或换 Railway / Cloudflare Pages
+| 时间 | 内容 |
+|------|------|
+| 0:00–0:30 | 问题：盲道被占、单次投诉易被忽略 |
+| 0:30–1:00 | 产品：无碍 + Gemma 4 + 赛道 D |
+| 1:00–2:30 | 演示：上传 → 公众记录 → 时间线 → 导出倡导摘要 |
+| 2:30–3:30 | 演示：物业自查模式 → 整改单 |
+| 3:30–4:30 | 技术：Gemma 4 结构化 JSON + 量化指标 |
+| 4:30–5:00 | 展望：证据库、残联合作、端侧扩展 |
 
 ---
 
@@ -130,79 +162,21 @@ npm install
 npm run dev
 ```
 
-浏览器打开 [http://localhost:3000](http://localhost:3000)
+浏览器打开 http://localhost:3000
 
----
-
-## 环境变量配置
-
-复制 `.env.example` 为 `.env.local`：
-
-```bash
-cp .env.example .env.local
-```
+### 环境变量
 
 | 变量 | 说明 |
 |------|------|
-| `GEMMA_API_KEY` | Gemma 4 API 密钥 |
-| `GEMMA_API_BASE_URL` | API 基础地址（可选） |
-| `GEMMA_MODEL_NAME` | 模型名称，默认 `gemma-4` |
+| `GEMMA_API_KEY` | Gemma 4 API 密钥（必填方可走真实模型） |
+| `GEMMA_API_BASE_URL` | API 地址（可选） |
+| `GEMMA_MODEL_NAME` | 默认 `gemma-4` |
 
 ---
 
-## Mock 模式说明
+## 公网部署
 
-未配置 `GEMMA_API_KEY` 时，系统自动进入 **Mock 演示模式**：
-
-- 页面会显示「演示模式」提示
-- 根据上传图片文件名 / 内容哈希选取预设场景（4 种盲道占用变体）
-- 模拟 1.5–2.5 秒分析延迟
-- 根据所选反馈对象生成差异化正式文本
-- 输出字段与真实 API 完全一致，便于 Demo 与评审
-
-配置 `GEMMA_API_KEY` 后，`src/lib/gemma.ts` 中的 `callGemmaApi` 将自动接管；API 失败时降级回 Mock。
-
----
-
-## 输出 JSON 结构
-
-```json
-{
-  "issueType": "盲道占用",
-  "riskLevel": "中",
-  "affectedGroups": ["视障人士", "老年人", "行动不便者"],
-  "sceneDescription": "照片中盲道被共享单车占用，连续通行路径被阻断。",
-  "suggestion": "建议责任方及时清理占用车辆，并加强该点位高峰期巡查。",
-  "targetDepartment": "物业",
-  "reportText": "您好，现场发现该处盲道被共享单车占用..."
-}
-```
-
----
-
-## 量化目标
-
-| 指标 | 目标 |
-|------|------|
-| 真实测试照片 | ≥ 30 张 |
-| 问题照片 | ≥ 20 张 |
-| 正常照片 | ≥ 10 张 |
-| 盲道占用识别准确率 | ≥ 85% |
-| 误报率 | ≤ 15% |
-| 报告生成成功率 | ≥ 95% |
-| 平均生成时间 | ≤ 8 秒 |
-| 用户操作步骤 | ≤ 4 步 |
-| 演示视频 | ≤ 5 分钟 |
-| 路演时长 | ≤ 3 分钟 |
-
----
-
-## 未来扩展
-
-- 接入真实 Gemma 4 Vision API
-- 更多无障碍场景（坡道、电梯、无障碍卫生间）
-- 反馈模板自定义
-- 多语言支持
+Vercel 一键部署，详见上文历史说明。Mock 模式可直接 Demo；配置 `GEMMA_API_KEY` 后切换真实 Gemma 4。
 
 ---
 
@@ -210,11 +184,10 @@ cp .env.example .env.local
 
 | 边界 | 说明 |
 |------|------|
-| 不替代监管 | 工具仅生成反馈文本，不自动投诉或执法 |
-| 不保证 100% 准确 | AI 分析需人工复核后再提交 |
-| 无用户系统 | 第一版不存储任何用户数据 |
-| 无地图功能 | 聚焦单点反馈，不做城市级平台 |
-| Mock 非真实识别 | 演示模式下结果为预设场景，不代表真实识图能力 |
+| 不替代执法 | 记录与倡导工具，非自动投诉系统 |
+| 需人工复核 | AI 分析结果供参考 |
+| 本地归档 | 第一版时间线存浏览器，无云端账号 |
+| Mock 非真实识图 | 演示模式为预设场景，报告需标注 |
 
 ---
 

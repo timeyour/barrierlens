@@ -23,7 +23,7 @@ export default function TargetSelector({
 }: TargetSelectorProps) {
   return (
     <div className="space-y-2.5 sm:space-y-3">
-      <p className="text-sm font-medium text-slate-700">反馈对象</p>
+      <p className="text-sm font-medium text-slate-700">场景归类</p>
       <div className="grid grid-cols-4 gap-2 sm:grid-cols-4 sm:gap-3">
         {TARGET_DEPARTMENTS.map((dept) => {
           const selected = value === dept;

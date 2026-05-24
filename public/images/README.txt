@@ -1,14 +1,15 @@
-# Gemini 生成 UI 素材放置说明
+无障碍场景示意图（虚构，无真实地标）
 
-将 Gemini 生成的图片保存为以下文件名，放入此目录即可自动渲染：
+当前线上使用：
+| 文件 | 用途 |
+|------|------|
+| scene-clear.svg | 对比滑块·畅通（虚构示意图） |
+| scene-blocked.svg | 对比滑块·占用（虚构示意图） |
+| hero-poster.svg | Hero 滚动背景 |
+| scene-blocked-close.png | 手机 mockup 内特写（用户实拍） |
 
-| 文件名 | 用途 | 建议尺寸 |
-|--------|------|----------|
-| hero-bg.jpg | Hero 全屏背景 | 1920×1080 (16:9) |
-| scene-clear.jpg | 叠加动效·后景（畅通） | 1200×900 (4:3) |
-| scene-blocked.jpg | 叠加动效·前景（占用） | 1200×900 (4:3) |
-| mobile-ui.jpg | 可选·移动端 UI mockup | 1080×1920 (9:16) |
+已弃用（含 AI 生成可识别背景，勿再引用）：
+| scene-clear.png / hero-bg.png | 旧 Gemini 图，背景可能含地标 |
+| scene-blocked.png | 旧 Gemini 图 |
 
-提示词见：src/config/uiAssets.ts 中的 GEMINI_PROMPTS
-
-若 JPG 不存在，网站会自动回退到 SVG 占位图。
+替换为真实无地标摄影图时，更新 src/config/uiAssets.ts 并递增 ?v= 缓存版本。

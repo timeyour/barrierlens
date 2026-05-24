@@ -1,16 +1,46 @@
 "use client";
 
-import AssetImage from "@/components/AssetImage";
-import { SCENE_IMAGE_CLASS } from "@/config/imageDisplay";
+import {
+  SceneBlockedIllustration,
+  SceneClearIllustration,
+} from "@/components/SceneCompareIllustrations";
+import {
+  COMPARE_BLOCKED_CLASS,
+  COMPARE_CLEAR_CLASS,
+} from "@/config/imageDisplay";
 import { UI_ASSETS } from "@/config/uiAssets";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { motion } from "framer-motion";
 import { useCallback, useRef, useState } from "react";
 
+function ComparePhotoLayer({
+  side,
+  className,
+}: {
+  side: "clear" | "blocked";
+  className: string;
+}) {
+  const asset =
+    side === "clear" ? UI_ASSETS.overlay.back : UI_ASSETS.overlay.front;
+  const objectClass =
+    side === "clear" ? COMPARE_CLEAR_CLASS : COMPARE_BLOCKED_CLASS;
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={asset.src}
+      alt={asset.alt}
+      className={`${className} ${objectClass}`}
+      draggable={false}
+    />
+  );
+}
+
 export default function CompareSlider() {
-  const { back, front } = UI_ASSETS.overlay;
   const containerRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState(50);
-  const dragging = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const usePhotos = useMediaQuery("(min-width: 768px)", false);
 
   const updateFromClientX = useCallback((clientX: number) => {
     const el = containerRef.current;
@@ -21,55 +51,51 @@ export default function CompareSlider() {
   }, []);
 
   const onPointerDown = (e: React.PointerEvent) => {
-    dragging.current = true;
+    setIsDragging(true);
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
     updateFromClientX(e.clientX);
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
-    if (!dragging.current) return;
+    if (!isDragging) return;
     updateFromClientX(e.clientX);
   };
 
   const onPointerUp = () => {
-    dragging.current = false;
+    setIsDragging(false);
   };
 
+  const layerClass = "absolute inset-0 h-full w-full";
+
   return (
-    <div className="space-y-3">
+    <motion.div className="space-y-3">
       <motion.div
         ref={containerRef}
-        className="relative aspect-[4/3] w-full select-none overflow-hidden rounded-2xl ring-1 ring-slate-200/80"
+        className="relative aspect-[4/3] w-full select-none overflow-hidden rounded-2xl bg-slate-200 ring-1 ring-slate-200/80"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerLeave={onPointerUp}
         whileHover={{ scale: 1.005 }}
         transition={{ duration: 0.2 }}
+        role="img"
+        aria-label="盲道畅通与占用对比"
       >
-        <AssetImage
-          src={back.src}
-          fallback={back.fallback}
-          alt={back.alt}
-          fill
-          className={SCENE_IMAGE_CLASS}
-          sizes="(max-width: 768px) 100vw, 560px"
-          priority
-        />
+        {usePhotos ? (
+          <ComparePhotoLayer side="blocked" className={layerClass} />
+        ) : (
+          <SceneBlockedIllustration className={layerClass} />
+        )}
 
         <div
           className="absolute inset-0"
           style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
         >
-          <AssetImage
-            src={front.src}
-            fallback={front.fallback}
-            alt={front.alt}
-            fill
-            className={SCENE_IMAGE_CLASS}
-            sizes="(max-width: 768px) 100vw, 560px"
-            priority
-          />
+          {usePhotos ? (
+            <ComparePhotoLayer side="clear" className={layerClass} />
+          ) : (
+            <SceneClearIllustration className={layerClass} />
+          )}
         </div>
 
         <div
@@ -78,16 +104,16 @@ export default function CompareSlider() {
         >
           <motion.div
             className="absolute left-1/2 top-1/2 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-slate-900/80 text-white shadow-xl backdrop-blur-sm"
-            animate={{ scale: dragging.current ? 1.08 : 1 }}
+            animate={{ scale: isDragging ? 1.08 : 1 }}
           >
             ↔
           </motion.div>
         </div>
 
-        <span className="absolute left-3 top-3 rounded-full bg-emerald-500/90 px-2.5 py-1 text-[11px] font-semibold text-white shadow">
+        <span className="absolute left-3 top-3 z-20 rounded-full bg-emerald-500/90 px-2.5 py-1 text-[11px] font-semibold text-white shadow">
           畅通
         </span>
-        <span className="absolute right-3 top-3 rounded-full bg-red-500/90 px-2.5 py-1 text-[11px] font-semibold text-white shadow">
+        <span className="absolute right-3 top-3 z-20 rounded-full bg-red-500/90 px-2.5 py-1 text-[11px] font-semibold text-white shadow">
           占用
         </span>
       </motion.div>
@@ -104,6 +130,6 @@ export default function CompareSlider() {
       <p className="text-center text-[11px] text-slate-400">
         拖动滑块或图片，对比盲道状态
       </p>
-    </div>
+    </motion.div>
   );
 }

@@ -15,6 +15,10 @@ interface AssetImageProps {
   sizes?: string;
 }
 
+function isSvgSrc(path: string): boolean {
+  return path.split("?")[0].toLowerCase().endsWith(".svg");
+}
+
 export default function AssetImage({
   src,
   fallback,
@@ -28,6 +32,37 @@ export default function AssetImage({
 }: AssetImageProps) {
   const [currentSrc, setCurrentSrc] = useState(src);
 
+  const handleError = () => {
+    if (currentSrc !== fallback) setCurrentSrc(fallback);
+  };
+
+  if (isSvgSrc(currentSrc)) {
+    if (fill) {
+      return (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={currentSrc}
+          alt={alt}
+          className={`absolute inset-0 h-full w-full ${className}`}
+          onError={handleError}
+          draggable={false}
+        />
+      );
+    }
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={currentSrc}
+        alt={alt}
+        width={width}
+        height={height}
+        className={className}
+        onError={handleError}
+        draggable={false}
+      />
+    );
+  }
+
   return (
     <Image
       src={currentSrc}
@@ -38,9 +73,7 @@ export default function AssetImage({
       className={className}
       priority={priority}
       sizes={sizes}
-      onError={() => {
-        if (currentSrc !== fallback) setCurrentSrc(fallback);
-      }}
+      onError={handleError}
     />
   );
 }
