@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" fill="none">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="45%" stop-color="#1E3A8A"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2563EB" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#059669" stop-opacity="0.2"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <rect width="1920" height="1080" fill="url(#glow)"/>
+  <!-- city silhouette -->
+  <rect x="0" y="620" width="1920" height="460" fill="#1E293B"/>
+  <rect x="120" y="420" width="140" height="200" fill="#334155" rx="4"/>
+  <rect x="300" y="360" width="180" height="260" fill="#475569" rx="4"/>
+  <rect x="520" y="480" width="120" height="140" fill="#334155" rx="4"/>
+  <rect x="1400" y="380" width="200" height="240" fill="#475569" rx="4"/>
+  <rect x="1650" y="450" width="160" height="170" fill="#334155" rx="4"/>
+  <!-- street -->
+  <rect x="0" y="780" width="1920" height="300" fill="#64748B"/>
+  <rect x="0" y="860" width="1920" height="120" fill="#94A3B8"/>
+  <!-- blind path -->
+  <rect x="760" y="870" width="400" height="90" fill="#FBBF24"/>
+  <g fill="#F59E0B">
+    <rect x="780" y="885" width="20" height="60" rx="2"/>
+    <rect x="820" y="885" width="20" height="60" rx="2"/>
+    <rect x="860" y="885" width="20" height="60" rx="2"/>
+    <rect x="900" y="885" width="20" height="60" rx="2"/>
+    <rect x="940" y="885" width="20" height="60" rx="2"/>
+    <rect x="980" y="885" width="20" height="60" rx="2"/>
+    <rect x="1020" y="885" width="20" height="60" rx="2"/>
+    <rect x="1060" y="885" width="20" height="60" rx="2"/>
+    <rect x="1100" y="885" width="20" height="60" rx="2"/>
+  </g>
+  <text x="960" y="720" text-anchor="middle" fill="#93C5FD" font-family="system-ui,sans-serif" font-size="42" font-weight="700" opacity="0.6">BarrierLens</text>
+</svg>

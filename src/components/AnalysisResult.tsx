@@ -8,7 +8,7 @@ interface AnalysisResultViewProps {
 export default function AnalysisResultView({ result }: AnalysisResultViewProps) {
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard label="问题类型" value={result.issueType} />
         <MetricCard
           label="风险等级"

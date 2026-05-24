@@ -10,10 +10,10 @@ interface TargetSelectorProps {
 }
 
 const DEPARTMENT_HINTS: Record<TargetDepartment, string> = {
-  物业: "强调现场清理与责任区域维护",
-  社区: "强调协调责任方与社区巡查",
-  商场: "强调顾客通行与公共空间管理",
-  城管: "强调公共通道秩序与违规占用",
+  物业: "现场清理与日常巡查",
+  社区: "协调责任方与社区巡查",
+  商场: "顾客通行与公共空间",
+  城管: "公共通道秩序与处置",
 };
 
 export default function TargetSelector({
@@ -22,9 +22,9 @@ export default function TargetSelector({
   disabled = false,
 }: TargetSelectorProps) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5 sm:space-y-3">
       <p className="text-sm font-medium text-slate-700">反馈对象</p>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-4 gap-2 sm:grid-cols-4 sm:gap-3">
         {TARGET_DEPARTMENTS.map((dept) => {
           const selected = value === dept;
           return (
@@ -33,7 +33,7 @@ export default function TargetSelector({
               type="button"
               disabled={disabled}
               onClick={() => onChange(dept)}
-              className={`rounded-xl border px-3 py-3 text-left transition-all ${
+              className={`rounded-xl border px-2 py-2.5 text-center transition-all sm:px-3 sm:py-3 sm:text-left ${
                 selected
                   ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
                   : "border-slate-200 bg-white hover:border-blue-300"
@@ -42,7 +42,7 @@ export default function TargetSelector({
               <span className="block text-sm font-semibold text-slate-900">
                 {dept}
               </span>
-              <span className="mt-1 block text-xs text-slate-500">
+              <span className="mt-0.5 hidden text-xs text-slate-500 sm:mt-1 sm:block">
                 {DEPARTMENT_HINTS[dept]}
               </span>
             </button>

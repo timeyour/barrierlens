@@ -14,8 +14,89 @@
   --font-mono: var(--font-geist-mono);
 }
 
-body {
+  body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Hero video: scroll-scrubbed, no autoplay loop */
+.hero-video {
+  pointer-events: none;
+}
+
+/* 3D interactive scene */
+.scene-perspective {
+  perspective: 1200px;
+}
+
+.scene-card {
+  transform-style: preserve-3d;
+  transition: transform 0.15s ease-out;
+}
+
+.scene-face {
+  backface-visibility: hidden;
+}
+
+.scene-float {
+  animation: float-badge 4s ease-in-out infinite;
+}
+
+.scene-float-delayed {
+  animation: float-badge 4s ease-in-out 1.2s infinite;
+}
+
+@keyframes float-badge {
+  0%,
+  100% {
+    transform: translateY(0) translateZ(40px);
+  }
+  50% {
+    transform: translateY(-8px) translateZ(60px);
+  }
+}
+
+/* Overlay parallax layers */
+.overlay-layer {
+  will-change: transform;
+}
+
+/* Entrance animations */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.8s ease-out both;
+}
+
+.animate-fade-up-delayed {
+  animation: fade-up 0.8s ease-out 0.25s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-video {
+    display: none;
+  }
+
+  .scene-card,
+  .scene-float,
+  .scene-float-delayed,
+  .overlay-layer,
+  .animate-fade-up,
+  .animate-fade-up-delayed {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
 }

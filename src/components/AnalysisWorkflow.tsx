@@ -98,7 +98,7 @@ export default function AnalysisWorkflow() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-lg shadow-slate-200/40 sm:rounded-3xl sm:p-6 sm:shadow-xl lg:p-8">
         <h2 className="text-lg font-semibold text-slate-900">上传并分析</h2>
         <p className="mt-1 text-sm text-slate-500">
           上传盲道占用现场照片，选择反馈对象，一键生成结构化报告
@@ -151,7 +151,7 @@ export default function AnalysisWorkflow() {
 
       {result && status === "success" && (
         <div className="space-y-6">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-lg shadow-slate-200/40 sm:rounded-3xl sm:p-6 sm:shadow-xl lg:p-8">
             <h2 className="text-lg font-semibold text-slate-900">分析结果</h2>
             <p className="mt-1 text-sm text-slate-500">
               Gemma 4 无障碍场景理解与结构化反馈
