@@ -80,6 +80,48 @@ Next.js 16 (App Router) + TypeScript + Tailwind CSS
 
 ---
 
+## 公网部署（Vercel，推荐）
+
+本项目是 Next.js App Router，**最适合一键部署到 Vercel**，部署后自动获得公网 URL（如 `https://barrierlens.vercel.app`）。
+
+### 方式一：GitHub + Vercel 网页（推荐）
+
+1. 把 `barrierlens` 目录推送到 GitHub 仓库
+2. 打开 [vercel.com](https://vercel.com) 并登录
+3. **Add New Project** → 导入该 GitHub 仓库
+4. 框架会自动识别为 Next.js，保持默认即可
+5. 点击 **Deploy**，约 1–2 分钟后获得公网地址
+
+**环境变量（可选）：** 在 Vercel 项目 Settings → Environment Variables 中添加：
+
+| 变量 | 必填 | 说明 |
+|------|------|------|
+| `GEMMA_API_KEY` | 否 | 不填则公网也走 Mock 演示模式 |
+| `GEMMA_API_BASE_URL` | 否 | Gemma API 地址 |
+| `GEMMA_MODEL_NAME` | 否 | 默认 `gemma-4` |
+
+### 方式二：Vercel CLI 直接部署
+
+```bash
+cd barrierlens
+npm i -g vercel
+vercel login
+vercel          # 首次：按提示创建项目
+vercel --prod   # 发布到生产环境公网 URL
+```
+
+### 自定义域名（可选）
+
+Vercel 项目 → **Settings → Domains** → 绑定自己的域名（如 `wiai.example.com`），按提示配置 DNS 即可。
+
+### 部署注意
+
+- **Mock 模式可直接 Demo**：未配置 `GEMMA_API_KEY` 时，公网访问与本地一样可用
+- **API Route**：`/api/analyze` 会作为 Serverless Function 运行，无需额外后端
+- **免费额度**：Hackathon Demo 流量通常足够；超出后可升级或换 Railway / Cloudflare Pages
+
+---
+
 ## 本地运行
 
 ```bash
