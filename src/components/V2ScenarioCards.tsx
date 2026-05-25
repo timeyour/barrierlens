@@ -22,7 +22,10 @@ const SCENES = [
 export default function V2ScenarioCards() {
   return (
     <ScrollReveal>
-      <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:mb-10 md:p-6">
+      <section
+        id="scenes"
+        className="mb-6 scroll-mt-20 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:mb-10 md:p-6"
+      >
         <SectionHeader
           eyebrow="Scope"
           title="公共空间无障碍通行风险"
@@ -42,4 +45,3 @@ export default function V2ScenarioCards() {
     </ScrollReveal>
   );
 }
-

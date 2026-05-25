@@ -1,20 +1,34 @@
 "use client";
 
 import { formatGemmaJson } from "@/lib/analysisJson";
-import type { AnalysisResult } from "@/types/analysis";
+import type { AnalysisResult, AnalysisSource } from "@/types/analysis";
 import { useState } from "react";
 
 interface GemmaJsonOutputProps {
   result: AnalysisResult;
   mockMode?: boolean;
+  source?: AnalysisSource | null;
+  modelName?: string | null;
+  fallbackReason?: string | null;
 }
 
 export default function GemmaJsonOutput({
   result,
   mockMode = false,
+  source,
+  modelName,
+  fallbackReason,
 }: GemmaJsonOutputProps) {
   const [copied, setCopied] = useState(false);
   const jsonText = formatGemmaJson(result);
+  const sourceText =
+    source === "gemma"
+      ? `真实模型 · ${modelName ?? "Gemma 4"}`
+      : source === "mock_fallback"
+        ? "Mock 兜底 · 接口失败后自动降级"
+        : mockMode
+          ? "演示模式 · 结构与真实 API 一致"
+          : "来自 Gemma 4 多模态分析结果";
 
   const handleCopy = async () => {
     try {
@@ -34,10 +48,13 @@ export default function GemmaJsonOutput({
             Gemma 4 结构化输出
           </p>
           <p className="mt-0.5 text-[11px] text-slate-400">
-            {mockMode
-              ? "演示模式 · 结构与真实 API 一致"
-              : "来自 Gemma 4 多模态分析结果"}
+            {sourceText}
           </p>
+          {fallbackReason && (
+            <p className="mt-0.5 max-w-xl text-[11px] text-amber-300">
+              降级原因：{fallbackReason}
+            </p>
+          )}
         </div>
         <button
           type="button"

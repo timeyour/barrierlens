@@ -6,13 +6,17 @@ import {
   PIPELINE_STEP_COUNT,
   type PipelineStep,
 } from "@/lib/analysisPipeline";
+import { ensureGsapPlugins, gsap, useGSAP } from "@/lib/gsapClient";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import type { AnalysisResult } from "@/types/analysis";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface AiAnalysisPipelineProps {
   running: boolean;
   result: AnalysisResult | null;
 }
+
+ensureGsapPlugins();
 
 function StepIcon({ status }: { status: PipelineStep["status"] }) {
   if (status === "done") {
@@ -40,24 +44,24 @@ export default function AiAnalysisPipeline({
   running,
   result,
 }: AiAnalysisPipelineProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
-    if (!running || result) {
-      return;
-    }
-    setActiveIndex(0);
+    if (!running || result) return undefined;
+    const timer = window.setTimeout(() => setActiveIndex(0), 0);
     const interval = window.setInterval(() => {
       setActiveIndex((current) =>
         current >= PIPELINE_STEP_COUNT - 1 ? current : current + 1,
       );
     }, 520);
-    return () => window.clearInterval(interval);
+    return () => {
+      window.clearTimeout(timer);
+      window.clearInterval(interval);
+    };
   }, [running, result]);
-
-  if (!running && !result) {
-    return null;
-  }
 
   const steps: PipelineStep[] = result
     ? buildStepsFromResult(result)
@@ -66,8 +70,45 @@ export default function AiAnalysisPipeline({
   const doneCount = steps.filter((s) => s.status === "done").length;
   const progress = result ? 100 : Math.round((doneCount / PIPELINE_STEP_COUNT) * 100);
 
+  useGSAP(
+    () => {
+      if (!progressRef.current) return;
+      if (reducedMotion) {
+        gsap.set(progressRef.current, { width: `${progress}%` });
+        return;
+      }
+      gsap.to(progressRef.current, {
+        width: `${progress}%`,
+        duration: result ? 0.85 : 0.45,
+        ease: result ? "power2.out" : "power1.inOut",
+      });
+    },
+    { scope: containerRef, dependencies: [progress, result, reducedMotion], revertOnUpdate: true },
+  );
+
+  useGSAP(
+    () => {
+      if (!result || reducedMotion) return;
+      gsap.from("[data-pipeline-step]", {
+        x: -12,
+        autoAlpha: 0,
+        duration: 0.45,
+        stagger: 0.08,
+        ease: "power2.out",
+      });
+    },
+    { scope: containerRef, dependencies: [result, reducedMotion], revertOnUpdate: true },
+  );
+
+  if (!running && !result) {
+    return null;
+  }
+
   return (
-    <div className="rounded-2xl border border-blue-200/80 bg-gradient-to-br from-blue-50/90 to-slate-50 p-4 sm:p-5">
+    <div
+      ref={containerRef}
+      className="rounded-2xl border border-blue-200/80 bg-gradient-to-br from-blue-50/90 to-slate-50 p-4 sm:p-5"
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">
@@ -86,8 +127,8 @@ export default function AiAnalysisPipeline({
 
       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-blue-100">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500 transition-all duration-500 ease-out"
-          style={{ width: `${progress}%` }}
+          ref={progressRef}
+          className="h-full w-0 rounded-full bg-gradient-to-r from-blue-500 to-emerald-500"
         />
       </div>
 
@@ -95,6 +136,7 @@ export default function AiAnalysisPipeline({
         {steps.map((step) => (
           <li
             key={step.id}
+            data-pipeline-step=""
             className={`flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors ${
               step.status === "active"
                 ? "bg-white/90 ring-1 ring-blue-200"

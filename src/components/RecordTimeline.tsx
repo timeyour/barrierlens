@@ -17,10 +17,13 @@ import {
 import type { StoredRecord } from "@/types/analysis";
 import BarrierMap from "@/components/BarrierMap";
 import PhotoCompareSlider from "@/components/PhotoCompareSlider";
+import RecordEvidencePreview from "@/components/RecordEvidencePreview";
 import RecordTimelineFilters from "@/components/RecordTimelineFilters";
 import ReviewStatusFlow from "@/components/ReviewStatusFlow";
-import SectionHeader from "@/components/SectionHeader";
 import ScrollReveal from "@/components/ScrollReveal";
+import SectionHeader from "@/components/SectionHeader";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { ensureGsapPlugins, gsap, useGSAP } from "@/lib/gsapClient";
 import {
   countByQueue,
   DEFAULT_RECORD_FILTERS,
@@ -29,6 +32,8 @@ import {
   type RecordFilterState,
 } from "@/lib/recordFilters";
 import { useEffect, useRef, useState } from "react";
+
+ensureGsapPlugins();
 
 const REVIEW_FLOW: ReviewStatus[] = [
   "pending",
@@ -172,11 +177,6 @@ function RecordItem({ record }: { record: StoredRecord }) {
   const [uploading, setUploading] = useState(false);
   const [statusNotice, setStatusNotice] = useState<string | null>(null);
 
-  useEffect(() => {
-    setNextStatus(record.reviewStatus);
-    setReviewNote(record.reviewNote ?? "");
-  }, [record.reviewStatus, record.reviewNote, record.id]);
-
   const modeLabel = RECORD_MODES[record.recordMode].label;
   const preview =
     record.recordMode === "inspection"
@@ -217,7 +217,16 @@ function RecordItem({ record }: { record: StoredRecord }) {
   };
 
   return (
-    <li className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <li
+      data-record-item=""
+      className={`rounded-xl border bg-white p-4 shadow-sm ${
+        record.reviewStatus === "fixed"
+          ? "border-emerald-300 ring-1 ring-emerald-100"
+          : record.reviewStatus === "unfixed"
+            ? "border-red-200 ring-1 ring-red-50"
+            : "border-slate-200"
+      }`}
+    >
       <div className="flex flex-wrap items-center gap-2">
         <span
           className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${
@@ -265,6 +274,8 @@ function RecordItem({ record }: { record: StoredRecord }) {
           {preview.slice(0, 120)}…
         </p>
       )}
+
+      <RecordEvidencePreview record={record} reviewStatus={record.reviewStatus} />
 
       <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
         <p className="text-[11px] font-semibold text-slate-600">整改复查</p>
@@ -348,8 +359,10 @@ function RecordItem({ record }: { record: StoredRecord }) {
 }
 
 export default function RecordTimeline() {
+  const listRef = useRef<HTMLDivElement>(null);
   const [records, setRecords] = useState<StoredRecord[]>(EMPTY_RECORDS);
   const [filters, setFilters] = useState<RecordFilterState>(DEFAULT_RECORD_FILTERS);
+  const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     seedDemoRecordsIfEmpty();
@@ -366,6 +379,38 @@ export default function RecordTimeline() {
   const counts = countByQueue(records);
   const visibleRecords = filterRecords(records, filters);
   const grouped = groupRecordsByLocation(visibleRecords);
+
+  useGSAP(
+    () => {
+      if (reducedMotion || visibleRecords.length === 0 || !listRef.current) return;
+
+      gsap.from("[data-record-item]", {
+        y: 28,
+        autoAlpha: 0,
+        duration: 0.55,
+        stagger: 0.07,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: listRef.current,
+          start: "top 90%",
+          toggleActions: "play none none none",
+        },
+      });
+    },
+    {
+      scope: listRef,
+      dependencies: [
+        reducedMotion,
+        visibleRecords.length,
+        filters.queue,
+        filters.query,
+        filters.mode,
+        filters.risk,
+        filters.scene,
+      ],
+      revertOnUpdate: true,
+    },
+  );
 
   return (
     <ScrollReveal>
@@ -392,7 +437,7 @@ export default function RecordTimeline() {
             没有匹配的记录。试试切换「全部」或清空搜索关键词。
           </p>
         ) : (
-          <div className="space-y-6">
+          <div ref={listRef} className="space-y-6">
             {grouped.map(({ location, records: groupRecords }) => (
               <div key={location}>
                 <div className="mb-2 flex items-center justify-between gap-2">
@@ -403,7 +448,10 @@ export default function RecordTimeline() {
                 </div>
                 <ul className="space-y-3">
                   {groupRecords.map((record) => (
-                    <RecordItem key={record.id} record={record} />
+                    <RecordItem
+                      key={`${record.id}-${record.reviewStatus}-${record.reviewNote ?? ""}`}
+                      record={record}
+                    />
                   ))}
                 </ul>
               </div>

@@ -4,9 +4,10 @@ import AnchorLink from "@/components/AnchorLink";
 import { useEffect, useState } from "react";
 
 const LINKS = [
+  { href: "#story", label: "闭环" },
+  { href: "#scenes", label: "场景" },
   { href: "#tool", label: "记录" },
   { href: "#records", label: "时间线" },
-  { href: "#story", label: "故事" },
 ];
 
 export default function SiteNav() {

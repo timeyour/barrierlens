@@ -17,6 +17,7 @@ import { saveRecord } from "@/lib/recordStore";
 import { scrollToAnchor } from "@/lib/scrollAnchor";
 import type {
   AnalysisResult,
+  AnalysisSource,
   RecordMode,
   StoredRecord,
   TargetDepartment,
@@ -26,6 +27,15 @@ import { RECORD_MODES } from "@/types/analysis";
 type WorkflowStatus = "idle" | "loading" | "success" | "error";
 
 const DEMO_IMAGE_URL = "/images/scene-blocked-close.png";
+
+type AnalyzeApiResponse = AnalysisResult & {
+  mockMode?: boolean;
+  analysisSource?: AnalysisSource;
+  modelName?: string;
+  provider?: string;
+  fallbackReason?: string;
+  analysisTimeMs?: number;
+};
 
 async function fetchDemoFile(): Promise<File> {
   const response = await fetch(DEMO_IMAGE_URL);
@@ -45,6 +55,10 @@ export default function AnalysisWorkflow() {
   const [status, setStatus] = useState<WorkflowStatus>("idle");
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [mockMode, setMockMode] = useState(false);
+  const [analysisSource, setAnalysisSource] = useState<AnalysisSource | null>(null);
+  const [modelName, setModelName] = useState<string | null>(null);
+  const [fallbackReason, setFallbackReason] = useState<string | null>(null);
+  const [analysisTimeMs, setAnalysisTimeMs] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
@@ -55,6 +69,10 @@ export default function AnalysisWorkflow() {
     setPreviewUrl(url);
     setUsedDemoImage(false);
     setResult(null);
+    setAnalysisSource(null);
+    setModelName(null);
+    setFallbackReason(null);
+    setAnalysisTimeMs(null);
     setStatus("idle");
     setErrorMessage(null);
     setSavedNotice(false);
@@ -66,6 +84,10 @@ export default function AnalysisWorkflow() {
     setPreviewUrl(null);
     setUsedDemoImage(false);
     setResult(null);
+    setAnalysisSource(null);
+    setModelName(null);
+    setFallbackReason(null);
+    setAnalysisTimeMs(null);
     setStatus("idle");
     setErrorMessage(null);
     setSavedNotice(false);
@@ -113,12 +135,10 @@ export default function AnalysisWorkflow() {
 
   const handleAnalyze = async () => {
     let analyzeFile = file;
-    let demoUsed = usedDemoImage;
 
     if (!analyzeFile) {
       try {
         analyzeFile = await fetchDemoFile();
-        demoUsed = true;
         const demoPreview = URL.createObjectURL(analyzeFile);
         setFile(analyzeFile);
         setPreviewUrl((prev) => {
@@ -136,6 +156,10 @@ export default function AnalysisWorkflow() {
     setErrorMessage(null);
     setResult(null);
     setSavedNotice(false);
+    setAnalysisSource(null);
+    setModelName(null);
+    setFallbackReason(null);
+    setAnalysisTimeMs(null);
 
     const formData = new FormData();
     formData.append("image", analyzeFile);
@@ -149,15 +173,26 @@ export default function AnalysisWorkflow() {
         body: formData,
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as AnalyzeApiResponse & { error?: string };
 
       if (!response.ok) {
         throw new Error(data.error ?? "分析失败");
       }
 
-      const analysis = data as AnalysisResult;
+      const {
+        mockMode: responseMockMode,
+        analysisSource: responseSource,
+        modelName: responseModelName,
+        fallbackReason: responseFallbackReason,
+        analysisTimeMs: responseAnalysisTimeMs,
+        ...analysis
+      } = data;
       setResult(analysis);
-      setMockMode(Boolean(data.mockMode));
+      setMockMode(Boolean(responseMockMode));
+      setAnalysisSource(responseSource ?? (responseMockMode ? "mock" : "gemma"));
+      setModelName(responseModelName ?? null);
+      setFallbackReason(responseFallbackReason ?? null);
+      setAnalysisTimeMs(responseAnalysisTimeMs ?? null);
       setStatus("success");
       await persistRecord(analysis, analyzeFile);
       window.requestAnimationFrame(() => scrollToAnchor("#tool-results"));
@@ -293,7 +328,23 @@ export default function AnalysisWorkflow() {
         </div>
       </div>
 
-      {mockMode && status === "success" && (
+      {analysisSource === "gemma" && status === "success" && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          <strong>真实模型：</strong>
+          本次结果来自 {modelName ?? "Gemma 4"} 多模态分析
+          {analysisTimeMs ? `，耗时 ${analysisTimeMs}ms` : ""}。
+        </div>
+      )}
+
+      {analysisSource === "mock_fallback" && status === "success" && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <strong>已自动降级：</strong>
+          Gemma 4 接口调用失败，当前结果使用 Mock 数据兜底。
+          {fallbackReason ? ` 原因：${fallbackReason}` : ""}
+        </div>
+      )}
+
+      {analysisSource === "mock" && mockMode && status === "success" && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <strong>演示模式：</strong>
           未配置 GEMMA_API_KEY，推理步骤与 JSON 结构按真实 Gemma 输出格式模拟；配置密钥后切换为真实 API。
@@ -353,7 +404,13 @@ export default function AnalysisWorkflow() {
               Gemma 4 结构化输出（开发者）
             </summary>
             <div className="border-t border-slate-200 p-3 pt-0">
-              <GemmaJsonOutput result={result} mockMode={mockMode} />
+              <GemmaJsonOutput
+                result={result}
+                mockMode={mockMode}
+                source={analysisSource}
+                modelName={modelName}
+                fallbackReason={fallbackReason}
+              />
             </div>
           </details>
         </div>

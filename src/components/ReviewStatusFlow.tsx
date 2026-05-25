@@ -1,6 +1,9 @@
 "use client";
 
 import { REVIEW_STATUS_LABELS, type ReviewStatus } from "@/types/analysis";
+import { ensureGsapPlugins, gsap, useGSAP } from "@/lib/gsapClient";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { useRef } from "react";
 
 const BASE_FLOW: ReviewStatus[] = [
   "pending",
@@ -36,11 +39,30 @@ interface ReviewStatusFlowProps {
   status: ReviewStatus;
 }
 
+ensureGsapPlugins();
+
 export default function ReviewStatusFlow({ status }: ReviewStatusFlowProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const reducedMotion = usePrefersReducedMotion();
   const flow = buildFlow(status);
 
+  useGSAP(
+    () => {
+      if (reducedMotion || !ref.current) return;
+      gsap.fromTo(
+        ref.current,
+        { scale: 0.98 },
+        { scale: 1, duration: 0.45, ease: "power2.out" },
+      );
+    },
+    { scope: ref, dependencies: [status, reducedMotion], revertOnUpdate: true },
+  );
+
   return (
-    <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
+    <div
+      ref={ref}
+      className="mt-3 rounded-lg border border-slate-200 bg-white p-3"
+    >
       <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
         记录状态流转
       </p>
@@ -91,10 +113,7 @@ export default function ReviewStatusFlow({ status }: ReviewStatusFlowProps) {
                 />
               )}
               <span
-                key={`${status}-${index}`}
-                className={`relative z-10 flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold transition-all duration-500 ${dotClass} ${
-                  state === "current" ? "scale-110 ring-4 ring-blue-200/60" : ""
-                }`}
+                className={`relative z-10 flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold transition-all duration-500 ${dotClass}`}
               >
                 {state === "done" || isFixedTerminal ? "✓" : index + 1}
               </span>

@@ -1,4 +1,5 @@
 import AnalysisWorkflow from "@/components/AnalysisWorkflow";
+import EvidenceStory from "@/components/EvidenceStory";
 import HowItWorks from "@/components/HowItWorks";
 import OverlayShowcase from "@/components/OverlayShowcase";
 import HashScrollHandler from "@/components/HashScrollHandler";
@@ -9,23 +10,11 @@ import ScrollProgressBar from "@/components/ScrollProgress";
 import ScrollReveal from "@/components/ScrollReveal";
 import SiteNav from "@/components/SiteNav";
 import V2ScenarioCards from "@/components/V2ScenarioCards";
-import { getModeLabel, resolveUiMode, type ModeSource } from "@/config/featureFlags";
-
-function ModeBadge({ modeSourceLabel, modeLabel }: { modeSourceLabel: string; modeLabel: string }) {
-  return (
-    <div className="pointer-events-none fixed bottom-3 right-3 z-50 rounded-full border border-slate-200/90 bg-white/90 px-3 py-1 text-[11px] font-semibold text-slate-700 shadow-sm backdrop-blur">
-      当前模式：{modeLabel}（{modeSourceLabel}）
-    </div>
-  );
-}
+import { resolveUiMode } from "@/config/featureFlags";
 
 function firstValue(raw?: string | string[]): string | undefined {
   if (Array.isArray(raw)) return raw[0];
   return raw;
-}
-
-function modeSourceToLabel(source: ModeSource): string {
-  return source === "url" ? "URL 覆盖" : "环境变量";
 }
 
 export default async function Home({
@@ -34,10 +23,8 @@ export default async function Home({
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const resolvedParams = (await searchParams) ?? {};
-  const { mode, source } = resolveUiMode(firstValue(resolvedParams.mode));
+  const { mode } = resolveUiMode(firstValue(resolvedParams.mode));
   const showMvpPanels = mode === "mvp";
-  const modeLabel = getModeLabel(mode);
-  const modeSourceLabel = modeSourceToLabel(source);
 
   return (
     <div className="relative min-h-screen">
@@ -46,35 +33,35 @@ export default async function Home({
       <ScrollProgressBar />
       <SiteNav />
       <ParallaxVideoHero />
-      <ModeBadge modeSourceLabel={modeSourceLabel} modeLabel={modeLabel} />
 
-      <main className="relative mx-auto flex max-w-5xl flex-col px-4 py-4 md:px-6 md:py-10 lg:py-16">
-        <ScrollReveal delay={0.05} className="order-1">
-          <div id="tool" className="scroll-mt-20" aria-hidden="true" />
-          <AnalysisWorkflow />
-        </ScrollReveal>
-
-        <div className="order-2">
-          <RecordTimeline />
+      <main className="relative mx-auto flex max-w-5xl flex-col px-4 pb-4 pt-2 md:px-6 md:py-10 lg:py-16">
+        <div className="order-0">
+          <EvidenceStory />
         </div>
 
         {!showMvpPanels && (
-          <div className="order-3">
+          <div className="order-1">
             <V2ScenarioCards />
           </div>
         )}
 
+        <ScrollReveal delay={0.05} className="order-2">
+          <div id="tool" className="scroll-mt-20" aria-hidden="true" />
+          <AnalysisWorkflow />
+        </ScrollReveal>
+
+        <div className="order-3">
+          <RecordTimeline />
+        </div>
+
         {showMvpPanels && (
-          <>
-            <div id="story" className="order-3 scroll-mt-20" aria-hidden="true" />
-            <div className="order-3 scroll-mt-0">
-              <OverlayShowcase />
-            </div>
-          </>
+          <div className="order-4 scroll-mt-0">
+            <OverlayShowcase />
+          </div>
         )}
 
         {showMvpPanels && (
-          <div className="order-4 hidden md:block">
+          <div className="order-5 hidden md:block">
             <HowItWorks />
           </div>
         )}

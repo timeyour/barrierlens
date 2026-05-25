@@ -1,14 +1,18 @@
 const TRUE_VALUES = new Set(["1", "true", "yes", "on"]);
+const FALSE_VALUES = new Set(["0", "false", "no", "off"]);
 
-function toBool(raw: string | undefined): boolean {
-  if (!raw) return false;
-  return TRUE_VALUES.has(raw.trim().toLowerCase());
+function toBool(raw: string | undefined, defaultValue = false): boolean {
+  if (!raw) return defaultValue;
+  const value = raw.trim().toLowerCase();
+  if (TRUE_VALUES.has(value)) return true;
+  if (FALSE_VALUES.has(value)) return false;
+  return defaultValue;
 }
 
 export const FEATURE_FLAGS = {
-  v2Enabled: toBool(process.env.NEXT_PUBLIC_V2_ENABLED),
-  barrierMapEnabled: toBool(process.env.NEXT_PUBLIC_V2_BARRIER_MAP_ENABLED),
-  reviewFlowEnabled: toBool(process.env.NEXT_PUBLIC_V2_REVIEW_FLOW_ENABLED),
+  v2Enabled: toBool(process.env.NEXT_PUBLIC_V2_ENABLED, true),
+  barrierMapEnabled: toBool(process.env.NEXT_PUBLIC_V2_BARRIER_MAP_ENABLED, true),
+  reviewFlowEnabled: toBool(process.env.NEXT_PUBLIC_V2_REVIEW_FLOW_ENABLED, true),
 } as const;
 
 export type UiMode = "mvp" | "v2";

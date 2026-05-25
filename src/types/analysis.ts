@@ -6,6 +6,7 @@ export type SceneType =
   | "accessible_entrance_blocked"
   | "access_route_discontinuity";
 export type PathStatus = "clear" | "partial" | "blocked";
+export type AnalysisSource = "gemma" | "mock" | "mock_fallback";
 export type ReviewStatus =
   | "pending"
   | "exported"
