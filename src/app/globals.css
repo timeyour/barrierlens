@@ -148,24 +148,34 @@ body {
 
 @media (max-width: 767px) {
   html {
-    scroll-snap-type: y mandatory;
+    scroll-snap-type: y proximity;
+    scroll-padding-top: 5rem;
   }
 
-  .mobile-page-panel {
+  /* 仅 Hero / Story 两屏分页；工具页与时间线自由滚动 */
+  .mobile-snap-screen {
     scroll-snap-align: start;
     scroll-snap-stop: always;
+    min-height: 100svh;
   }
 
-  .mobile-snap-gap {
-    height: 1px;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
+  .mobile-snap-screen-fixed {
+    height: 100svh;
+    max-height: 100svh;
+    overflow: hidden;
   }
 
-  .mobile-page-break {
-    height: 1px;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
+  .mobile-snap-screen-scroll {
+    height: 100svh;
+    max-height: 100svh;
+    overflow-y: auto;
+    overscroll-behavior-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-no-snap {
+    scroll-snap-align: none;
+    scroll-snap-stop: normal;
   }
 }
 

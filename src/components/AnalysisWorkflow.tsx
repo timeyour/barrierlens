@@ -252,7 +252,7 @@ export default function AnalysisWorkflow() {
           拍照上传，AI 帮你结构化记录并归档
         </p>
 
-        <div className="-mt-2 space-y-6">
+        <div className="-mt-2 space-y-4 md:space-y-6">
           <ImageUploader
             previewUrl={previewUrl}
             onImageSelect={handleImageSelect}

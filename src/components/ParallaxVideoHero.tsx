@@ -79,7 +79,7 @@ export default function ParallaxVideoHero() {
   return (
     <header
       ref={containerRef}
-      className="mobile-page-panel relative md:h-[180vh] lg:h-[200vh]"
+      className="mobile-snap-screen mobile-snap-screen-fixed relative md:h-[180vh] lg:h-[200vh]"
     >
       <div className="relative h-[100svh] max-h-[100svh] overflow-hidden md:sticky md:top-0 md:h-screen md:max-h-none md:min-h-0">
         <div className="absolute inset-0 overflow-hidden">

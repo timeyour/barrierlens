@@ -34,27 +34,21 @@ export default async function Home({
       <SiteNav />
       <ParallaxVideoHero />
 
-      <div className="mobile-snap-gap md:hidden" aria-hidden />
-
       <main className="relative mx-auto flex max-w-5xl flex-col px-4 pb-4 pt-0 md:px-6 md:py-10 lg:py-16">
-        <div className="mobile-page-panel order-0 flex min-h-[100svh] flex-col justify-center gap-4 rounded-t-[1.75rem] border-t border-slate-200/80 bg-[var(--background)] py-8 shadow-[0_-16px_40px_rgba(15,23,42,0.08)] md:contents md:min-h-0 md:rounded-none md:border-0 md:bg-transparent md:py-0 md:shadow-none">
+        <div className="mobile-snap-screen mobile-snap-screen-scroll order-0 flex flex-col gap-3 rounded-t-[1.75rem] border-t border-slate-200/80 bg-[var(--background)] px-0 py-5 shadow-[0_-16px_40px_rgba(15,23,42,0.08)] md:contents md:min-h-0 md:rounded-none md:border-0 md:bg-transparent md:py-0 md:shadow-none">
           <EvidenceStory />
           {!showMvpPanels && <V2ScenarioCards embedded />}
         </div>
 
-        <div className="mobile-page-break md:hidden" aria-hidden />
-
         <ScrollReveal
           delay={0.05}
-          className="mobile-page-panel order-2 min-h-[100svh] py-16 md:min-h-0 md:py-0"
+          className="mobile-no-snap order-2 scroll-mt-20 pt-6 md:min-h-0 md:scroll-mt-20 md:py-0"
         >
           <div id="tool" className="scroll-mt-20" aria-hidden="true" />
           <AnalysisWorkflow />
         </ScrollReveal>
 
-        <div className="mobile-page-break md:hidden" aria-hidden />
-
-        <div className="mobile-page-panel order-3 min-h-[100svh] py-16 md:min-h-0 md:py-0">
+        <div className="mobile-no-snap order-3 scroll-mt-16 pt-10 md:min-h-0 md:pt-0">
           <RecordTimeline />
         </div>
 

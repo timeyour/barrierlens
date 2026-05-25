@@ -71,7 +71,7 @@ export default function ImageUploader({
             <img
               src={previewUrl}
               alt="现场照片预览"
-              className="max-h-72 w-full object-cover"
+              className="max-h-48 w-full object-cover sm:max-h-72"
             />
             {!disabled && (
               <p className="bg-slate-50 px-3 py-2 text-center text-xs text-slate-500">
