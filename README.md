@@ -50,7 +50,7 @@ Gemma 4 负责无障碍场景理解与结构化证据生成，不只是识图。
   -> 公众倡导摘要 / 物业巡查整改单
 ```
 
-真实 API 走 `src/lib/gemma.ts`。未配置 API Key 时使用 Mock；配置了 Key 但接口超时或失败时，会自动降级为 Mock，并在页面和 API 响应中标注 `analysisSource=mock_fallback`。
+真实 API 走 `src/lib/gemma.ts`（`@google/genai` → `gemma-4-26b-a4b-it`）。未配置 API Key 时使用 Mock；配置了 Key 但接口超时或失败时，会自动降级为 Mock，并在页面和 API 响应中标注 `analysisSource=mock_fallback`。
 
 ### API 响应状态
 
@@ -97,10 +97,10 @@ cp .env.example .env.local
 
 | 变量 | 说明 |
 |------|------|
-| `GEMMA_API_KEY` | Gemma 4 API Key；为空时使用 Mock |
-| `GEMMA_API_BASE_URL` | OpenAI-compatible base URL，默认 `https://generativelanguage.googleapis.com/v1beta/openai` |
-| `GEMMA_MODEL_NAME` | 默认 `gemma-4` |
-| `GEMMA_API_TIMEOUT_MS` | 默认 `8000` |
+| `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/app/apikey) 创建的 Key；为空时使用 Mock |
+| `GEMMA_API_KEY` | 兼容旧变量名，与 `GEMINI_API_KEY` 二选一 |
+| `GEMMA_MODEL_NAME` | 默认 `gemma-4-26b-a4b-it` |
+| `GEMMA_API_TIMEOUT_MS` | 默认 `30000` |
 | `NEXT_PUBLIC_V2_ENABLED` | 默认 `true`；设为 `false` 回退 MVP |
 | `NEXT_PUBLIC_V2_BARRIER_MAP_ENABLED` | 默认 `true` |
 | `NEXT_PUBLIC_V2_REVIEW_FLOW_ENABLED` | 默认 `true` |

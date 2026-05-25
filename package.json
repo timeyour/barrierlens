@@ -9,9 +9,11 @@
     "preview": "npm run build --webpack && next start -H 127.0.0.1 -p 3000",
     "lint": "eslint",
     "test:round0": "npm run lint && npm run build --webpack",
-    "test:multiround": "node scripts/multiround-test.mjs"
+    "test:multiround": "node scripts/multiround-test.mjs",
+    "test:gemma": "node --env-file=.env.local test-gemma.mjs"
   },
   "dependencies": {
+    "@google/genai": "^2.6.0",
     "@gsap/react": "^2.1.2",
     "framer-motion": "^12.40.0",
     "gsap": "^3.15.0",

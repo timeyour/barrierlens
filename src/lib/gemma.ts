@@ -1,3 +1,4 @@
+import { GoogleGenAI } from "@google/genai";
 import { mockAnalyze } from "@/lib/mockAnalysis";
 import type {
   AnalysisRequest,
@@ -12,24 +13,10 @@ import type {
 } from "@/types/analysis";
 
 const HUMAN_REVIEW_CONFIDENCE_THRESHOLD = 0.8;
-const DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai";
-const DEFAULT_MODEL_NAME = "gemma-4";
-const DEFAULT_TIMEOUT_MS = 8000;
+const DEFAULT_MODEL_NAME = "gemma-4-26b-a4b-it";
+const DEFAULT_TIMEOUT_MS = 30000;
 
 type RawAnalysis = Partial<AnalysisResult> & Record<string, unknown>;
-
-interface ChatContentPart {
-  text?: string;
-  type?: string;
-}
-
-interface ChatCompletionResponse {
-  choices?: Array<{
-    message?: {
-      content?: string | ChatContentPart[];
-    };
-  }>;
-}
 
 export interface AnalyzeImageResponse {
   result: AnalysisResult;
@@ -38,6 +25,20 @@ export interface AnalyzeImageResponse {
   modelName: string;
   provider: string;
   fallbackReason?: string;
+}
+
+function getApiKey(): string | undefined {
+  return process.env.GEMINI_API_KEY || process.env.GEMMA_API_KEY;
+}
+
+function getModelName(): string {
+  return process.env.GEMMA_MODEL_NAME || DEFAULT_MODEL_NAME;
+}
+
+function getTimeoutMs(): number {
+  const raw = Number(process.env.GEMMA_API_TIMEOUT_MS);
+  if (!Number.isFinite(raw) || raw <= 0) return DEFAULT_TIMEOUT_MS;
+  return raw;
 }
 
 function normalizePathStatus(raw: unknown): PathStatus {
@@ -62,6 +63,9 @@ function normalizeReviewStatus(raw: unknown): ReviewStatus {
 }
 
 function normalizeSceneType(raw: unknown): SceneType {
+  const value = typeof raw === "string" ? raw : "";
+  if (value === "blind_path_blocked") return "tactile_paving_blocked";
+  if (value === "path_chain_broken") return "access_route_discontinuity";
   if (
     raw === "tactile_paving_blocked" ||
     raw === "accessible_entrance_blocked" ||
@@ -75,6 +79,7 @@ function normalizeSceneType(raw: unknown): SceneType {
 function normalizeRiskLevel(raw: unknown): RiskLevel {
   if (raw === "低" || raw === "中" || raw === "高") return raw;
   if (raw === "low") return "低";
+  if (raw === "medium") return "中";
   if (raw === "high") return "高";
   return "中";
 }
@@ -112,11 +117,20 @@ function normalizeObstacles(raw: unknown): Obstacle[] {
   if (!Array.isArray(raw)) return [];
   return raw
     .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
-    .map((item) => ({
-      name: stringValue(item.name, "待人工确认障碍物"),
-      position: stringValue(item.position, "照片中可见通行路径附近"),
-      blocks: stringValue(item.blocks, "无障碍通行路径"),
-    }));
+    .map((item) => {
+      if (typeof item === "string") {
+        return {
+          name: item,
+          position: "照片中可见通行路径附近",
+          blocks: "无障碍通行路径",
+        };
+      }
+      return {
+        name: stringValue(item.name, "待人工确认障碍物"),
+        position: stringValue(item.position, "照片中可见通行路径附近"),
+        blocks: stringValue(item.blocks, "无障碍通行路径"),
+      };
+    });
 }
 
 function cleanJsonText(content: string): string {
@@ -128,18 +142,6 @@ function cleanJsonText(content: string): string {
   const end = withoutFence.lastIndexOf("}");
   if (start >= 0 && end > start) return withoutFence.slice(start, end + 1);
   return withoutFence;
-}
-
-function extractContent(data: ChatCompletionResponse): string {
-  const content = data.choices?.[0]?.message?.content;
-  if (typeof content === "string") return content;
-  if (Array.isArray(content)) {
-    return content
-      .map((part) => part.text ?? "")
-      .filter(Boolean)
-      .join("\n");
-  }
-  return "";
 }
 
 function parseGemmaJson(content: string): RawAnalysis {
@@ -163,12 +165,14 @@ function normalizeResult(parsed: RawAnalysis, request: AnalysisRequest): Analysi
     "照片中存在需要人工复核的无障碍通行风险。",
   );
   const problemSummary = stringValue(
-    field(parsed, "problemSummary", "problem_summary"),
+    field(parsed, "problemSummary", "problem_summary", "public_summary"),
     sceneDescription,
   );
   const suggestion = stringValue(
     field(parsed, "suggestion"),
-    "请责任方清理障碍物，并将该点位纳入日常巡查与复查。",
+    stringArray(field(parsed, "suggestedActions", "suggested_actions"), [
+      "请责任方清理障碍物，并将该点位纳入日常巡查与复查。",
+    ])[0] ?? "请责任方清理障碍物，并将该点位纳入日常巡查与复查。",
   );
   const suggestedActions = stringArray(
     field(parsed, "suggestedActions", "suggested_actions"),
@@ -222,11 +226,11 @@ function normalizeResult(parsed: RawAnalysis, request: AnalysisRequest): Analysi
   } satisfies AnalysisResult;
 
   const advocacyText = stringValue(
-    field(parsed, "advocacyText", "advocacy_text"),
+    field(parsed, "advocacyText", "advocacy_text", "public_summary"),
     buildDefaultAdvocacy(baseResult),
   );
   const inspectionText = stringValue(
-    field(parsed, "inspectionText", "inspection_text"),
+    field(parsed, "inspectionText", "inspection_text", "property_work_order"),
     buildDefaultInspection(baseResult),
   );
 
@@ -238,86 +242,30 @@ function normalizeResult(parsed: RawAnalysis, request: AnalysisRequest): Analysi
   };
 }
 
-function buildEndpoint(baseUrl: string): string {
-  return `${baseUrl.replace(/\/+$/, "")}/chat/completions`;
-}
-
-function getTimeoutMs(): number {
-  const raw = Number(process.env.GEMMA_API_TIMEOUT_MS);
-  if (!Number.isFinite(raw) || raw <= 0) return DEFAULT_TIMEOUT_MS;
-  return raw;
-}
-
-async function callGemmaApi(request: AnalysisRequest): Promise<AnalysisResult> {
-  const apiKey = process.env.GEMMA_API_KEY;
-  const baseUrl = process.env.GEMMA_API_BASE_URL ?? DEFAULT_BASE_URL;
-  const modelName = process.env.GEMMA_MODEL_NAME ?? DEFAULT_MODEL_NAME;
-  const timeoutMs = getTimeoutMs();
-
-  if (!apiKey) {
-    throw new Error("GEMMA_API_KEY is not configured");
+function parseDataUrl(dataUrl: string): { mimeType: string; data: string } {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (match) {
+    return { mimeType: match[1], data: match[2] };
   }
-
-  const controller = new AbortController();
-  const timer = windowlessTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(buildEndpoint(baseUrl), {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: modelName,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: buildAnalysisPrompt(
-                  request.targetDepartment,
-                  request.recordMode,
-                  request.location,
-                ),
-              },
-              {
-                type: "image_url",
-                image_url: { url: request.imageBase64 },
-              },
-            ],
-          },
-        ],
-        response_format: { type: "json_object" },
-      }),
-    });
-
-    if (!response.ok) {
-      const message = await response.text();
-      throw new Error(`Gemma API error ${response.status}: ${message.slice(0, 300)}`);
-    }
-
-    const data = (await response.json()) as ChatCompletionResponse;
-    const content = extractContent(data);
-    if (!content) {
-      throw new Error("Gemma API returned empty content");
-    }
-
-    return normalizeResult(parseGemmaJson(content), request);
-  } catch (error) {
-    if (controller.signal.aborted) {
-      throw new Error(`Gemma API timeout after ${timeoutMs}ms`);
-    }
-    throw error;
-  } finally {
-    clearTimeout(timer);
-  }
+  return { mimeType: "image/jpeg", data: dataUrl };
 }
 
-function windowlessTimeout(callback: () => void, timeoutMs: number): ReturnType<typeof setTimeout> {
-  return setTimeout(callback, timeoutMs);
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`${label} timeout after ${timeoutMs}ms`));
+    }, timeoutMs);
+
+    promise
+      .then((value) => {
+        clearTimeout(timer);
+        resolve(value);
+      })
+      .catch((error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+  });
 }
 
 function buildAnalysisPrompt(
@@ -326,52 +274,105 @@ function buildAnalysisPrompt(
   location?: string,
 ): string {
   const place = location?.trim() || "未标注地点";
-  return `你是“公共空间无障碍通行风险识别与证据生成”助手。请分析现场照片并只输出 JSON：
+  return `你是无障碍环境巡检助手。请根据用户上传的现场照片，判断是否存在公共空间无障碍通行风险。
+只输出 JSON，不要输出解释文字。
+
+字段如下：
 {
-  "hasIssue": true,
-  "sceneType": "tactile_paving_blocked|accessible_entrance_blocked|access_route_discontinuity",
-  "locationType": "mall|community|street|hospital|campus|transport_hub|public_space",
-  "obstacles": [{"name":"障碍物","position":"位置","blocks":"阻断对象"}],
-  "blockedPath": "受阻通行路径",
-  "pathStatus": "clear|partial|blocked",
-  "problemSummary": "一句话问题总结",
-  "evidencePoints": ["证据点1", "证据点2"],
-  "responsibleParty": ["责任方1", "责任方2"],
-  "suggestedActions": ["建议动作1", "建议动作2"],
-  "confidence": 0.0,
-  "needsHumanReview": true,
-  "reviewStatus": "pending",
-  "issueType": "问题类型中文名",
-  "riskLevel": "低|中|高",
-  "affectedGroups": ["视障人士", "轮椅使用者", "老年人", "推婴儿车人群"],
-  "sceneDescription": "客观现场描述",
-  "suggestion": "单句整改建议",
-  "advocacyText": "面向公众/公益组织的倡导摘要（含地点 ${place}，场景归类 ${targetDepartment}）",
-  "inspectionText": "面向物业/商场的内部巡查整改单（含巡查点位 ${place}）"
+  "has_issue": boolean,
+  "scene_type": "blind_path_blocked | accessible_entrance_blocked | path_chain_broken | no_issue",
+  "risk_level": "low | medium | high",
+  "affected_groups": string[],
+  "obstacles": string[],
+  "blocked_path": string,
+  "evidence_points": string[],
+  "suggested_actions": string[],
+  "public_summary": string,
+  "property_work_order": string,
+  "confidence": number,
+  "needs_human_review": boolean
 }
+
+判断重点：
+1. 盲道是否被共享单车、电动车、杂物、施工物阻断
+2. 无障碍入口或坡道是否被阻挡
+3. 通行路径是否连续
+4. 不确定时 needs_human_review=true
 
 当前记录模式：${recordMode === "inspection" ? "物业自查" : "公众记录"}
 地点：${place}
 场景归类：${targetDepartment}
-
-要求：
-1) 重点识别三类：盲道占用、无障碍入口/坡道受阻、通行链断点。
-2) 人拍照不是为了让 AI 看见，而是为了留下可整改、可归档、可复查的证据。
-3) 证据点必须具体、客观、可人工复核。
-4) 当 confidence < ${HUMAN_REVIEW_CONFIDENCE_THRESHOLD} 时 needsHumanReview 必须为 true。`;
+当 confidence < ${HUMAN_REVIEW_CONFIDENCE_THRESHOLD} 时 needs_human_review 必须为 true。`;
 }
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+export async function callGemmaText(prompt: string): Promise<string> {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    throw new Error("Missing GEMINI_API_KEY");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
+  const response = await ai.models.generateContent({
+    model: getModelName(),
+    contents: prompt,
+  });
+
+  const text = response.text?.trim();
+  if (!text) {
+    throw new Error("Gemma API returned empty content");
+  }
+  return text;
+}
+
+async function callGemmaApi(request: AnalysisRequest): Promise<AnalysisResult> {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    throw new Error("Missing GEMINI_API_KEY");
+  }
+
+  const modelName = getModelName();
+  const timeoutMs = getTimeoutMs();
+  const ai = new GoogleGenAI({ apiKey });
+  const prompt = buildAnalysisPrompt(
+    request.targetDepartment,
+    request.recordMode,
+    request.location,
+  );
+  const { mimeType, data } = parseDataUrl(request.imageBase64);
+
+  const response = await withTimeout(
+    ai.models.generateContent({
+      model: modelName,
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: prompt }, { inlineData: { mimeType, data } }],
+        },
+      ],
+    }),
+    timeoutMs,
+    "Gemma API",
+  );
+
+  const content = response.text?.trim();
+  if (!content) {
+    throw new Error("Gemma API returned empty content");
+  }
+
+  return normalizeResult(parseGemmaJson(content), request);
+}
+
 export async function analyzeImage(
   request: AnalysisRequest,
 ): Promise<AnalyzeImageResponse> {
-  const modelName = process.env.GEMMA_MODEL_NAME ?? DEFAULT_MODEL_NAME;
-  const provider = "openai-compatible";
+  const modelName = getModelName();
+  const provider = "google-genai";
 
-  if (process.env.GEMMA_API_KEY) {
+  if (getApiKey()) {
     try {
       return {
         result: await callGemmaApi(request),

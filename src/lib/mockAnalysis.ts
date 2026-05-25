@@ -252,7 +252,7 @@ export async function mockAnalyze(
 }
 
 export function isMockMode(): boolean {
-  return !process.env.GEMMA_API_KEY;
+  return !process.env.GEMINI_API_KEY && !process.env.GEMMA_API_KEY;
 }
 
 export function getModeText(recordMode: RecordMode): string {

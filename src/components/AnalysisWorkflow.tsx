@@ -347,7 +347,7 @@ export default function AnalysisWorkflow() {
       {analysisSource === "mock" && mockMode && status === "success" && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <strong>演示模式：</strong>
-          未配置 GEMMA_API_KEY，推理步骤与 JSON 结构按真实 Gemma 输出格式模拟；配置密钥后切换为真实 API。
+          未配置 GEMINI_API_KEY，推理步骤与 JSON 结构按真实 Gemma 输出格式模拟；在 .env.local 配置密钥后切换为 gemma-4-26b-a4b-it。
         </div>
       )}
 
