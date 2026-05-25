@@ -1,7 +1,7 @@
 "use client";
 
 import AnchorLink from "@/components/AnchorLink";
-import { HERO_VIDEO, UI_ASSETS } from "@/config/uiAssets";
+import { HERO_VIDEO } from "@/config/uiAssets";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useEffect, useRef } from "react";
@@ -35,22 +35,46 @@ export default function ParallaxVideoHero() {
 
     video.muted = true;
     video.defaultMuted = true;
+    video.playsInline = true;
+    video.controls = false;
+    video.disablePictureInPicture = true;
     video.setAttribute("playsinline", "");
     video.setAttribute("webkit-playsinline", "");
+    video.setAttribute("x5-playsinline", "");
+    video.setAttribute("x5-video-player-type", "h5-page");
 
     const tryPlay = () => {
       void video.play().catch(() => {});
     };
 
     tryPlay();
+    video.addEventListener("canplay", tryPlay);
     video.addEventListener("loadeddata", tryPlay);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) tryPlay();
+      },
+      { threshold: 0.2 },
+    );
+    observer.observe(video);
+
+    const onFirstTouch = () => tryPlay();
+    document.addEventListener("touchstart", onFirstTouch, { once: true, passive: true });
     document.addEventListener("visibilitychange", tryPlay);
 
     return () => {
+      video.removeEventListener("canplay", tryPlay);
       video.removeEventListener("loadeddata", tryPlay);
+      observer.disconnect();
+      document.removeEventListener("touchstart", onFirstTouch);
       document.removeEventListener("visibilitychange", tryPlay);
     };
-  }, []);
+  }, [isDesktop]);
+
+  const videoClassName =
+    "hero-bg-video absolute inset-0 h-full w-full object-cover " +
+    (isDesktop ? "object-[58%_42%] lg:object-[62%_42%]" : "object-[50%_32%]");
 
   return (
     <header
@@ -66,51 +90,58 @@ export default function ParallaxVideoHero() {
             >
               <video
                 ref={videoRef}
-                className="absolute inset-0 h-full w-full object-cover object-[58%_42%] lg:object-[62%_42%]"
+                className={videoClassName}
                 src={HERO_VIDEO}
-                poster={UI_ASSETS.hero.src}
                 autoPlay
                 muted
                 loop
                 playsInline
                 preload="auto"
                 aria-hidden
+                tabIndex={-1}
               />
-              <motion.div
-                className="absolute inset-0 bg-slate-950"
-                style={{ opacity: overlayDark }}
-              />
-              <motion.div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-950/40 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-b from-slate-950/45 via-slate-950/25 to-slate-950/85" />
-              <motion.div
-                className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_30%,rgba(37,99,235,0.3),transparent_55%)]"
-                style={{ opacity: glowOpacity }}
-              />
-              <motion.div className="noise-overlay absolute inset-0" />
             </motion.div>
           ) : (
-            <>
-              <video
-                ref={videoRef}
-                className="absolute inset-0 h-full w-full object-cover object-[50%_32%]"
-                src={HERO_VIDEO}
-                poster={UI_ASSETS.overlay.front.src}
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="auto"
-                aria-hidden
-              />
-              <div className="absolute inset-0 bg-slate-950/10" />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/88 via-slate-950/25 to-transparent" />
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_18%,rgba(37,99,235,0.12),transparent_50%)]" />
-              <div className="noise-overlay absolute inset-0" />
-            </>
+            <video
+              ref={videoRef}
+              className={videoClassName}
+              src={HERO_VIDEO}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
+              aria-hidden
+              tabIndex={-1}
+            />
           )}
+
+          <div className="pointer-events-none absolute inset-0">
+            {isDesktop ? (
+              <>
+                <motion.div
+                  className="absolute inset-0 bg-slate-950"
+                  style={{ opacity: overlayDark }}
+                />
+                <motion.div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-950/40 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-b from-slate-950/45 via-slate-950/25 to-slate-950/85" />
+                <motion.div
+                  className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_30%,rgba(37,99,235,0.3),transparent_55%)]"
+                  style={{ opacity: glowOpacity }}
+                />
+              </>
+            ) : (
+              <>
+                <div className="absolute inset-0 bg-slate-950/10" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/88 via-slate-950/25 to-transparent" />
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_18%,rgba(37,99,235,0.12),transparent_50%)]" />
+              </>
+            )}
+            <div className="noise-overlay absolute inset-0" />
+          </div>
         </div>
 
-        <div className="relative mx-auto flex w-full max-w-6xl flex-col items-stretch justify-end gap-5 px-4 pb-10 pt-20 max-md:min-h-[100svh] md:h-full md:max-h-screen md:justify-center md:grid md:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] md:items-center md:gap-6 md:pb-12 md:pt-24 md:px-6 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] lg:gap-10 lg:pt-20">
+        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-stretch justify-end gap-5 px-4 pb-10 pt-20 max-md:min-h-[100svh] md:h-full md:max-h-screen md:justify-center md:grid md:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] md:items-center md:gap-6 md:pb-12 md:pt-24 md:px-6 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] lg:gap-10 lg:pt-20">
           <div className="w-full max-w-xl md:max-w-none">
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-medium text-emerald-100 backdrop-blur-md md:mb-3 md:text-xs">
               公共空间无障碍 · 通行风险记录
@@ -170,7 +201,7 @@ export default function ParallaxVideoHero() {
 
         <AnchorLink
           href="#story"
-          className="absolute bottom-4 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-[10px] font-medium tracking-wide text-white/55 md:hidden"
+          className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1 text-[10px] font-medium tracking-wide text-white/55 md:hidden"
         >
           <span>向下滑动</span>
           <span className="block h-5 w-px bg-gradient-to-b from-white/0 via-white/60 to-white/0" />

@@ -5,7 +5,7 @@
 const V = "?v=8";
 const STREET_V = "?v=2";
 
-export const HERO_VIDEO = `/videos/hero-demo.mp4?v=3`;
+export const HERO_VIDEO = `/videos/hero-demo.mp4?v=4`;
 
 export const UI_ASSETS = {
   hero: {
