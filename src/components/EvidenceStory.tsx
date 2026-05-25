@@ -41,7 +41,7 @@ const STORY_STEPS = [
 const SLIDE_DWELL = 4.2;
 const SLIDE_FADE = 0.55;
 
-function StoryStats() {
+function StoryStats({ compact = false }: { compact?: boolean }) {
   const [stats, setStats] = useState({ total: 0, high: 0, pending: 0 });
 
   useEffect(() => {
@@ -65,7 +65,7 @@ function StoryStats() {
   }, []);
 
   return (
-    <div className="mt-3 grid grid-cols-3 gap-2 sm:mt-4">
+    <div className={`grid grid-cols-3 gap-1.5 ${compact ? "" : "mt-3 gap-2 sm:mt-4"}`}>
       {[
         { label: "累计记录", value: stats.total },
         { label: "高风险", value: stats.high },
@@ -73,17 +73,21 @@ function StoryStats() {
       ].map((item) => (
         <div
           key={item.label}
-          className="rounded-xl border border-white/60 bg-white/80 px-2 py-2 text-center shadow-sm backdrop-blur-sm sm:px-3"
+          className={`rounded-xl border border-white/60 bg-white/80 text-center shadow-sm backdrop-blur-sm ${
+            compact ? "px-1.5 py-1.5" : "px-2 py-2 sm:px-3"
+          }`}
         >
-          <p className="text-base font-bold text-slate-900 sm:text-lg">{item.value}</p>
-          <p className="text-[10px] text-slate-500">{item.label}</p>
+          <p className={`font-bold text-slate-900 ${compact ? "text-sm" : "text-base sm:text-lg"}`}>
+            {item.value}
+          </p>
+          <p className="text-[9px] text-slate-500 sm:text-[10px]">{item.label}</p>
         </div>
       ))}
     </div>
   );
 }
 
-function StoryVisual({ index }: { index: number }) {
+function StoryVisual({ index, compact = false }: { index: number; compact?: boolean }) {
   if (index === 0) {
     return (
       <div className="relative overflow-hidden rounded-2xl border border-slate-200 shadow-lg">
@@ -91,10 +95,10 @@ function StoryVisual({ index }: { index: number }) {
         <img
           src={UI_ASSETS.overlay.front.src}
           alt="盲道占用示意"
-          className="aspect-[16/10] w-full object-cover"
+          className={`w-full object-cover ${compact ? "aspect-[16/9] max-h-36" : "aspect-[16/10]"}`}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-red-950/70 via-transparent to-transparent" />
-        <p className="absolute bottom-3 left-3 rounded-md bg-red-600/90 px-2 py-1 text-[11px] font-semibold text-white">
+        <p className="absolute bottom-2 left-2 rounded-md bg-red-600/90 px-2 py-1 text-[10px] font-semibold text-white sm:bottom-3 sm:left-3 sm:text-[11px]">
           路径状态：受阻
         </p>
       </div>
@@ -103,16 +107,20 @@ function StoryVisual({ index }: { index: number }) {
 
   if (index === 1) {
     return (
-      <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-3 shadow-lg sm:p-4">
+      <div
+        className={`rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white shadow-lg ${
+          compact ? "p-2.5" : "p-3 sm:p-4"
+        }`}
+      >
         <div className="flex items-center gap-2 rounded-lg border border-dashed border-blue-300 bg-white px-3 py-2">
-          <span className="h-8 w-8 shrink-0 rounded-lg bg-blue-100" />
-          <span className="text-xs text-slate-600">现场照片 → 结构化 JSON</span>
+          <span className={`shrink-0 rounded-lg bg-blue-100 ${compact ? "h-6 w-6" : "h-8 w-8"}`} />
+          <span className="text-[11px] text-slate-600 sm:text-xs">现场照片 → 结构化 JSON</span>
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className={`flex flex-wrap gap-1.5 ${compact ? "mt-2" : "mt-3 gap-2"}`}>
           {["盲道占用", "中风险", "视障人士 / 老年人"].map((tag) => (
             <span
               key={tag}
-              className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700"
+              className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700 sm:px-2.5 sm:py-1 sm:text-[11px]"
             >
               {tag}
             </span>
@@ -124,33 +132,43 @@ function StoryVisual({ index }: { index: number }) {
 
   if (index === 2) {
     return (
-      <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50/80 to-white p-3 shadow-lg sm:p-4">
-        <StoryStats />
-        <div className="mt-3 space-y-2">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="flex items-center gap-2 rounded-lg border border-slate-200/80 bg-white/90 px-3 py-2"
-              style={{ marginLeft: `${(i - 1) * 8}px` }}
-            >
-              <span className="h-2 w-2 rounded-full bg-amber-500" />
-              <span className="text-[11px] text-slate-600">地点聚合 · 记录 #{i}</span>
-            </div>
-          ))}
-        </div>
+      <div
+        className={`rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50/80 to-white shadow-lg ${
+          compact ? "p-2.5" : "p-3 sm:p-4"
+        }`}
+      >
+        <StoryStats compact={compact} />
+        {!compact && (
+          <div className="mt-3 space-y-2">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="flex items-center gap-2 rounded-lg border border-slate-200/80 bg-white/90 px-3 py-2"
+                style={{ marginLeft: `${(i - 1) * 8}px` }}
+              >
+                <span className="h-2 w-2 rounded-full bg-amber-500" />
+                <span className="text-[11px] text-slate-600">地点聚合 · 记录 #{i}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-3 shadow-lg sm:p-4">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
+    <div
+      className={`rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white shadow-lg ${
+        compact ? "p-2.5" : "p-3 sm:p-4"
+      }`}
+    >
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 sm:text-[11px]">
         公众倡导摘要
       </p>
-      <p className="mt-2 text-sm leading-relaxed text-slate-700">
+      <p className={`mt-2 leading-relaxed text-slate-700 ${compact ? "text-xs" : "text-sm"}`}>
         「地铁口盲道被共享单车占用，视障人士通行路径中断，建议高峰时段加强巡查。」
       </p>
-      <p className="mt-3 text-[11px] text-slate-500">可复制 · 可导出 Markdown</p>
+      <p className="mt-2 text-[10px] text-slate-500 sm:mt-3 sm:text-[11px]">可复制 · 可导出 Markdown</p>
     </div>
   );
 }
@@ -238,7 +256,7 @@ export default function EvidenceStory({
       <div
         className={`relative overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-blue-50/40 shadow-sm ${
           compact
-            ? "min-h-[min(300px,36svh)]"
+            ? "min-h-[min(420px,52svh)]"
             : "min-h-[min(480px,78vh)] sm:min-h-[min(520px,72vh)]"
         }`}
       >
@@ -255,31 +273,33 @@ export default function EvidenceStory({
             aria-hidden={!isActive}
           >
             <div
-              className={`grid items-center gap-5 ${
-                compact ? "gap-3" : "lg:grid-cols-2 lg:gap-10"
-              }`}
+              className={
+                compact
+                  ? "flex flex-col gap-3"
+                  : "grid items-center gap-5 lg:grid-cols-2 lg:gap-10"
+              }
             >
               <div>
                 <p className={`text-xs font-bold uppercase tracking-widest ${step.accent}`}>
                   {step.step}
                 </p>
                 <h3
-                  className={`mt-2 font-bold text-slate-900 ${
-                    compact ? "text-lg" : "text-xl sm:text-2xl lg:text-3xl"
+                  className={`mt-1.5 font-bold text-slate-900 ${
+                    compact ? "text-base" : "text-xl sm:text-2xl lg:text-3xl"
                   }`}
                 >
                   {step.title}
                 </h3>
                 <p
-                  className={`mt-2 leading-relaxed text-slate-600 ${
-                    compact ? "text-xs sm:mt-2" : "text-sm sm:mt-3 lg:text-base"
+                  className={`mt-1.5 leading-relaxed text-slate-600 ${
+                    compact ? "text-xs" : "text-sm sm:mt-3 lg:text-base"
                   }`}
                 >
                   {step.body}
                 </p>
                 {!compact && <StoryCta index={index} />}
               </div>
-              {!compact && <StoryVisual index={index} />}
+              <StoryVisual index={index} compact={compact} />
             </div>
           </article>
           );

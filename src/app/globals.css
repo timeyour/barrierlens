@@ -148,7 +148,7 @@ body {
 
 @media (max-width: 767px) {
   html {
-    scroll-snap-type: y proximity;
+    scroll-snap-type: y mandatory;
   }
 
   .mobile-page-panel {
@@ -156,8 +156,14 @@ body {
     scroll-snap-stop: always;
   }
 
+  .mobile-snap-gap {
+    height: 1px;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
   .mobile-page-break {
-    height: 0.75rem;
+    height: 1px;
     scroll-snap-align: start;
     scroll-snap-stop: always;
   }

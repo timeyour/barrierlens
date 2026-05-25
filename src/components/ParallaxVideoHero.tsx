@@ -81,7 +81,7 @@ export default function ParallaxVideoHero() {
       ref={containerRef}
       className="mobile-page-panel relative md:h-[180vh] lg:h-[200vh]"
     >
-      <div className="relative min-h-[100svh] overflow-hidden md:sticky md:top-0 md:h-screen md:min-h-0">
+      <div className="relative h-[100svh] max-h-[100svh] overflow-hidden md:sticky md:top-0 md:h-screen md:max-h-none md:min-h-0">
         <div className="absolute inset-0 overflow-hidden">
           {isDesktop ? (
             <motion.div
@@ -141,7 +141,7 @@ export default function ParallaxVideoHero() {
           </div>
         </div>
 
-        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-stretch justify-end gap-5 px-4 pb-10 pt-20 max-md:min-h-[100svh] md:h-full md:max-h-screen md:justify-center md:grid md:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] md:items-center md:gap-6 md:pb-12 md:pt-24 md:px-6 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] lg:gap-10 lg:pt-20">
+        <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col items-stretch justify-end gap-5 px-4 pb-10 pt-20 max-md:pb-12 md:max-h-screen md:justify-center md:grid md:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] md:items-center md:gap-6 md:pb-12 md:pt-24 md:px-6 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] lg:gap-10 lg:pt-20">
           <div className="w-full max-w-xl md:max-w-none">
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-medium text-emerald-100 backdrop-blur-md md:mb-3 md:text-xs">
               公共空间无障碍 · 通行风险记录

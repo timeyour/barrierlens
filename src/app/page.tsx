@@ -34,8 +34,10 @@ export default async function Home({
       <SiteNav />
       <ParallaxVideoHero />
 
+      <div className="mobile-snap-gap md:hidden" aria-hidden />
+
       <main className="relative mx-auto flex max-w-5xl flex-col px-4 pb-4 pt-0 md:px-6 md:py-10 lg:py-16">
-        <div className="mobile-page-panel order-0 flex min-h-[100svh] flex-col justify-center gap-3 py-16 md:contents md:min-h-0 md:py-0">
+        <div className="mobile-page-panel order-0 flex min-h-[100svh] flex-col justify-center gap-4 rounded-t-[1.75rem] border-t border-slate-200/80 bg-[var(--background)] py-8 shadow-[0_-16px_40px_rgba(15,23,42,0.08)] md:contents md:min-h-0 md:rounded-none md:border-0 md:bg-transparent md:py-0 md:shadow-none">
           <EvidenceStory />
           {!showMvpPanels && <V2ScenarioCards embedded />}
         </div>
