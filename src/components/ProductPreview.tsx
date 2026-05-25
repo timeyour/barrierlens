@@ -25,12 +25,11 @@ export default function ProductPreview({
   const progress = scrollProgress ?? fallback;
 
   const phoneY = useTransform(progress, [0, 0.7], [0, isHero ? -40 : -60]);
-  const phoneOpacity = useTransform(progress, [0, 0.75], [1, 0]);
   const phoneScale = useTransform(progress, [0, 0.5], [1, isHero ? 0.96 : 0.94]);
 
   return (
     <motion.div
-      style={{ y: phoneY, opacity: phoneOpacity, scale: phoneScale }}
+      style={{ y: phoneY, scale: phoneScale }}
       className={
         className ??
         (isHero

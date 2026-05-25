@@ -1,19 +1,16 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
+import AnchorLink from "@/components/AnchorLink";
 import { useEffect, useState } from "react";
 
 const LINKS = [
-  { href: "#story", label: "故事" },
   { href: "#tool", label: "记录" },
   { href: "#records", label: "时间线" },
-  { href: "#metrics", label: "参赛" },
+  { href: "#story", label: "故事" },
 ];
 
 export default function SiteNav() {
   const [scrolled, setScrolled] = useState(false);
-  const { scrollYProgress } = useScroll();
-  const opacity = useTransform(scrollYProgress, [0, 0.06], [0, 1]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
@@ -23,8 +20,7 @@ export default function SiteNav() {
   }, []);
 
   return (
-    <motion.header
-      style={{ opacity }}
+    <header
       className={`fixed left-0 right-0 top-0 z-50 px-4 py-3 transition-colors duration-300 sm:px-6 ${
         scrolled
           ? "border-b border-slate-200/70 bg-white/75 backdrop-blur-xl"
@@ -39,7 +35,7 @@ export default function SiteNav() {
         </span>
         <nav className="hidden items-center gap-5 sm:flex">
           {LINKS.map((link) => (
-            <a
+            <AnchorLink
               key={link.href}
               href={link.href}
               className={`text-xs font-medium transition-colors ${
@@ -49,10 +45,10 @@ export default function SiteNav() {
               }`}
             >
               {link.label}
-            </a>
+            </AnchorLink>
           ))}
         </nav>
-        <a
+        <AnchorLink
           href="#tool"
           className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
             scrolled
@@ -61,8 +57,8 @@ export default function SiteNav() {
           }`}
         >
           开始记录
-        </a>
+        </AnchorLink>
       </div>
-    </motion.header>
+    </header>
   );
 }

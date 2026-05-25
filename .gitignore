@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/tests/reports
+/tmp
 
 # next.js
 /.next/

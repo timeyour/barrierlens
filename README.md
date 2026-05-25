@@ -171,6 +171,20 @@ npm run dev
 | `GEMMA_API_KEY` | Gemma 4 API 密钥（必填方可走真实模型） |
 | `GEMMA_API_BASE_URL` | API 地址（可选） |
 | `GEMMA_MODEL_NAME` | 默认 `gemma-4` |
+| `NEXT_PUBLIC_V2_ENABLED` | `true` 启用 V2 风险闭环页面，`false` 回退 MVP 稳定版 |
+| `NEXT_PUBLIC_V2_BARRIER_MAP_ENABLED` | V2 内 Barrier Map 子开关（预留） |
+| `NEXT_PUBLIC_V2_REVIEW_FLOW_ENABLED` | V2 内整改复查子开关（预留） |
+
+快速回退到 MVP：
+
+```bash
+NEXT_PUBLIC_V2_ENABLED=false npm run dev
+```
+
+临时 URL 切换（优先级高于环境变量）：
+
+- `http://localhost:3000/?mode=mvp` 强制显示 MVP
+- `http://localhost:3000/?mode=v2` 强制显示 V2
 
 ---
 

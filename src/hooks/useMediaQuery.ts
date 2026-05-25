@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 
+/**
+ * SSR-safe: first client render matches server (defaultValue), then updates after mount.
+ */
 export function useMediaQuery(query: string, defaultValue = false): boolean {
   const [matches, setMatches] = useState(defaultValue);
 

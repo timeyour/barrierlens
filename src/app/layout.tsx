@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "无碍 BarrierLens · Gemma 4 无障碍问题记录平台",
+  title: "无碍 BarrierLens · 无障碍通行风险记录",
   description:
-    "Gemma 4 Hackathon 2026 赛道 D 参赛作品。基于 Gemma 4 多模态理解，将盲道占用现场照片转化为结构化证据记录与倡导/自查报告。",
+    "基于 Gemma 4 多模态理解，将现场照片转化为结构化无障碍通行风险证据，支持归档、复查与导出。",
 };
 
 export default function RootLayout({

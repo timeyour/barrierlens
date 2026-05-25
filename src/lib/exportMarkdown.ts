@@ -1,4 +1,10 @@
-import type { AnalysisResult, RecordMode } from "@/types/analysis";
+import {
+  PATH_STATUS_LABELS,
+  REVIEW_STATUS_LABELS,
+  SCENE_TYPE_LABELS,
+  type AnalysisResult,
+  type RecordMode,
+} from "@/types/analysis";
 
 function formatMeta(result: AnalysisResult): string {
   const groups = result.affectedGroups.join("、");
@@ -13,7 +19,10 @@ function formatMeta(result: AnalysisResult): string {
 | 记录时间 | ${time} |
 | 地点 | ${result.location || "未标注"} |
 | 问题类型 | ${result.issueType} |
+| 场景类型 | ${SCENE_TYPE_LABELS[result.sceneType]} |
 | 风险等级 | ${result.riskLevel} |
+| 受阻路径状态 | ${PATH_STATUS_LABELS[result.pathStatus]} |
+| 受阻路径 | ${result.blockedPath} |
 | 影响群体 | ${groups} |
 | 场景归类 | ${result.targetDepartment} |`;
 }
@@ -27,6 +36,21 @@ export function buildAdvocacyMarkdown(result: AnalysisResult): string {
 
 ${formatMeta(result)}
 
+## 问题摘要
+
+${result.problemSummary}
+
+## 障碍物清单
+
+${result.obstacles.length > 0
+    ? result.obstacles
+        .map(
+          (obstacle, index) =>
+            `${index + 1}. ${obstacle.name}｜${obstacle.position}｜影响：${obstacle.blocks}`,
+        )
+        .join("\n")
+    : "未识别到明确障碍物"}
+
 ## 现场描述
 
 ${result.sceneDescription}
@@ -34,6 +58,18 @@ ${result.sceneDescription}
 ## 关注建议
 
 ${result.suggestion}
+
+## 建议责任方
+
+${result.responsibleParty.join("、")}
+
+## 整改动作
+
+${result.suggestedActions.map((action, idx) => `${idx + 1}. ${action}`).join("\n")}
+
+## 复查状态
+
+${REVIEW_STATUS_LABELS[result.reviewStatus]}
 
 ## 倡导文本
 
@@ -54,6 +90,21 @@ export function buildInspectionMarkdown(result: AnalysisResult): string {
 
 ${formatMeta(result)}
 
+## 问题摘要
+
+${result.problemSummary}
+
+## 障碍物清单
+
+${result.obstacles.length > 0
+    ? result.obstacles
+        .map(
+          (obstacle, index) =>
+            `${index + 1}. ${obstacle.name}｜${obstacle.position}｜影响：${obstacle.blocks}`,
+        )
+        .join("\n")
+    : "未识别到明确障碍物"}
+
 ## 现场描述
 
 ${result.sceneDescription}
@@ -61,6 +112,18 @@ ${result.sceneDescription}
 ## 整改要求
 
 ${result.suggestion}
+
+## 建议责任方
+
+${result.responsibleParty.join("、")}
+
+## 整改动作
+
+${result.suggestedActions.map((action, idx) => `${idx + 1}. ${action}`).join("\n")}
+
+## 复查状态
+
+${REVIEW_STATUS_LABELS[result.reviewStatus]}
 
 ## 完整整改单
 

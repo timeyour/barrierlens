@@ -6,7 +6,10 @@
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "preview": "npm run build --webpack && next start -H 127.0.0.1 -p 3000",
+    "lint": "eslint",
+    "test:round0": "npm run lint && npm run build --webpack",
+    "test:multiround": "node scripts/multiround-test.mjs"
   },
   "dependencies": {
     "framer-motion": "^12.40.0",

@@ -1,4 +1,4 @@
-import type { StoredRecord } from "@/types/analysis";
+import type { ReviewStatus, StoredRecord } from "@/types/analysis";
 
 const STORAGE_KEY = "barrierlens-records";
 const MAX_RECORDS = 50;
@@ -20,6 +20,7 @@ function writeAll(records: StoredRecord[]): void {
     STORAGE_KEY,
     JSON.stringify(records.slice(0, MAX_RECORDS)),
   );
+  window.dispatchEvent(new Event("barrierlens-record-saved"));
 }
 
 export function getRecords(): StoredRecord[] {
@@ -34,6 +35,46 @@ export function saveRecord(record: StoredRecord): void {
   writeAll([record, ...existing.filter((r) => r.id !== record.id)]);
 }
 
+export function updateRecordReview(
+  id: string,
+  patch: {
+    reviewStatus?: ReviewStatus;
+    reviewNote?: string;
+    reviewedAt?: string;
+    reviewImageDataUrl?: string | null;
+  },
+): StoredRecord | null {
+  const records = readAll();
+  const idx = records.findIndex((record) => record.id === id);
+  if (idx < 0) return null;
+
+  const current = records[idx];
+  const touched =
+    patch.reviewStatus !== undefined ||
+    patch.reviewNote !== undefined ||
+    patch.reviewImageDataUrl !== undefined;
+
+  const next: StoredRecord = {
+    ...current,
+    ...(patch.reviewStatus !== undefined
+      ? { reviewStatus: patch.reviewStatus }
+      : {}),
+    ...(patch.reviewNote !== undefined ? { reviewNote: patch.reviewNote } : {}),
+    ...(patch.reviewImageDataUrl !== undefined
+      ? {
+          reviewImageDataUrl:
+            patch.reviewImageDataUrl === null
+              ? undefined
+              : patch.reviewImageDataUrl,
+        }
+      : {}),
+    reviewedAt: patch.reviewedAt ?? (touched ? new Date().toISOString() : current.reviewedAt),
+  };
+  records[idx] = next;
+  writeAll(records);
+  return next;
+}
+
 export function seedDemoRecordsIfEmpty(): StoredRecord[] {
   const existing = readAll();
   if (existing.length > 0) return getRecords();
@@ -41,11 +82,26 @@ export function seedDemoRecordsIfEmpty(): StoredRecord[] {
   const demos: StoredRecord[] = [
     {
       id: "demo-1",
+      hasIssue: true,
+      sceneType: "tactile_paving_blocked",
+      locationType: "transport_hub",
+      obstacles: [
+        { name: "共享单车", position: "盲道中心段", blocks: "盲道连续通行路径" },
+      ],
+      blockedPath: "视障人士沿盲道连续通行路径",
+      pathStatus: "blocked",
+      problemSummary: "盲道连续通行链被占用车辆切断。",
+      evidencePoints: ["障碍物位于盲道中心段", "缺少替代导引路径"],
       issueType: "盲道占用",
       riskLevel: "中",
       affectedGroups: ["视障人士", "老年人"],
       sceneDescription: "地铁口盲道被共享单车连续占用，通行路径中断。",
       suggestion: "建议高峰时段加强巡查与清理。",
+      responsibleParty: ["城管", "街道运维单位"],
+      suggestedActions: ["清理占用车辆", "设置禁停提醒", "增加巡检频次"],
+      confidence: 0.82,
+      needsHumanReview: true,
+      reviewStatus: "pending",
       targetDepartment: "城管",
       reportText: "",
       advocacyText: "【公众记录】地铁口盲道占用，需持续关注和记录。",
@@ -53,14 +109,30 @@ export function seedDemoRecordsIfEmpty(): StoredRecord[] {
       location: "某市地铁 2 号线 A 出入口",
       recordMode: "public",
       recordedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+      imageDataUrl: "/images/scene-blocked-street.png",
     },
     {
       id: "demo-2",
-      issueType: "盲道占用",
+      hasIssue: true,
+      sceneType: "accessible_entrance_blocked",
+      locationType: "mall",
+      obstacles: [
+        { name: "电动车", position: "坡道入口前", blocks: "入口净宽" },
+      ],
+      blockedPath: "轮椅进入建筑的无障碍入口路径",
+      pathStatus: "blocked",
+      problemSummary: "无障碍入口被占，轮椅和推车难以进入。",
+      evidencePoints: ["障碍物紧贴坡道入口", "无替代入口指引"],
+      issueType: "无障碍入口受阻",
       riskLevel: "高",
       affectedGroups: ["视障人士", "轮椅使用者"],
       sceneDescription: "商场主入口盲道被电动车完全阻断。",
       suggestion: "立即清理并设置禁停标识。",
+      responsibleParty: ["商场运营方", "物业"],
+      suggestedActions: ["清理入口障碍物", "补充入口导引标识"],
+      confidence: 0.87,
+      needsHumanReview: true,
+      reviewStatus: "review_pending",
       targetDepartment: "商场",
       reportText: "",
       advocacyText: "",
@@ -68,14 +140,29 @@ export function seedDemoRecordsIfEmpty(): StoredRecord[] {
       location: "社区商业综合体北门",
       recordMode: "inspection",
       recordedAt: new Date(Date.now() - 86400000).toISOString(),
+      imageDataUrl: "/images/scene-blocked-close.png",
+      reviewImageDataUrl: "/images/scene-clear-street.png",
     },
     {
       id: "demo-3",
-      issueType: "盲道占用",
+      hasIssue: true,
+      sceneType: "access_route_discontinuity",
+      locationType: "community",
+      obstacles: [{ name: "杂物堆放", position: "路径边缘", blocks: "通道净宽" }],
+      blockedPath: "小区入口到楼栋的连续通行路径",
+      pathStatus: "partial",
+      problemSummary: "通行链虽可绕行，但连续性不足。",
+      evidencePoints: ["路径边缘持续堆放", "绕行空间有限"],
+      issueType: "通行链断点",
       riskLevel: "低",
       affectedGroups: ["视障人士"],
       sceneDescription: "小区内部盲道边缘有杂物，主路径仍可通行。",
       suggestion: "纳入日常保洁巡查。",
+      responsibleParty: ["物业", "社区"],
+      suggestedActions: ["清理边缘杂物", "建立常态巡检"],
+      confidence: 0.76,
+      needsHumanReview: true,
+      reviewStatus: "exported",
       targetDepartment: "物业",
       reportText: "",
       advocacyText: "【公众记录】小区盲道边缘占用，建议纳入社区关注。",
@@ -83,6 +170,7 @@ export function seedDemoRecordsIfEmpty(): StoredRecord[] {
       location: "XX 花园 3 号楼南侧",
       recordMode: "public",
       recordedAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+      imageDataUrl: "/images/scene-blocked.png",
     },
   ];
 

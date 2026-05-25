@@ -1,6 +1,29 @@
 import { mockAnalyze } from "@/lib/mockAnalysis";
 import type { AnalysisRequest, AnalysisResult, RecordMode } from "@/types/analysis";
 
+const HUMAN_REVIEW_CONFIDENCE_THRESHOLD = 0.8;
+
+function normalizePathStatus(raw: string | undefined): "clear" | "partial" | "blocked" {
+  if (raw === "clear" || raw === "partial" || raw === "blocked") return raw;
+  return "blocked";
+}
+
+function normalizeReviewStatus(
+  raw: string | undefined,
+): "pending" | "exported" | "reported" | "review_pending" | "fixed" | "unfixed" {
+  if (
+    raw === "pending" ||
+    raw === "exported" ||
+    raw === "reported" ||
+    raw === "review_pending" ||
+    raw === "fixed" ||
+    raw === "unfixed"
+  ) {
+    return raw;
+  }
+  return "pending";
+}
+
 async function callGemmaApi(
   request: AnalysisRequest,
 ): Promise<AnalysisResult> {
@@ -65,6 +88,9 @@ async function callGemmaApi(
     AnalysisResult,
     "targetDepartment" | "recordMode" | "location" | "recordedAt"
   >;
+  const confidence = Number(parsed.confidence ?? 0.75);
+  const needsHumanReview =
+    parsed.needsHumanReview ?? confidence < HUMAN_REVIEW_CONFIDENCE_THRESHOLD;
   const recordedAt = new Date().toISOString();
   const reportText =
     request.recordMode === "inspection"
@@ -73,6 +99,19 @@ async function callGemmaApi(
 
   return {
     ...parsed,
+    hasIssue: parsed.hasIssue ?? true,
+    sceneType: parsed.sceneType ?? "tactile_paving_blocked",
+    locationType: parsed.locationType ?? "public_space",
+    obstacles: parsed.obstacles ?? [],
+    blockedPath: parsed.blockedPath ?? parsed.sceneDescription ?? "无障碍通行路径",
+    pathStatus: normalizePathStatus(parsed.pathStatus),
+    problemSummary: parsed.problemSummary ?? parsed.sceneDescription ?? "",
+    evidencePoints: parsed.evidencePoints ?? [],
+    responsibleParty: parsed.responsibleParty ?? [request.targetDepartment],
+    suggestedActions: parsed.suggestedActions ?? [parsed.suggestion ?? "请人工复核后处理"],
+    confidence,
+    needsHumanReview,
+    reviewStatus: normalizeReviewStatus(parsed.reviewStatus),
     reportText,
     targetDepartment: request.targetDepartment,
     recordMode: request.recordMode,
@@ -87,13 +126,26 @@ function buildAnalysisPrompt(
   location?: string,
 ): string {
   const place = location?.trim() || "未标注地点";
-  return `你是无障碍环境问题记录助手。请分析照片中的盲道占用情况，输出 JSON：
+  return `你是“公共空间无障碍通行风险识别与证据生成”助手。请分析现场照片并只输出 JSON：
 {
-  "issueType": "盲道占用",
+  "hasIssue": true,
+  "sceneType": "tactile_paving_blocked|accessible_entrance_blocked|access_route_discontinuity",
+  "locationType": "mall|community|street|hospital|campus|transport_hub|public_space",
+  "obstacles": [{"name":"障碍物","position":"位置","blocks":"阻断对象"}],
+  "blockedPath": "受阻通行路径",
+  "pathStatus": "clear|partial|blocked",
+  "problemSummary": "一句话问题总结",
+  "evidencePoints": ["证据点1", "证据点2"],
+  "responsibleParty": ["责任方1", "责任方2"],
+  "suggestedActions": ["建议动作1", "建议动作2"],
+  "confidence": 0.0,
+  "needsHumanReview": true,
+  "reviewStatus": "pending",
+  "issueType": "问题类型中文名",
   "riskLevel": "低|中|高",
   "affectedGroups": ["视障人士", ...],
   "sceneDescription": "客观现场描述",
-  "suggestion": "整改或关注建议",
+  "suggestion": "单句整改建议",
   "advocacyText": "面向公众/公益组织的倡导摘要（含地点 ${place}，场景归类 ${targetDepartment}）",
   "inspectionText": "面向物业/商场的内部巡查整改单（含巡查点位 ${place}）"
 }
@@ -102,10 +154,10 @@ function buildAnalysisPrompt(
 地点：${place}
 场景归类：${targetDepartment}
 
-风险等级规则：
-- 低：轻微占用，仍有明显绕行空间
-- 中：盲道连续性被阻断，影响正常通行
-- 高：盲道完全被阻断，且位于高人流区域`;
+要求：
+1) 重点识别三类：盲道占用、无障碍入口/坡道受阻、通行链断点。
+2) “人拍照不是让 AI 看见，而是留下证据”，证据点需具体可复核。
+3) 当 confidence < ${HUMAN_REVIEW_CONFIDENCE_THRESHOLD} 时 needsHumanReview 必须为 true。`;
 }
 
 export async function analyzeImage(
