@@ -34,23 +34,25 @@ export default async function Home({
       <SiteNav />
       <ParallaxVideoHero />
 
-      <main className="relative mx-auto flex max-w-5xl flex-col px-4 pb-4 pt-2 md:px-6 md:py-10 lg:py-16">
-        <div className="order-0">
+      <main className="relative mx-auto flex max-w-5xl flex-col px-4 pb-4 pt-0 md:px-6 md:py-10 lg:py-16">
+        <div className="mobile-page-panel order-0 flex min-h-[100svh] flex-col justify-center gap-3 py-16 md:contents md:min-h-0 md:py-0">
           <EvidenceStory />
+          {!showMvpPanels && <V2ScenarioCards embedded />}
         </div>
 
-        {!showMvpPanels && (
-          <div className="order-1">
-            <V2ScenarioCards />
-          </div>
-        )}
+        <div className="mobile-page-break md:hidden" aria-hidden />
 
-        <ScrollReveal delay={0.05} className="order-2">
+        <ScrollReveal
+          delay={0.05}
+          className="mobile-page-panel order-2 min-h-[100svh] py-16 md:min-h-0 md:py-0"
+        >
           <div id="tool" className="scroll-mt-20" aria-hidden="true" />
           <AnalysisWorkflow />
         </ScrollReveal>
 
-        <div className="order-3">
+        <div className="mobile-page-break md:hidden" aria-hidden />
+
+        <div className="mobile-page-panel order-3 min-h-[100svh] py-16 md:min-h-0 md:py-0">
           <RecordTimeline />
         </div>
 

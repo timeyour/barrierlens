@@ -2,6 +2,7 @@
 
 import AnchorLink from "@/components/AnchorLink";
 import { UI_ASSETS } from "@/config/uiAssets";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { getRecords } from "@/lib/recordStore";
 import { useEffect, useState } from "react";
@@ -188,9 +189,17 @@ function StoryCta({ index }: { index: number }) {
   return null;
 }
 
-export default function EvidenceStory() {
+export default function EvidenceStory({
+  compact: compactProp,
+  className = "",
+}: {
+  compact?: boolean;
+  className?: string;
+} = {}) {
   const [activeIndex, setActiveIndex] = useState(0);
   const reducedMotion = usePrefersReducedMotion();
+  const isMobile = useMediaQuery("(max-width: 767px)");
+  const compact = compactProp ?? isMobile;
 
   useEffect(() => {
     if (reducedMotion) return;
@@ -204,21 +213,35 @@ export default function EvidenceStory() {
   return (
     <section
       id="story"
-      className="relative mb-8 scroll-mt-20 md:mb-12"
+      className={`relative scroll-mt-20 ${compact ? "mb-0" : "mb-8 md:mb-12"} ${className}`}
       aria-label="无碍故事线"
       aria-live="polite"
     >
-      <div className="mb-4 text-center md:mb-6">
+      <div className={`text-center ${compact ? "mb-2" : "mb-4 md:mb-6"}`}>
         <p className="section-eyebrow">Story</p>
-        <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+        <h2
+          className={`mt-2 font-bold tracking-tight text-slate-900 ${
+            compact ? "text-xl" : "text-2xl sm:text-3xl"
+          }`}
+        >
           从「过不去」到「被看见」
         </h2>
-        <p className="mx-auto mt-2 max-w-xl text-sm text-slate-600">
+        <p
+          className={`mx-auto max-w-xl text-slate-600 ${
+            compact ? "mt-1 text-xs" : "mt-2 text-sm"
+          }`}
+        >
           四步自动循环 · 看一条记录如何变成可复查、可导出的无障碍证据
         </p>
       </div>
 
-      <div className="relative min-h-[min(480px,78vh)] overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-blue-50/40 shadow-sm sm:min-h-[min(520px,72vh)]">
+      <div
+        className={`relative overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-blue-50/40 shadow-sm ${
+          compact
+            ? "min-h-[min(300px,36svh)]"
+            : "min-h-[min(480px,78vh)] sm:min-h-[min(520px,72vh)]"
+        }`}
+      >
         {STORY_STEPS.map((step, index) => {
           const isActive = activeIndex === index;
           return (
@@ -227,24 +250,36 @@ export default function EvidenceStory() {
             className={`absolute inset-0 flex flex-col justify-center p-4 transition-all duration-500 ease-out sm:p-6 lg:p-8 ${
               isActive
                 ? "z-10 translate-y-0 opacity-100"
-                : "pointer-events-none z-0 translate-y-3 opacity-0"
+                : "pointer-events-none z-0 translate-y-3 opacity-0 invisible"
             }`}
             aria-hidden={!isActive}
           >
-            <div className="grid items-center gap-5 lg:grid-cols-2 lg:gap-10">
+            <div
+              className={`grid items-center gap-5 ${
+                compact ? "gap-3" : "lg:grid-cols-2 lg:gap-10"
+              }`}
+            >
               <div>
                 <p className={`text-xs font-bold uppercase tracking-widest ${step.accent}`}>
                   {step.step}
                 </p>
-                <h3 className="mt-2 text-xl font-bold text-slate-900 sm:text-2xl lg:text-3xl">
+                <h3
+                  className={`mt-2 font-bold text-slate-900 ${
+                    compact ? "text-lg" : "text-xl sm:text-2xl lg:text-3xl"
+                  }`}
+                >
                   {step.title}
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600 sm:mt-3 lg:text-base">
+                <p
+                  className={`mt-2 leading-relaxed text-slate-600 ${
+                    compact ? "text-xs sm:mt-2" : "text-sm sm:mt-3 lg:text-base"
+                  }`}
+                >
                   {step.body}
                 </p>
-                <StoryCta index={index} />
+                {!compact && <StoryCta index={index} />}
               </div>
-              <StoryVisual index={index} />
+              {!compact && <StoryVisual index={index} />}
             </div>
           </article>
           );
