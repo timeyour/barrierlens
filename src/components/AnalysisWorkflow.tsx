@@ -12,7 +12,7 @@ import AiAnalysisPipeline from "@/components/AiAnalysisPipeline";
 import GemmaJsonOutput from "@/components/GemmaJsonOutput";
 import ReportCard from "@/components/ReportCard";
 import { downloadMarkdownReport } from "@/lib/exportMarkdown";
-import { fileToStoredImageDataUrl } from "@/lib/imageUtils";
+import { compressImageForUpload, fileToStoredImageDataUrl } from "@/lib/imageUtils";
 import { saveRecord } from "@/lib/recordStore";
 import { scrollToAnchor } from "@/lib/scrollAnchor";
 import type {
@@ -162,7 +162,8 @@ export default function AnalysisWorkflow() {
     setAnalysisTimeMs(null);
 
     const formData = new FormData();
-    formData.append("image", analyzeFile);
+    const uploadFile = await compressImageForUpload(analyzeFile);
+    formData.append("image", uploadFile);
     formData.append("targetDepartment", targetDepartment);
     formData.append("recordMode", recordMode);
     if (location.trim()) formData.append("location", location.trim());
@@ -173,7 +174,20 @@ export default function AnalysisWorkflow() {
         body: formData,
       });
 
-      const data = (await response.json()) as AnalyzeApiResponse & { error?: string };
+      const rawText = await response.text();
+      let data: AnalyzeApiResponse & { error?: string };
+      try {
+        data = JSON.parse(rawText) as AnalyzeApiResponse & { error?: string };
+      } catch {
+        if (response.status === 413) {
+          throw new Error("图片过大，请换一张或使用样例图体验");
+        }
+        throw new Error(
+          rawText.startsWith("Request")
+            ? "服务器拒绝请求（可能图片过大），请使用样例图或换一张较小的照片"
+            : "分析失败，请稍后重试",
+        );
+      }
 
       if (!response.ok) {
         throw new Error(data.error ?? "分析失败");
