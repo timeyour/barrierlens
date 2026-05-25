@@ -179,6 +179,10 @@ export default function ParallaxVideoHero() {
               >
                 了解完整闭环
               </AnchorLink>
+              <p className="pt-1 text-center text-[10px] font-medium tracking-wide text-white/50">
+                向下滑动
+                <span className="mx-auto mt-1 block h-4 w-px bg-gradient-to-b from-white/0 via-white/50 to-white/0" />
+              </p>
             </div>
             <div className="mt-4 hidden flex-wrap gap-1.5 md:flex lg:mt-5 lg:gap-2">
               {TAGS.map((tag) => (
@@ -198,14 +202,6 @@ export default function ParallaxVideoHero() {
             <ProductPreview scrollProgress={scrollYProgress} variant="hero" />
           </div>
         </div>
-
-        <AnchorLink
-          href="#story"
-          className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1 text-[10px] font-medium tracking-wide text-white/55 md:hidden"
-        >
-          <span>向下滑动</span>
-          <span className="block h-5 w-px bg-gradient-to-b from-white/0 via-white/60 to-white/0" />
-        </AnchorLink>
 
         <motion.div
           className="absolute bottom-8 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 text-white/60 md:flex"
