@@ -153,6 +153,27 @@ body {
   pointer-events: none;
 }
 
+/* 微信内 autoplay 失败时，poster 轻微缩放，避免静态图过于呆板 */
+.hero-poster-wechat {
+  transform-origin: center center;
+  animation: hero-poster-kenburns 20s ease-in-out infinite alternate;
+}
+
+@keyframes hero-poster-kenburns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-poster-wechat {
+    animation: none;
+  }
+}
+
 .hero-bg-video::-webkit-media-controls {
   display: none !important;
 }

@@ -3,6 +3,7 @@
 import AnchorLink from "@/components/AnchorLink";
 import { HERO_POSTER, HERO_VIDEO } from "@/config/uiAssets";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { bindWeChatVideoAutoplay, isWeChatBrowser } from "@/lib/weChatVideo";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useLayoutEffect, useRef, useState } from "react";
 import ProductPreview from "@/components/ProductPreview";
@@ -22,6 +23,7 @@ function bindHeroVideoPlayback(video: HTMLVideoElement) {
   video.setAttribute("x5-playsinline", "");
   video.setAttribute("x5-video-player-type", "h5-page");
   video.setAttribute("x5-video-player-fullscreen", "false");
+  video.setAttribute("x5-video-orientation", "portrait");
 
   let disposed = false;
 
@@ -60,14 +62,18 @@ function bindHeroVideoPlayback(video: HTMLVideoElement) {
   window.addEventListener("touchstart", onGesture, { once: true, passive: true });
   window.addEventListener("pointerdown", onGesture, { once: true, passive: true });
 
+  const unbindWeChat = bindWeChatVideoAutoplay(tryPlay);
+
   tryPlay();
   video.load();
   requestAnimationFrame(tryPlay);
   window.setTimeout(tryPlay, 120);
   window.setTimeout(tryPlay, 480);
+  window.setTimeout(tryPlay, 1200);
 
   return () => {
     disposed = true;
+    unbindWeChat();
     for (const event of mediaEvents) {
       video.removeEventListener(event, tryPlay);
     }
@@ -82,6 +88,7 @@ export default function ParallaxVideoHero() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [videoReady, setVideoReady] = useState(false);
+  const [isWeChat, setIsWeChat] = useState(false);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -92,6 +99,7 @@ export default function ParallaxVideoHero() {
   const scrollHintOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
 
   useLayoutEffect(() => {
+    setIsWeChat(isWeChatBrowser());
     const video = videoRef.current;
     if (!video) return;
     return bindHeroVideoPlayback(video);
@@ -102,6 +110,10 @@ export default function ParallaxVideoHero() {
     (videoReady ? "opacity-100" : "opacity-0") +
     (isDesktop ? " object-[58%_42%] lg:object-[62%_42%]" : " object-[50%_32%]");
 
+  const posterClassName =
+    "absolute inset-0 bg-cover bg-center bg-no-repeat " +
+    (isWeChat && !videoReady ? "hero-poster-wechat" : "");
+
   return (
     <header
       ref={containerRef}
@@ -109,10 +121,9 @@ export default function ParallaxVideoHero() {
     >
       <div className="relative h-[100svh] max-h-[100svh] overflow-hidden md:sticky md:top-0 md:h-screen md:max-h-none md:min-h-0">
         <div className="absolute inset-0 overflow-hidden bg-slate-950">
-          {/* 静态 poster：autoplay 前立即有画面，不露出 page-grid */}
           <div
             aria-hidden
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            className={posterClassName}
             style={{ backgroundImage: `url(${HERO_POSTER})` }}
           />
 
