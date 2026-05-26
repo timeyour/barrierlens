@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { HERO_POSTER, HERO_VIDEO } from "@/config/uiAssets";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -25,6 +26,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <head>
+        <link rel="preload" href={HERO_POSTER} as="image" />
+        <link rel="preload" href={HERO_VIDEO.split("#")[0]} as="fetch" crossOrigin="anonymous" />
+      </head>
       <body className="min-h-screen font-sans antialiased">{children}</body>
     </html>
   );

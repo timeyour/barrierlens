@@ -1,103 +1,106 @@
 "use client";
 
 import AnchorLink from "@/components/AnchorLink";
-import { HERO_VIDEO } from "@/config/uiAssets";
+import { HERO_POSTER, HERO_VIDEO } from "@/config/uiAssets";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import ProductPreview from "@/components/ProductPreview";
 
 const TAGS = ["现场拍照", "AI 结构化分析", "证据归档", "合规导出"];
+
+function bindHeroVideoPlayback(video: HTMLVideoElement) {
+  video.muted = true;
+  video.defaultMuted = true;
+  video.volume = 0;
+  video.playsInline = true;
+  video.controls = false;
+  video.disablePictureInPicture = true;
+  video.setAttribute("muted", "");
+  video.setAttribute("playsinline", "");
+  video.setAttribute("webkit-playsinline", "");
+  video.setAttribute("x5-playsinline", "");
+  video.setAttribute("x5-video-player-type", "h5-page");
+  video.setAttribute("x5-video-player-fullscreen", "false");
+
+  let disposed = false;
+
+  const tryPlay = () => {
+    if (disposed || !video.isConnected) return;
+    void video.play().catch(() => {});
+  };
+
+  const mediaEvents = [
+    "loadedmetadata",
+    "loadeddata",
+    "canplay",
+    "canplaythrough",
+  ] as const;
+  for (const event of mediaEvents) {
+    video.addEventListener(event, tryPlay);
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0]?.isIntersecting) tryPlay();
+    },
+    { threshold: 0.01 },
+  );
+  observer.observe(video);
+
+  const onVisibility = () => {
+    if (document.visibilityState === "visible") tryPlay();
+  };
+  const onPageShow = () => tryPlay();
+  const onGesture = () => tryPlay();
+
+  document.addEventListener("visibilitychange", onVisibility);
+  window.addEventListener("pageshow", onPageShow);
+  window.addEventListener("scroll", onGesture, { once: true, passive: true });
+  window.addEventListener("touchstart", onGesture, { once: true, passive: true });
+  window.addEventListener("pointerdown", onGesture, { once: true, passive: true });
+
+  tryPlay();
+  video.load();
+  requestAnimationFrame(tryPlay);
+  window.setTimeout(tryPlay, 120);
+  window.setTimeout(tryPlay, 480);
+
+  return () => {
+    disposed = true;
+    for (const event of mediaEvents) {
+      video.removeEventListener(event, tryPlay);
+    }
+    observer.disconnect();
+    document.removeEventListener("visibilitychange", onVisibility);
+    window.removeEventListener("pageshow", onPageShow);
+  };
+}
 
 export default function ParallaxVideoHero() {
   const containerRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const isDesktop = useMediaQuery("(min-width: 768px)");
+  const [videoReady, setVideoReady] = useState(false);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"],
   });
 
-  const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.06]);
+  const bgScale = useTransform(scrollYProgress, [0, 1], isDesktop ? [1, 1.06] : [1, 1]);
   const scrollHintOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-
-    video.muted = true;
-    video.defaultMuted = true;
-    video.playsInline = true;
-    video.controls = false;
-    video.disablePictureInPicture = true;
-    video.setAttribute("playsinline", "");
-    video.setAttribute("webkit-playsinline", "");
-    video.setAttribute("x5-playsinline", "");
-    video.setAttribute("x5-video-player-type", "h5-page");
-
-    const tryPlay = () => {
-      void video.play().catch(() => {});
-    };
-
-    tryPlay();
-    video.addEventListener("canplay", tryPlay);
-    video.addEventListener("loadeddata", tryPlay);
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) tryPlay();
-      },
-      { threshold: 0.2 },
-    );
-    observer.observe(video);
-
-    const onFirstTouch = () => tryPlay();
-    document.addEventListener("touchstart", onFirstTouch, { once: true, passive: true });
-    document.addEventListener("visibilitychange", tryPlay);
-
-    return () => {
-      video.removeEventListener("canplay", tryPlay);
-      video.removeEventListener("loadeddata", tryPlay);
-      observer.disconnect();
-      document.removeEventListener("touchstart", onFirstTouch);
-      document.removeEventListener("visibilitychange", tryPlay);
-    };
-  }, [isDesktop]);
+    return bindHeroVideoPlayback(video);
+  }, []);
 
   const videoClassName =
-    "hero-bg-video absolute inset-0 h-full w-full object-cover " +
-    (isDesktop ? "object-[58%_42%] lg:object-[62%_42%]" : "object-[50%_32%]");
-
-  const videoLayer = isDesktop ? (
-    <motion.div className="absolute inset-0 overflow-hidden" style={{ scale: bgScale }}>
-      <video
-        ref={videoRef}
-        className={videoClassName}
-        src={HERO_VIDEO}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-        aria-hidden
-        tabIndex={-1}
-      />
-    </motion.div>
-  ) : (
-    <video
-      ref={videoRef}
-      className={videoClassName}
-      src={HERO_VIDEO}
-      autoPlay
-      muted
-      loop
-      playsInline
-      preload="auto"
-      aria-hidden
-      tabIndex={-1}
-    />
-  );
+    "hero-bg-video absolute inset-0 h-full w-full object-cover transition-opacity duration-500 " +
+    (videoReady ? "opacity-100" : "opacity-0") +
+    (isDesktop ? " object-[58%_42%] lg:object-[62%_42%]" : " object-[50%_32%]");
 
   return (
     <header
@@ -105,10 +108,32 @@ export default function ParallaxVideoHero() {
       className="mobile-snap-screen mobile-snap-screen-fixed relative md:h-[180vh] lg:h-[200vh]"
     >
       <div className="relative h-[100svh] max-h-[100svh] overflow-hidden md:sticky md:top-0 md:h-screen md:max-h-none md:min-h-0">
-        <div className="absolute inset-0 overflow-hidden">
-          {videoLayer}
+        <div className="absolute inset-0 overflow-hidden bg-slate-950">
+          {/* 静态 poster：autoplay 前立即有画面，不露出 page-grid */}
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${HERO_POSTER})` }}
+          />
 
-          {/* 底部/左侧暗角，文字直接叠在视频上，不做全屏或大面积毛玻璃 */}
+          <motion.div className="absolute inset-0 overflow-hidden" style={{ scale: bgScale }}>
+            <video
+              ref={videoRef}
+              className={videoClassName}
+              src={HERO_VIDEO}
+              poster={HERO_POSTER}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
+              disableRemotePlayback
+              aria-hidden
+              tabIndex={-1}
+              onPlaying={() => setVideoReady(true)}
+            />
+          </motion.div>
+
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/20 to-transparent" />
             <div className="absolute inset-0 hidden bg-gradient-to-r from-slate-950/45 via-slate-950/10 to-transparent md:block" />

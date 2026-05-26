@@ -5,7 +5,9 @@
 const V = "?v=8";
 const STREET_V = "?v=2";
 
-export const HERO_VIDEO = `/videos/hero-demo.mp4?v=4`;
+export const HERO_VIDEO = `/videos/hero-demo.mp4?v=5#t=0.001`;
+/** 首屏静态占位，避免移动端 autoplay 前露出页面网格背景 */
+export const HERO_POSTER = `/images/scene-blocked-street.png${STREET_V}`;
 
 export const UI_ASSETS = {
   hero: {
