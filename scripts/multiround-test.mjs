@@ -24,6 +24,9 @@ const MODES = [
 ];
 
 const REQUIRED_FIELDS = [
+  "category",
+  "obstacleNature",
+  "managementAction",
   "issueType",
   "riskLevel",
   "affectedGroups",

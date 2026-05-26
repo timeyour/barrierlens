@@ -22,6 +22,7 @@ import RecordTimelineFilters from "@/components/RecordTimelineFilters";
 import ReviewStatusFlow from "@/components/ReviewStatusFlow";
 import ScrollReveal from "@/components/ScrollReveal";
 import SectionHeader from "@/components/SectionHeader";
+import SpatialDiagnosisTags from "@/components/SpatialDiagnosisTags";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { ensureGsapPlugins, gsap, useGSAP } from "@/lib/gsapClient";
 import {
@@ -237,6 +238,7 @@ function RecordItem({ record }: { record: StoredRecord }) {
         >
           {modeLabel}
         </span>
+        <SpatialDiagnosisTags record={record} compact />
         <span
           className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${
             record.riskLevel === "高"

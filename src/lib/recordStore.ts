@@ -83,6 +83,9 @@ export function seedDemoRecordsIfEmpty(): StoredRecord[] {
     {
       id: "demo-1",
       hasIssue: true,
+      category: "capacity_demand_mismatch",
+      obstacleNature: "dynamic",
+      managementAction: "高峰时段保安疏导并增设定点隔离",
       sceneType: "tactile_paving_blocked",
       locationType: "transport_hub",
       obstacles: [
@@ -114,6 +117,9 @@ export function seedDemoRecordsIfEmpty(): StoredRecord[] {
     {
       id: "demo-2",
       hasIssue: true,
+      category: "legacy_addition_conflict",
+      obstacleNature: "dynamic",
+      managementAction: "清理入口障碍物并划定临停区",
       sceneType: "accessible_entrance_blocked",
       locationType: "mall",
       obstacles: [
@@ -146,6 +152,9 @@ export function seedDemoRecordsIfEmpty(): StoredRecord[] {
     {
       id: "demo-3",
       hasIssue: true,
+      category: "legacy_addition_conflict",
+      obstacleNature: "static",
+      managementAction: "清理边缘杂物并恢复通道净宽",
       sceneType: "access_route_discontinuity",
       locationType: "community",
       obstacles: [{ name: "杂物堆放", position: "路径边缘", blocks: "通道净宽" }],

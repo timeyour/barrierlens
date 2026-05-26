@@ -2,6 +2,8 @@ import { analyzeImage } from "@/lib/gemma";
 import { NextResponse } from "next/server";
 import type { RecordMode, TargetDepartment } from "@/types/analysis";
 
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();

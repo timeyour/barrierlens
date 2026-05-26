@@ -1,6 +1,16 @@
 export type TargetDepartment = "物业" | "社区" | "商场" | "城管";
 
 export type RiskLevel = "低" | "中" | "高";
+
+/** 三元空间冲突品类 */
+export type SpatialConflictCategory =
+  | "native_design_defect"
+  | "legacy_addition_conflict"
+  | "capacity_demand_mismatch";
+
+/** 障碍物物理属性 */
+export type ObstacleNature = "static" | "dynamic";
+
 export type SceneType =
   | "tactile_paving_blocked"
   | "accessible_entrance_blocked"
@@ -26,6 +36,9 @@ export interface Obstacle {
 
 export interface AnalysisResult {
   hasIssue: boolean;
+  category: SpatialConflictCategory;
+  obstacleNature: ObstacleNature;
+  managementAction: string;
   sceneType: SceneType;
   locationType: string;
   obstacles: Obstacle[];
@@ -93,6 +106,17 @@ export const RECORD_MODES: Record<
     label: "物业自查",
     hint: "生成内部巡查整改单，便于物业/商场主动整改",
   },
+};
+
+export const SPATIAL_CONFLICT_LABELS: Record<SpatialConflictCategory, string> = {
+  native_design_defect: "设计硬伤",
+  legacy_addition_conflict: "加建冲突",
+  capacity_demand_mismatch: "容量错配",
+};
+
+export const OBSTACLE_NATURE_LABELS: Record<ObstacleNature, string> = {
+  static: "静态受阻",
+  dynamic: "动态占用",
 };
 
 export const SCENE_TYPE_LABELS: Record<SceneType, string> = {

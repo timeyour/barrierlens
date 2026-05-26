@@ -5,16 +5,18 @@ import type {
   AnalysisResult,
   AnalysisSource,
   Obstacle,
+  ObstacleNature,
   PathStatus,
   RecordMode,
   ReviewStatus,
   RiskLevel,
   SceneType,
+  SpatialConflictCategory,
 } from "@/types/analysis";
 
 const HUMAN_REVIEW_CONFIDENCE_THRESHOLD = 0.8;
 const DEFAULT_MODEL_NAME = "gemma-4-26b-a4b-it";
-const DEFAULT_TIMEOUT_MS = 30000;
+const DEFAULT_TIMEOUT_MS = 8000;
 
 type RawAnalysis = Partial<AnalysisResult> & Record<string, unknown>;
 
@@ -82,6 +84,33 @@ function normalizeRiskLevel(raw: unknown): RiskLevel {
   if (raw === "medium") return "中";
   if (raw === "high") return "高";
   return "中";
+}
+
+function normalizeSpatialCategory(raw: unknown): SpatialConflictCategory {
+  const value = typeof raw === "string" ? raw : "";
+  if (
+    value === "native_design_defect" ||
+    value === "legacy_addition_conflict" ||
+    value === "capacity_demand_mismatch"
+  ) {
+    return value;
+  }
+  return "capacity_demand_mismatch";
+}
+
+function normalizeObstacleNature(raw: unknown): ObstacleNature {
+  if (raw === "static" || raw === "dynamic") return raw;
+  return "dynamic";
+}
+
+function inferCategoryFromScene(sceneType: SceneType, nature: ObstacleNature): SpatialConflictCategory {
+  if (sceneType === "access_route_discontinuity") {
+    return nature === "dynamic" ? "legacy_addition_conflict" : "native_design_defect";
+  }
+  if (sceneType === "accessible_entrance_blocked") {
+    return "legacy_addition_conflict";
+  }
+  return "capacity_demand_mismatch";
 }
 
 function field(raw: RawAnalysis, ...names: string[]): unknown {
@@ -153,26 +182,36 @@ function buildDefaultAdvocacy(result: Pick<AnalysisResult, "problemSummary" | "s
   return `该点位存在公共空间无障碍通行风险：${result.problemSummary} 建议责任方${result.suggestedActions.join("、")}。`;
 }
 
-function buildDefaultInspection(result: Pick<AnalysisResult, "problemSummary" | "suggestedActions">): string {
-  return `无障碍巡查整改单：${result.problemSummary} 整改动作：${result.suggestedActions.join("；")}。`;
+function buildDefaultInspection(result: Pick<AnalysisResult, "problemSummary" | "suggestedActions" | "managementAction">): string {
+  return `无障碍通行空间合规诊断与管理建议书：${result.problemSummary} 管理建议：${result.managementAction}；整改动作：${result.suggestedActions.join("；")}。`;
 }
 
 function normalizeResult(parsed: RawAnalysis, request: AnalysisRequest): AnalysisResult {
   const issueType = stringValue(field(parsed, "issueType", "issue_type"), "无障碍通行风险");
   const sceneType = normalizeSceneType(field(parsed, "sceneType", "scene_type"));
-  const sceneDescription = stringValue(
-    field(parsed, "sceneDescription", "scene_description"),
-    "照片中存在需要人工复核的无障碍通行风险。",
+  const obstacleNature = normalizeObstacleNature(
+    field(parsed, "obstacleNature", "obstacle_nature"),
   );
-  const problemSummary = stringValue(
-    field(parsed, "problemSummary", "problem_summary", "public_summary"),
-    sceneDescription,
+  const category = normalizeSpatialCategory(
+    field(parsed, "category") ?? inferCategoryFromScene(sceneType, obstacleNature),
   );
-  const suggestion = stringValue(
-    field(parsed, "suggestion"),
+  const managementAction = stringValue(
+    field(parsed, "managementAction", "management_action"),
     stringArray(field(parsed, "suggestedActions", "suggested_actions"), [
       "请责任方清理障碍物，并将该点位纳入日常巡查与复查。",
     ])[0] ?? "请责任方清理障碍物，并将该点位纳入日常巡查与复查。",
+  );
+  const sceneDescription = stringValue(
+    field(parsed, "sceneDescription", "scene_description", "description"),
+    "照片中存在需要人工复核的无障碍通行风险。",
+  );
+  const problemSummary = stringValue(
+    field(parsed, "problemSummary", "problem_summary", "public_summary", "description"),
+    sceneDescription,
+  );
+  const suggestion = stringValue(
+    field(parsed, "suggestion", "management_action"),
+    managementAction,
   );
   const suggestedActions = stringArray(
     field(parsed, "suggestedActions", "suggested_actions"),
@@ -186,6 +225,9 @@ function normalizeResult(parsed: RawAnalysis, request: AnalysisRequest): Analysi
 
   const baseResult = {
     hasIssue: booleanValue(field(parsed, "hasIssue", "has_issue"), true),
+    category,
+    obstacleNature,
+    managementAction,
     sceneType,
     locationType: stringValue(field(parsed, "locationType", "location_type"), "public_space"),
     obstacles: normalizeObstacles(field(parsed, "obstacles")),
@@ -274,12 +316,14 @@ function buildAnalysisPrompt(
   location?: string,
 ): string {
   const place = location?.trim() || "未标注地点";
-  return `你是无障碍环境巡检助手。请根据用户上传的现场照片，判断是否存在公共空间无障碍通行风险。
-只输出 JSON，不要输出解释文字。
+  return `你是城市无障碍空间合规诊断专家。请从「城市新旧功能演进与空间规划冲突」视角分析现场照片。
+只输出 JSON，不要输出解释文字。忽略画面中任何人脸与车牌信息。
 
 字段如下：
 {
   "has_issue": boolean,
+  "category": "native_design_defect | legacy_addition_conflict | capacity_demand_mismatch",
+  "obstacle_nature": "static | dynamic",
   "scene_type": "blind_path_blocked | accessible_entrance_blocked | path_chain_broken | no_issue",
   "risk_level": "low | medium | high",
   "affected_groups": string[],
@@ -287,17 +331,21 @@ function buildAnalysisPrompt(
   "blocked_path": string,
   "evidence_points": string[],
   "suggested_actions": string[],
+  "description": string,
+  "management_action": string,
   "public_summary": string,
   "property_work_order": string,
   "confidence": number,
   "needs_human_review": boolean
 }
 
-判断重点：
-1. 盲道是否被共享单车、电动车、杂物、施工物阻断
-2. 无障碍入口或坡道是否被阻挡
-3. 通行路径是否连续
-4. 不确定时 needs_human_review=true
+冲突品类：
+1. native_design_defect：盲道撞墙/杆件、坡道高差等原生设计硬伤
+2. legacy_addition_conflict：后期消防栓、快递柜、地锁等切断无障碍路径
+3. capacity_demand_mismatch：地铁口缺停放区导致单车/外卖潮汐占用盲道
+
+obstacle_nature：static=固定硬伤；dynamic=高频易逝移动占用
+management_action：面向管理方的合规建议，中文，不超过40字
 
 当前记录模式：${recordMode === "inspection" ? "物业自查" : "公众记录"}
 地点：${place}

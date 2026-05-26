@@ -27,6 +27,7 @@ import { RECORD_MODES } from "@/types/analysis";
 type WorkflowStatus = "idle" | "loading" | "success" | "error";
 
 const DEMO_IMAGE_URL = "/images/scene-blocked-close.png";
+const ANALYZE_CLIENT_TIMEOUT_MS = 12000;
 
 type AnalyzeApiResponse = AnalysisResult & {
   mockMode?: boolean;
@@ -169,10 +170,22 @@ export default function AnalysisWorkflow() {
     if (location.trim()) formData.append("location", location.trim());
 
     try {
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        body: formData,
-      });
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(
+        () => controller.abort(),
+        ANALYZE_CLIENT_TIMEOUT_MS,
+      );
+
+      let response: Response;
+      try {
+        response = await fetch("/api/analyze", {
+          method: "POST",
+          body: formData,
+          signal: controller.signal,
+        });
+      } finally {
+        window.clearTimeout(timeoutId);
+      }
 
       const rawText = await response.text();
       let data: AnalyzeApiResponse & { error?: string };
@@ -212,6 +225,10 @@ export default function AnalysisWorkflow() {
       window.requestAnimationFrame(() => scrollToAnchor("#tool-results"));
     } catch (error) {
       setStatus("error");
+      if (error instanceof Error && error.name === "AbortError") {
+        setErrorMessage("分析超时，请使用样例图或稍后重试");
+        return;
+      }
       setErrorMessage(
         error instanceof Error ? error.message : "分析失败，请稍后重试",
       );
@@ -237,7 +254,9 @@ export default function AnalysisWorkflow() {
   const isLoading = status === "loading";
   const canGenerate = !isLoading;
   const reportTitle =
-    recordMode === "inspection" ? "巡查整改单" : "公众倡导摘要";
+    recordMode === "inspection"
+      ? "无障碍通行空间合规诊断与管理建议书"
+      : "公众倡导摘要";
 
   return (
     <div className="space-y-8">

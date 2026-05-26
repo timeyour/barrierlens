@@ -1,13 +1,18 @@
 import {
+  OBSTACLE_NATURE_LABELS,
   PATH_STATUS_LABELS,
   REVIEW_STATUS_LABELS,
   SCENE_TYPE_LABELS,
+  SPATIAL_CONFLICT_LABELS,
   type AnalysisResult,
   type RecordMode,
 } from "@/types/analysis";
+import { inferObstacleNature, inferSpatialCategory } from "@/lib/spatialDiagnosis";
 
 function formatMeta(result: AnalysisResult): string {
   const groups = result.affectedGroups.join("、");
+  const category = inferSpatialCategory(result);
+  const nature = inferObstacleNature(result);
   const time = result.recordedAt
     ? new Date(result.recordedAt).toLocaleString("zh-CN", {
         timeZone: "Asia/Shanghai",
@@ -18,6 +23,8 @@ function formatMeta(result: AnalysisResult): string {
 |------|------|
 | 记录时间 | ${time} |
 | 地点 | ${result.location || "未标注"} |
+| 冲突源 | ${SPATIAL_CONFLICT_LABELS[category]} |
+| 物理属性 | ${OBSTACLE_NATURE_LABELS[nature]} |
 | 问题类型 | ${result.issueType} |
 | 场景类型 | ${SCENE_TYPE_LABELS[result.sceneType]} |
 | 风险等级 | ${result.riskLevel} |
@@ -55,9 +62,9 @@ ${result.obstacles.length > 0
 
 ${result.sceneDescription}
 
-## 关注建议
+## 合规管理建议
 
-${result.suggestion}
+${result.managementAction || result.suggestion}
 
 ## 建议责任方
 
@@ -82,17 +89,21 @@ ${result.advocacyText}
 }
 
 export function buildInspectionMarkdown(result: AnalysisResult): string {
-  return `# 无障碍巡查整改单 · 无碍 BarrierLens
+  return `# 无障碍通行空间合规诊断与管理建议书 · 无碍 BarrierLens
 
 > 内部自查 · 供物业/商场归档与跟进
 
-## 巡查概览
+## 诊断概览
 
 ${formatMeta(result)}
 
-## 问题摘要
+## 空间冲突诊断
 
 ${result.problemSummary}
+
+## 合规管理建议
+
+${result.managementAction || result.suggestion}
 
 ## 障碍物清单
 
@@ -155,7 +166,7 @@ export function downloadMarkdownReport(
   const date = new Date().toISOString().slice(0, 10);
   const defaultName =
     effectiveMode === "inspection"
-      ? `无碍-巡查整改单-${date}.md`
+      ? `无碍-合规诊断建议书-${date}.md`
       : `无碍-公众记录-${date}.md`;
   const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
   const url = URL.createObjectURL(blob);

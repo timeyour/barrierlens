@@ -48,14 +48,10 @@ export async function fileToStoredImageDataUrl(file: File): Promise<string> {
   return compressDataUrl(raw, { maxWidth: 960, quality: 0.82 });
 }
 
-/** 上传 API 前压缩，避免 Vercel 413（请求体约 4.5MB 上限） */
+/** 上传 API 前压缩：800px / 0.6，控制体积与推理耗时 */
 export async function compressImageForUpload(file: File): Promise<File> {
-  if (file.size <= 1.5 * 1024 * 1024 && /image\/jpe?g/i.test(file.type)) {
-    return file;
-  }
-
   const raw = await readFileAsDataUrl(file);
-  const compressed = await compressDataUrl(raw, { maxWidth: 1280, quality: 0.8 });
+  const compressed = await compressDataUrl(raw, { maxWidth: 800, quality: 0.6 });
   const baseName = file.name.replace(/\.[^.]+$/i, "") || "upload";
   return dataUrlToFile(compressed, `${baseName}.jpg`);
 }

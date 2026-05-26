@@ -5,6 +5,7 @@ import {
   type AnalysisResult,
   type RecordMode,
 } from "@/types/analysis";
+import SpatialDiagnosisTags from "./SpatialDiagnosisTags";
 import BarrierMap from "./BarrierMap";
 import MetricCard from "./MetricCard";
 
@@ -23,6 +24,10 @@ export default function AnalysisResultView({
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-wrap gap-2">
+        <SpatialDiagnosisTags record={result} />
+      </div>
+
       <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard label="问题类型" value={result.issueType} />
         <MetricCard
@@ -88,10 +93,10 @@ export default function AnalysisResultView({
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <h3 className="text-sm font-semibold text-slate-900">
-            {recordMode === "inspection" ? "整改要求" : "关注建议"}
+            {recordMode === "inspection" ? "合规管理建议" : "关注建议"}
           </h3>
           <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            {result.suggestion}
+            {result.managementAction || result.suggestion}
           </p>
           {result.suggestedActions.length > 0 && (
             <ul className="mt-3 list-disc space-y-1 pl-5 text-xs text-slate-500">
