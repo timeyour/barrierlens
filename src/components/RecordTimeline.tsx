@@ -8,10 +8,7 @@ import {
 } from "@/lib/recordStore";
 import { fileToStoredImageDataUrl } from "@/lib/imageUtils";
 import {
-  PATH_STATUS_LABELS,
-  RECORD_MODES,
   REVIEW_STATUS_LABELS,
-  SCENE_TYPE_LABELS,
   type ReviewStatus,
 } from "@/types/analysis";
 import type { StoredRecord } from "@/types/analysis";
@@ -23,8 +20,7 @@ import ReviewStatusFlow from "@/components/ReviewStatusFlow";
 import ScrollReveal from "@/components/ScrollReveal";
 import SectionHeader from "@/components/SectionHeader";
 import SpatialDiagnosisTags from "@/components/SpatialDiagnosisTags";
-import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
-import { ensureGsapPlugins, gsap, useGSAP } from "@/lib/gsapClient";
+import { REVIEW_STATUS_BADGE, REVIEW_STATUS_BAR } from "@/lib/reviewStatusStyles";
 import {
   countByQueue,
   DEFAULT_RECORD_FILTERS,
@@ -33,8 +29,6 @@ import {
   type RecordFilterState,
 } from "@/lib/recordFilters";
 import { useEffect, useRef, useState } from "react";
-
-ensureGsapPlugins();
 
 const REVIEW_FLOW: ReviewStatus[] = [
   "pending",
@@ -178,7 +172,6 @@ function RecordItem({ record }: { record: StoredRecord }) {
   const [uploading, setUploading] = useState(false);
   const [statusNotice, setStatusNotice] = useState<string | null>(null);
 
-  const modeLabel = RECORD_MODES[record.recordMode].label;
   const preview =
     record.recordMode === "inspection"
       ? record.inspectionText || record.reportText
@@ -218,153 +211,139 @@ function RecordItem({ record }: { record: StoredRecord }) {
   };
 
   return (
-    <li
-      data-record-item=""
-      className={`rounded-xl border bg-white p-4 shadow-sm ${
-        record.reviewStatus === "fixed"
-          ? "border-emerald-300 ring-1 ring-emerald-100"
-          : record.reviewStatus === "unfixed"
-            ? "border-red-200 ring-1 ring-red-50"
-            : "border-slate-200"
-      }`}
-    >
-      <div className="flex flex-wrap items-center gap-2">
-        <span
-          className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${
-            record.recordMode === "public"
-              ? "bg-blue-100 text-blue-800"
-              : "bg-emerald-100 text-emerald-800"
-          }`}
-        >
-          {modeLabel}
-        </span>
-        <SpatialDiagnosisTags record={record} compact />
-        <span
-          className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${
-            record.riskLevel === "高"
-              ? "bg-red-100 text-red-800"
-              : record.riskLevel === "中"
-                ? "bg-amber-100 text-amber-800"
-                : "bg-slate-100 text-slate-700"
-          }`}
-        >
-          {record.riskLevel}风险
-        </span>
-        <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 transition-colors duration-500">
-          {REVIEW_STATUS_LABELS[record.reviewStatus]}
-        </span>
-        {record.reviewImageDataUrl && (
-          <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
-            已上传整改照片
-          </span>
-        )}
-        <span className="text-[11px] text-slate-400">
-          {formatRecordTime(record.recordedAt)}
-        </span>
-      </div>
-      <p className="mt-2 text-sm font-semibold text-slate-900">
-        {record.issueType} · {record.location || "地点未标注"}
-      </p>
-      <p className="mt-1 text-xs leading-relaxed text-slate-500">
-        {SCENE_TYPE_LABELS[record.sceneType]} · 路径状态：{PATH_STATUS_LABELS[record.pathStatus]}
-      </p>
-      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500">
-        {record.sceneDescription}
-      </p>
-      {preview && (
-        <p className="mt-2 line-clamp-2 text-[11px] text-slate-400">
-          {preview.slice(0, 120)}…
-        </p>
-      )}
-
-      <RecordEvidencePreview record={record} reviewStatus={record.reviewStatus} />
-
-      <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-        <p className="text-[11px] font-semibold text-slate-600">整改复查</p>
-
-        <ReviewStatusFlow status={record.reviewStatus} />
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={(event) => {
-            void handleReviewPhotoSelect(event.target.files?.[0]);
-          }}
-        />
-
-        <ReviewPhotoCompare
-          record={record}
-          uploading={uploading}
-          onUploadClick={() => fileInputRef.current?.click()}
-          onClear={clearReviewPhoto}
-        />
-
-        <button
-          type="button"
-          onClick={() => setShowMap((open) => !open)}
-          className="mt-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700"
-        >
-          {showMap ? "收起整改地图" : "查看整改前后地图"}
-        </button>
-        {showMap && (
-          <div className="mt-3 border-t border-slate-200 pt-3">
-            <BarrierMap result={record} />
-          </div>
-        )}
-
-        <div className="mt-4 border-t border-slate-200 pt-3">
-          <p className="mb-2 text-[11px] font-semibold text-slate-600">更新状态</p>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <select
-              value={nextStatus}
-              onChange={(event) => setNextStatus(event.target.value as ReviewStatus)}
-              className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700"
+    <li data-record-item="" className="flex overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div
+        className={`w-1.5 shrink-0 ${REVIEW_STATUS_BAR[record.reviewStatus]}`}
+        aria-hidden
+      />
+      <details className="group min-w-0 flex-1">
+        <summary className="cursor-pointer list-none p-4 [&::-webkit-details-marker]:hidden">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset ${REVIEW_STATUS_BADGE[record.reviewStatus]}`}
             >
-              {REVIEW_FLOW.map((status) => (
-                <option key={status} value={status}>
-                  {REVIEW_STATUS_LABELS[status]}
-                </option>
-              ))}
-            </select>
+              {REVIEW_STATUS_LABELS[record.reviewStatus]}
+            </span>
+            <SpatialDiagnosisTags record={record} compact />
+            <span
+              className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${
+                record.riskLevel === "高"
+                  ? "bg-red-100 text-red-800"
+                  : record.riskLevel === "中"
+                    ? "bg-amber-100 text-amber-800"
+                    : "bg-slate-100 text-slate-700"
+              }`}
+            >
+              {record.riskLevel}
+            </span>
+            <span className="ml-auto text-[11px] text-slate-400">
+              {formatRecordTime(record.recordedAt)}
+            </span>
+          </div>
+          <p className="mt-2 text-sm font-semibold text-slate-900">
+            {record.issueType}
+          </p>
+          <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">
+            {record.location || "地点未标注"} · {record.problemSummary}
+          </p>
+          <p className="mt-2 text-xs font-medium text-blue-600 group-open:hidden">
+            展开详情与整改复查 ↓
+          </p>
+        </summary>
+
+        <div className="border-t border-slate-100 px-4 pb-4 pt-3">
+          <p className="text-xs leading-relaxed text-slate-600">{record.sceneDescription}</p>
+          {preview && (
+            <p className="mt-2 line-clamp-3 text-[11px] text-slate-400">{preview.slice(0, 200)}…</p>
+          )}
+
+          <RecordEvidencePreview record={record} reviewStatus={record.reviewStatus} />
+
+          <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-[11px] font-semibold text-slate-600">整改复查</p>
+            <ReviewStatusFlow status={record.reviewStatus} />
+
             <input
-              value={reviewNote}
-              onChange={(event) => setReviewNote(event.target.value)}
-              placeholder="复查备注（如：已清理，待复拍）"
-              className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 placeholder:text-slate-400"
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(event) => {
+                void handleReviewPhotoSelect(event.target.files?.[0]);
+              }}
             />
+
+            <ReviewPhotoCompare
+              record={record}
+              uploading={uploading}
+              onUploadClick={() => fileInputRef.current?.click()}
+              onClear={clearReviewPhoto}
+            />
+
             <button
               type="button"
-              onClick={applyReviewUpdate}
-              className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white"
+              onClick={() => setShowMap((open) => !open)}
+              className="mt-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700"
             >
-              保存状态
+              {showMap ? "收起整改地图" : "查看整改前后地图"}
             </button>
-          </div>
-          {statusNotice && (
-            <p className="mt-2 rounded-md bg-blue-50 px-2 py-1.5 text-[11px] font-semibold text-blue-800">
-              状态已更新：{statusNotice}
-            </p>
-          )}
-        </div>
+            {showMap && (
+              <div className="mt-3 border-t border-slate-200 pt-3">
+                <BarrierMap result={record} />
+              </div>
+            )}
 
-        {record.reviewedAt && (
-          <p className="mt-2 text-[11px] text-slate-500">
-            最近复查：{formatRecordTime(record.reviewedAt)}
-          </p>
-        )}
-      </div>
+            <div className="mt-4 border-t border-slate-200 pt-3">
+              <p className="mb-2 text-[11px] font-semibold text-slate-600">更新状态</p>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <select
+                  value={nextStatus}
+                  onChange={(event) => setNextStatus(event.target.value as ReviewStatus)}
+                  className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700"
+                >
+                  {REVIEW_FLOW.map((status) => (
+                    <option key={status} value={status}>
+                      {REVIEW_STATUS_LABELS[status]}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  value={reviewNote}
+                  onChange={(event) => setReviewNote(event.target.value)}
+                  placeholder="复查备注"
+                  className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 placeholder:text-slate-400"
+                />
+                <button
+                  type="button"
+                  onClick={applyReviewUpdate}
+                  className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white"
+                >
+                  保存状态
+                </button>
+              </div>
+              {statusNotice && (
+                <p className="mt-2 rounded-md bg-blue-50 px-2 py-1.5 text-[11px] font-semibold text-blue-800">
+                  状态已更新：{statusNotice}
+                </p>
+              )}
+            </div>
+
+            {record.reviewedAt && (
+              <p className="mt-2 text-[11px] text-slate-500">
+                最近复查：{formatRecordTime(record.reviewedAt)}
+              </p>
+            )}
+          </div>
+        </div>
+      </details>
     </li>
   );
 }
 
 export default function RecordTimeline() {
-  const listRef = useRef<HTMLDivElement>(null);
   const [records, setRecords] = useState<StoredRecord[]>(EMPTY_RECORDS);
   const [filters, setFilters] = useState<RecordFilterState>(DEFAULT_RECORD_FILTERS);
-  const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     seedDemoRecordsIfEmpty();
@@ -382,38 +361,6 @@ export default function RecordTimeline() {
   const visibleRecords = filterRecords(records, filters);
   const grouped = groupRecordsByLocation(visibleRecords);
 
-  useGSAP(
-    () => {
-      if (reducedMotion || visibleRecords.length === 0 || !listRef.current) return;
-
-      gsap.from("[data-record-item]", {
-        y: 28,
-        autoAlpha: 0,
-        duration: 0.55,
-        stagger: 0.07,
-        ease: "power2.out",
-        scrollTrigger: {
-          trigger: listRef.current,
-          start: "top 90%",
-          toggleActions: "play none none none",
-        },
-      });
-    },
-    {
-      scope: listRef,
-      dependencies: [
-        reducedMotion,
-        visibleRecords.length,
-        filters.queue,
-        filters.query,
-        filters.mode,
-        filters.risk,
-        filters.scene,
-      ],
-      revertOnUpdate: true,
-    },
-  );
-
   return (
     <ScrollReveal>
       <section
@@ -421,9 +368,9 @@ export default function RecordTimeline() {
         className="mb-6 scroll-mt-20 md:mb-10 lg:mb-14"
       >
         <SectionHeader
-          eyebrow="Records"
-          title="问题记录时间线"
-          description="工作队列默认展示待处理与待复查；支持搜索、筛选与按地点聚合。"
+          eyebrow="Recent"
+          title="最近上报"
+          description="像 FixMyStreet 一样按 feed 浏览；点击展开详情与整改复查。"
           align="center"
           descriptionClassName="hidden md:block"
         />
@@ -439,7 +386,7 @@ export default function RecordTimeline() {
             没有匹配的记录。试试切换「全部」或清空搜索关键词。
           </p>
         ) : (
-          <div ref={listRef} className="space-y-6">
+          <div className="space-y-6">
             {grouped.map(({ location, records: groupRecords }) => (
               <div key={location}>
                 <div className="mb-2 flex items-center justify-between gap-2">

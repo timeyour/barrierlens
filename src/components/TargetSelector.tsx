@@ -16,6 +16,13 @@ const DEPARTMENT_HINTS: Record<TargetDepartment, string> = {
   城管: "公共通道秩序与处置",
 };
 
+const DEPARTMENT_ICONS: Record<TargetDepartment, string> = {
+  物业: "🏢",
+  社区: "🏘️",
+  商场: "🛍️",
+  城管: "🚧",
+};
+
 export default function TargetSelector({
   value,
   onChange,
@@ -24,7 +31,7 @@ export default function TargetSelector({
   return (
     <div className="space-y-2.5 sm:space-y-3">
       <p className="text-sm font-medium text-slate-700">场景归类</p>
-      <div className="grid grid-cols-4 gap-2 sm:grid-cols-4 sm:gap-3">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
         {TARGET_DEPARTMENTS.map((dept) => {
           const selected = value === dept;
           return (
@@ -33,16 +40,17 @@ export default function TargetSelector({
               type="button"
               disabled={disabled}
               onClick={() => onChange(dept)}
-              className={`rounded-xl border px-2 py-2.5 text-center transition-all sm:px-3 sm:py-3 sm:text-left ${
+              className={`flex flex-col items-center rounded-xl border px-2 py-3 text-center transition-all sm:items-start sm:px-3 sm:py-3 sm:text-left ${
                 selected
-                  ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
+                  ? "border-blue-600 bg-blue-50 ring-2 ring-blue-200"
                   : "border-slate-200 bg-white hover:border-blue-300"
               } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
             >
-              <span className="block text-sm font-semibold text-slate-900">
-                {dept}
+              <span className="text-xl sm:text-lg" aria-hidden>
+                {DEPARTMENT_ICONS[dept]}
               </span>
-              <span className="mt-0.5 hidden text-xs text-slate-500 sm:mt-1 sm:block">
+              <span className="mt-1 block text-sm font-semibold text-slate-900">{dept}</span>
+              <span className="mt-0.5 hidden text-xs text-slate-500 sm:block">
                 {DEPARTMENT_HINTS[dept]}
               </span>
             </button>

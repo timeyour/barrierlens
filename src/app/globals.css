@@ -58,6 +58,25 @@ body {
   backdrop-filter: blur(16px);
 }
 
+/* Hero 文案叠在视频上：无 backdrop-blur，避免把背景视频糊掉 */
+.hero-copy {
+  text-shadow: 0 1px 12px rgb(15 23 42 / 0.45);
+}
+
+.hero-tag {
+  border-radius: 9999px;
+  border: 1px solid rgb(255 255 255 / 0.22);
+  background: rgb(15 23 42 / 0.35);
+}
+
+/* FixMyStreet 式工具区：白底、少装饰 */
+.tool-card {
+  border-radius: 0.75rem;
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
 .bento-card {
   border-radius: 1rem;
   border: 1px solid var(--border);

@@ -9,6 +9,11 @@ interface ModeSelectorProps {
   disabled?: boolean;
 }
 
+const MODE_ICONS: Record<RecordMode, string> = {
+  public: "📢",
+  inspection: "📋",
+};
+
 export default function ModeSelector({
   value,
   onChange,
@@ -27,17 +32,22 @@ export default function ModeSelector({
               type="button"
               disabled={disabled}
               onClick={() => onChange(mode)}
-              className={`rounded-xl border px-3 py-3 text-left transition-all ${
+              className={`flex items-start gap-3 rounded-xl border px-4 py-3.5 text-left transition-all ${
                 selected
-                  ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
+                  ? "border-blue-600 bg-blue-50 ring-2 ring-blue-200"
                   : "border-slate-200 bg-white hover:border-blue-300"
               } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
             >
-              <span className="block text-sm font-semibold text-slate-900">
-                {meta.label}
+              <span className="text-xl" aria-hidden>
+                {MODE_ICONS[mode]}
               </span>
-              <span className="mt-1 block text-xs leading-relaxed text-slate-500">
-                {meta.hint}
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold text-slate-900">
+                  {meta.label}
+                </span>
+                <span className="mt-1 block text-xs leading-relaxed text-slate-500">
+                  {meta.hint}
+                </span>
               </span>
             </button>
           );

@@ -24,15 +24,15 @@ export default function SiteNav() {
     <header
       className={`fixed left-0 right-0 top-0 z-50 px-4 py-3 transition-colors duration-300 sm:px-6 ${
         scrolled
-          ? "border-b border-slate-200/70 bg-white/75 backdrop-blur-xl"
-          : "border-b border-white/10 bg-slate-950/40 backdrop-blur-md"
+          ? "border-b border-slate-200/80 bg-white/90 backdrop-blur-xl shadow-sm"
+          : "border-b border-white/10 bg-slate-950/20"
       }`}
     >
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
         <span
           className={`text-sm font-semibold transition-colors ${scrolled ? "text-slate-900" : "text-white"}`}
         >
-          无碍 <span className="text-blue-500">BarrierLens</span>
+          无碍 <span className={scrolled ? "text-blue-600" : "text-blue-300"}>BarrierLens</span>
         </span>
         <nav className="hidden items-center gap-5 sm:flex">
           {LINKS.map((link) => (
@@ -42,7 +42,7 @@ export default function SiteNav() {
               className={`text-xs font-medium transition-colors ${
                 scrolled
                   ? "text-slate-600 hover:text-slate-900"
-                  : "text-white/75 hover:text-white"
+                  : "text-white/85 hover:text-white"
               }`}
             >
               {link.label}
@@ -53,8 +53,8 @@ export default function SiteNav() {
           href="#tool"
           className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
             scrolled
-              ? "btn-primary text-white"
-              : "bg-white/15 text-white ring-1 ring-white/25 hover:bg-white/25"
+              ? "bg-blue-600 text-white hover:bg-blue-700"
+              : "bg-white/90 text-slate-900 hover:bg-white"
           }`}
         >
           开始记录

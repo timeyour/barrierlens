@@ -1,3 +1,4 @@
+import ReportToolIntro from "@/components/ReportToolIntro";
 import AnalysisWorkflow from "@/components/AnalysisWorkflow";
 import EvidenceStory from "@/components/EvidenceStory";
 import HowItWorks from "@/components/HowItWorks";
@@ -35,7 +36,7 @@ export default async function Home({
       <ParallaxVideoHero />
 
       <main className="relative mx-auto flex max-w-5xl flex-col px-4 pb-4 pt-0 md:px-6 md:py-10 lg:py-16">
-        <div className="mobile-snap-screen mobile-snap-screen-scroll order-0 flex flex-col gap-3 rounded-t-[1.75rem] border-t border-slate-200/80 bg-[var(--background)] px-0 py-5 shadow-[0_-16px_40px_rgba(15,23,42,0.08)] md:contents md:min-h-0 md:rounded-none md:border-0 md:bg-transparent md:py-0 md:shadow-none">
+        <div className="mobile-snap-screen mobile-snap-screen-scroll order-0 flex flex-col gap-3 bg-[var(--background)] px-0 py-5 md:contents md:min-h-0 md:bg-transparent md:py-0">
           <EvidenceStory />
           {!showMvpPanels && <V2ScenarioCards embedded />}
         </div>
@@ -45,6 +46,7 @@ export default async function Home({
           className="mobile-no-snap order-2 scroll-mt-20 pt-6 md:min-h-0 md:scroll-mt-20 md:py-0"
         >
           <div id="tool" className="scroll-mt-20" aria-hidden="true" />
+          <ReportToolIntro />
           <AnalysisWorkflow />
         </ScrollReveal>
 
