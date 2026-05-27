@@ -42,10 +42,10 @@ async function dataUrlToFile(dataUrl: string, fileName: string): Promise<File> {
   return new File([blob], fileName, { type: "image/jpeg" });
 }
 
-/** 压缩后存入 localStorage，避免原图过大 */
+/** 压缩后存入 localStorage（缩略图，约 480px） */
 export async function fileToStoredImageDataUrl(file: File): Promise<string> {
   const raw = await readFileAsDataUrl(file);
-  return compressDataUrl(raw, { maxWidth: 960, quality: 0.82 });
+  return compressDataUrl(raw, { maxWidth: 480, quality: 0.55 });
 }
 
 /** 上传 API 前压缩：800px / 0.6，控制体积与推理耗时 */

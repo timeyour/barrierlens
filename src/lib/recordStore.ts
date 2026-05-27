@@ -1,7 +1,27 @@
 import type { ReviewStatus, StoredRecord } from "@/types/analysis";
 
 const STORAGE_KEY = "barrierlens-records";
-const MAX_RECORDS = 50;
+/** 含缩略图时 localStorage 约 5MB 上限，条数不宜过多 */
+const MAX_RECORDS = 25;
+
+export class RecordStorageError extends Error {
+  code: "quota" | "unknown";
+
+  constructor(message: string, code: "quota" | "unknown" = "quota") {
+    super(message);
+    this.name = "RecordStorageError";
+    this.code = code;
+  }
+}
+
+function isQuotaError(error: unknown): boolean {
+  if (!(error instanceof DOMException)) return false;
+  return (
+    error.name === "QuotaExceededError" ||
+    error.code === 22 ||
+    error.code === 1014
+  );
+}
 
 function readAll(): StoredRecord[] {
   if (typeof window === "undefined") return [];
@@ -15,12 +35,44 @@ function readAll(): StoredRecord[] {
   }
 }
 
+function stripImages(record: StoredRecord): StoredRecord {
+  const next = { ...record };
+  delete next.imageDataUrl;
+  delete next.reviewImageDataUrl;
+  return next;
+}
+
+function compactionPasses(records: StoredRecord[]): StoredRecord[][] {
+  const capped = records.slice(0, MAX_RECORDS);
+  return [
+    capped,
+    capped.map((r, i) => (i >= 8 ? stripImages(r) : r)),
+    capped.map((r, i) => (i >= 3 ? stripImages(r) : r)),
+    capped.slice(0, 15).map((r, i) => (i >= 1 ? stripImages(r) : r)),
+    capped.slice(0, 10).map(stripImages),
+    capped.slice(0, 5),
+  ];
+}
+
 function writeAll(records: StoredRecord[]): void {
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(records.slice(0, MAX_RECORDS)),
+  const attempts = compactionPasses(records);
+
+  for (let i = 0; i < attempts.length; i += 1) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(attempts[i]));
+      window.dispatchEvent(new Event("barrierlens-record-saved"));
+      return;
+    } catch (error) {
+      if (!isQuotaError(error) && i === 0) {
+        throw new RecordStorageError("无法写入本机记录", "unknown");
+      }
+    }
+  }
+
+  throw new RecordStorageError(
+    "本机存储空间已满（localStorage 约 5MB）。请在「最近上报」中删除旧记录，或使用浏览器清除本站数据后重试。诊断结果仍可复制/导出。",
+    "quota",
   );
-  window.dispatchEvent(new Event("barrierlens-record-saved"));
 }
 
 export function getRecords(): StoredRecord[] {
@@ -33,6 +85,18 @@ export function getRecords(): StoredRecord[] {
 export function saveRecord(record: StoredRecord): void {
   const existing = readAll();
   writeAll([record, ...existing.filter((r) => r.id !== record.id)]);
+}
+
+export function deleteRecord(id: string): boolean {
+  const next = readAll().filter((r) => r.id !== id);
+  if (next.length === readAll().length) return false;
+  writeAll(next);
+  return true;
+}
+
+export function clearAllRecords(): void {
+  localStorage.removeItem(STORAGE_KEY);
+  window.dispatchEvent(new Event("barrierlens-record-saved"));
 }
 
 export function updateRecordReview(

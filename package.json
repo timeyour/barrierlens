@@ -11,7 +11,8 @@
     "test:round0": "npm run lint && npm run build --webpack",
     "test:multiround": "node scripts/multiround-test.mjs",
     "test:gemma": "node --env-file=.env.local test-gemma.mjs",
-    "verify:gemma": "node --env-file=.env.local scripts/verify-gemma.mjs"
+    "verify:gemma": "node --env-file=.env.local scripts/verify-gemma.mjs",
+    "test:production": "node scripts/test-production-analyze.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.6.0",

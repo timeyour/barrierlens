@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  clearAllRecords,
   formatRecordTime,
   getRecords,
   seedDemoRecordsIfEmpty,
@@ -411,6 +412,26 @@ export default function RecordTimeline() {
         <p className="mt-4 text-center text-[11px] text-slate-400">
           记录保存在本机浏览器 · 共 {records.length} 条 · 当前显示 {visibleRecords.length} 条
         </p>
+        {records.length > 0 && (
+          <p className="mt-2 text-center">
+            <button
+              type="button"
+              className="text-[11px] font-medium text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-red-600"
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "清空本机全部记录？此操作不可恢复，可释放浏览器存储空间。",
+                  )
+                ) {
+                  clearAllRecords();
+                  setRecords([]);
+                }
+              }}
+            >
+              清空本机记录（释放空间）
+            </button>
+          </p>
+        )}
       </section>
     </ScrollReveal>
   );

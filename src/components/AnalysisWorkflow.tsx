@@ -14,7 +14,7 @@ import WizardStepIndicator from "@/components/WizardStepIndicator";
 import ReportNextSteps from "@/components/ReportNextSteps";
 import { downloadMarkdownReport } from "@/lib/exportMarkdown";
 import { compressImageForUpload, fileToStoredImageDataUrl } from "@/lib/imageUtils";
-import { saveRecord, updateRecordReview } from "@/lib/recordStore";
+import { RecordStorageError, saveRecord, updateRecordReview } from "@/lib/recordStore";
 import { scrollToAnchor } from "@/lib/scrollAnchor";
 import type {
   AnalysisResult,
@@ -68,6 +68,7 @@ export default function AnalysisWorkflow() {
   const [savedNotice, setSavedNotice] = useState(false);
   const [savedRecordId, setSavedRecordId] = useState<string | null>(null);
   const [exportedMarked, setExportedMarked] = useState(false);
+  const [storageWarning, setStorageWarning] = useState<string | null>(null);
   const [usedDemoImage, setUsedDemoImage] = useState(false);
 
   const resetAnalysis = useCallback(() => {
@@ -80,6 +81,7 @@ export default function AnalysisWorkflow() {
     setSavedNotice(false);
     setSavedRecordId(null);
     setExportedMarked(false);
+    setStorageWarning(null);
   }, []);
 
   const handleImageSelect = useCallback(
@@ -147,6 +149,21 @@ export default function AnalysisWorkflow() {
     setSavedRecordId(id);
     setSavedNotice(true);
     return id;
+  };
+
+  const persistRecordSafe = async (
+    data: AnalysisResult,
+    imageFile: File | null,
+  ): Promise<string | null> => {
+    try {
+      return await persistRecord(data, imageFile);
+    } catch (error) {
+      if (error instanceof RecordStorageError) {
+        setStorageWarning(error.message);
+        return null;
+      }
+      throw error;
+    }
   };
 
   const markRecordExported = useCallback(() => {
@@ -242,7 +259,7 @@ export default function AnalysisWorkflow() {
       setFallbackReason(responseFallbackReason ?? null);
       setAnalysisTimeMs(responseAnalysisTimeMs ?? null);
       setStatus("success");
-      await persistRecord(analysis, analyzeFile);
+      await persistRecordSafe(analysis, analyzeFile);
       window.requestAnimationFrame(() => scrollToAnchor("#tool-results"));
     } catch (error) {
       setStatus("error");
@@ -465,6 +482,13 @@ export default function AnalysisWorkflow() {
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <strong>演示模式：</strong>
           未配置 GEMINI_API_KEY，当前为 Mock 演示数据。
+        </div>
+      )}
+
+      {storageWarning && status === "success" && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">
+          <strong>未能写入本机时间线：</strong>
+          {storageWarning}
         </div>
       )}
 
