@@ -3,85 +3,15 @@
 import AnchorLink from "@/components/AnchorLink";
 import { HERO_POSTER, HERO_VIDEO } from "@/config/uiAssets";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { bindWeChatVideoAutoplay, isWeChatBrowser } from "@/lib/weChatVideo";
+import {
+  bindHeroVideoPlayback,
+  isWeChatBrowser,
+} from "@/lib/weChatVideo";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useLayoutEffect, useRef, useState } from "react";
 import ProductPreview from "@/components/ProductPreview";
 
 const TAGS = ["现场拍照", "AI 结构化分析", "证据归档", "合规导出"];
-
-function bindHeroVideoPlayback(video: HTMLVideoElement) {
-  video.muted = true;
-  video.defaultMuted = true;
-  video.volume = 0;
-  video.playsInline = true;
-  video.controls = false;
-  video.disablePictureInPicture = true;
-  video.setAttribute("muted", "");
-  video.setAttribute("playsinline", "");
-  video.setAttribute("webkit-playsinline", "");
-  video.setAttribute("x5-playsinline", "");
-  video.setAttribute("x5-video-player-type", "h5-page");
-  video.setAttribute("x5-video-player-fullscreen", "false");
-  video.setAttribute("x5-video-orientation", "portrait");
-
-  let disposed = false;
-
-  const tryPlay = () => {
-    if (disposed || !video.isConnected) return;
-    void video.play().catch(() => {});
-  };
-
-  const mediaEvents = [
-    "loadedmetadata",
-    "loadeddata",
-    "canplay",
-    "canplaythrough",
-  ] as const;
-  for (const event of mediaEvents) {
-    video.addEventListener(event, tryPlay);
-  }
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      if (entries[0]?.isIntersecting) tryPlay();
-    },
-    { threshold: 0.01 },
-  );
-  observer.observe(video);
-
-  const onVisibility = () => {
-    if (document.visibilityState === "visible") tryPlay();
-  };
-  const onPageShow = () => tryPlay();
-  const onGesture = () => tryPlay();
-
-  document.addEventListener("visibilitychange", onVisibility);
-  window.addEventListener("pageshow", onPageShow);
-  window.addEventListener("scroll", onGesture, { once: true, passive: true });
-  window.addEventListener("touchstart", onGesture, { once: true, passive: true });
-  window.addEventListener("pointerdown", onGesture, { once: true, passive: true });
-
-  const unbindWeChat = bindWeChatVideoAutoplay(tryPlay);
-
-  tryPlay();
-  video.load();
-  requestAnimationFrame(tryPlay);
-  window.setTimeout(tryPlay, 120);
-  window.setTimeout(tryPlay, 480);
-  window.setTimeout(tryPlay, 1200);
-
-  return () => {
-    disposed = true;
-    unbindWeChat();
-    for (const event of mediaEvents) {
-      video.removeEventListener(event, tryPlay);
-    }
-    observer.disconnect();
-    document.removeEventListener("visibilitychange", onVisibility);
-    window.removeEventListener("pageshow", onPageShow);
-  };
-}
 
 export default function ParallaxVideoHero() {
   const containerRef = useRef<HTMLElement>(null);
@@ -102,17 +32,18 @@ export default function ParallaxVideoHero() {
     setIsWeChat(isWeChatBrowser());
     const video = videoRef.current;
     if (!video) return;
-    return bindHeroVideoPlayback(video);
+    return bindHeroVideoPlayback(video, () => setVideoReady(true));
   }, []);
 
   const videoClassName =
-    "hero-bg-video absolute inset-0 h-full w-full object-cover transition-opacity duration-500 " +
+    "hero-bg-video absolute inset-0 h-full w-full object-cover transition-opacity duration-700 " +
     (videoReady ? "opacity-100" : "opacity-0") +
     (isDesktop ? " object-[58%_42%] lg:object-[62%_42%]" : " object-[50%_32%]");
 
   const posterClassName =
-    "absolute inset-0 bg-cover bg-center bg-no-repeat " +
-    (isWeChat && !videoReady ? "hero-poster-wechat" : "");
+    "absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-700 " +
+    (videoReady ? "opacity-0" : "opacity-100") +
+    (isWeChat && !videoReady ? " hero-poster-wechat" : "");
 
   return (
     <header
@@ -121,6 +52,7 @@ export default function ParallaxVideoHero() {
     >
       <div className="relative h-[100svh] max-h-[100svh] overflow-hidden md:sticky md:top-0 md:h-screen md:max-h-none md:min-h-0">
         <div className="absolute inset-0 overflow-hidden bg-slate-950">
+          {/* 加载占位：不用 <video poster>，避免微信 X5 一直显示静态图 */}
           <div
             aria-hidden
             className={posterClassName}
@@ -132,7 +64,6 @@ export default function ParallaxVideoHero() {
               ref={videoRef}
               className={videoClassName}
               src={HERO_VIDEO}
-              poster={HERO_POSTER}
               autoPlay
               muted
               loop
@@ -141,7 +72,6 @@ export default function ParallaxVideoHero() {
               disableRemotePlayback
               aria-hidden
               tabIndex={-1}
-              onPlaying={() => setVideoReady(true)}
             />
           </motion.div>
 
