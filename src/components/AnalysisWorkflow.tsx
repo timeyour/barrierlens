@@ -11,9 +11,10 @@ import AiAnalysisPipeline from "@/components/AiAnalysisPipeline";
 import GemmaJsonOutput from "@/components/GemmaJsonOutput";
 import ReportCard from "@/components/ReportCard";
 import WizardStepIndicator from "@/components/WizardStepIndicator";
+import ReportNextSteps from "@/components/ReportNextSteps";
 import { downloadMarkdownReport } from "@/lib/exportMarkdown";
 import { compressImageForUpload, fileToStoredImageDataUrl } from "@/lib/imageUtils";
-import { saveRecord } from "@/lib/recordStore";
+import { saveRecord, updateRecordReview } from "@/lib/recordStore";
 import { scrollToAnchor } from "@/lib/scrollAnchor";
 import type {
   AnalysisResult,
@@ -65,6 +66,8 @@ export default function AnalysisWorkflow() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
+  const [savedRecordId, setSavedRecordId] = useState<string | null>(null);
+  const [exportedMarked, setExportedMarked] = useState(false);
   const [usedDemoImage, setUsedDemoImage] = useState(false);
 
   const resetAnalysis = useCallback(() => {
@@ -75,6 +78,8 @@ export default function AnalysisWorkflow() {
     setAnalysisTimeMs(null);
     setStatus("idle");
     setSavedNotice(false);
+    setSavedRecordId(null);
+    setExportedMarked(false);
   }, []);
 
   const handleImageSelect = useCallback(
@@ -127,18 +132,33 @@ export default function AnalysisWorkflow() {
       }
     }
 
+    const id = crypto.randomUUID();
     const stored: StoredRecord = {
       ...data,
-      id: crypto.randomUUID(),
+      id,
       location: data.location || location.trim() || "地点未标注",
       recordMode: data.recordMode ?? recordMode,
+      targetDepartment: data.targetDepartment ?? targetDepartment,
       reviewStatus: data.reviewStatus ?? "pending",
       recordedAt: data.recordedAt ?? new Date().toISOString(),
       imageDataUrl,
     };
     saveRecord(stored);
+    setSavedRecordId(id);
     setSavedNotice(true);
+    return id;
   };
+
+  const markRecordExported = useCallback(() => {
+    if (!savedRecordId) return;
+    updateRecordReview(savedRecordId, { reviewStatus: "exported" });
+    setResult((prev) =>
+      prev && prev.reviewStatus === "pending"
+        ? { ...prev, reviewStatus: "exported" }
+        : prev,
+    );
+    setExportedMarked(true);
+  }, [savedRecordId]);
 
   const handleAnalyze = async () => {
     let analyzeFile = file;
@@ -241,6 +261,7 @@ export default function AnalysisWorkflow() {
     try {
       await navigator.clipboard.writeText(result.reportText);
       setCopySuccess(true);
+      markRecordExported();
       setTimeout(() => setCopySuccess(false), 2000);
     } catch {
       setErrorMessage("复制失败，请手动选择文本复制");
@@ -250,6 +271,7 @@ export default function AnalysisWorkflow() {
   const handleExport = () => {
     if (!result) return;
     downloadMarkdownReport(result, undefined, recordMode);
+    markRecordExported();
   };
 
   const isLoading = status === "loading";
@@ -457,6 +479,12 @@ export default function AnalysisWorkflow() {
 
       {result && status === "success" && (
         <div id="tool-results" className="scroll-mt-20 space-y-6">
+          <ReportNextSteps
+            recordMode={recordMode}
+            targetDepartment={targetDepartment}
+            exportedMarked={exportedMarked}
+          />
+
           <div className="tool-card p-5 sm:p-8">
             <h2 className="text-lg font-bold text-slate-900">诊断结果</h2>
             <p className="mt-1 text-sm text-slate-500">
