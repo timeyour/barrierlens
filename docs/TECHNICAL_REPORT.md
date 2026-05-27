@@ -23,10 +23,9 @@ Gemma 4 在项目中承担多模态场景理解和结构化生成：
 
 接口位置：`src/lib/gemma.ts`
 
-当前实现使用 Google GenAI SDK 调用 Gemma 4：
+当前实现使用 Gemini REST `generateContent` 调用 Gemma 4：
 
 ```text
-@google/genai
 apiKey: GEMINI_API_KEY 或 GEMMA_API_KEY
 model: GEMMA_MODEL_NAME，默认 gemma-4-26b-a4b-it
 input: text prompt + inlineData image
@@ -48,7 +47,7 @@ Next.js 16 App Router
 ├── API Route
 │   └── /api/analyze
 ├── 模型层
-│   ├── Google GenAI / Gemma 4 接口
+│   ├── Gemini REST / Gemma 4 接口
 │   └── Mock fallback
 └── 本地数据
     └── localStorage 记录、复查状态、前后照片

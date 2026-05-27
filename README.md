@@ -50,7 +50,7 @@ Gemma 4 负责无障碍场景理解与结构化证据生成，不只是识图。
   -> 公众倡导摘要 / 物业巡查整改单
 ```
 
-真实 API 走 `src/lib/gemma.ts`（`@google/genai` → `gemma-4-26b-a4b-it`）。未配置 API Key 时使用 Mock；配置了 Key 但接口超时或失败时，会自动降级为 Mock，并在页面和 API 响应中标注 `analysisSource=mock_fallback`。
+真实 API 走 `src/lib/gemma.ts`（Gemini REST `generateContent` → `gemma-4-26b-a4b-it`）。未配置 API Key 时使用 Mock；配置了 Key 但接口超时或失败时，会自动降级为 Mock，并在页面和 API 响应中标注 `analysisSource=mock_fallback`。
 
 ### API 响应状态
 
@@ -101,6 +101,8 @@ cp .env.example .env.local
 | `GEMMA_API_KEY` | 兼容旧变量名，与 `GEMINI_API_KEY` 二选一 |
 | `GEMMA_MODEL_NAME` | 默认 `gemma-4-26b-a4b-it` |
 | `GEMMA_API_TIMEOUT_MS` | 默认 `25000`（Gemma 4 多模态常需 10–20s；Vercel Hobby 函数上限约 10s，易降级时需 Pro 或调 Key 在 Vercel 同步本变量） |
+| `GEMMA_API_RETRY_ATTEMPTS` | 默认 `2`，仅对网络类错误重试 |
+| `GEMMA_API_PROXY` | 本地开发需代理时填写，如 `http://127.0.0.1:7897`；**Vercel 留空** |
 | `NEXT_PUBLIC_V2_ENABLED` | 默认 `true`；设为 `false` 回退 MVP |
 | `NEXT_PUBLIC_V2_BARRIER_MAP_ENABLED` | 默认 `true` |
 | `NEXT_PUBLIC_V2_REVIEW_FLOW_ENABLED` | 默认 `true` |

@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { fetch as undiciFetch, ProxyAgent } from "undici";
 import { mockAnalyze } from "@/lib/mockAnalysis";
 import type {
   AnalysisRequest,
@@ -17,8 +17,24 @@ import type {
 const HUMAN_REVIEW_CONFIDENCE_THRESHOLD = 0.8;
 const DEFAULT_MODEL_NAME = "gemma-4-26b-a4b-it";
 const DEFAULT_TIMEOUT_MS = 25000;
+const DEFAULT_RETRY_ATTEMPTS = 2;
 
 type RawAnalysis = Partial<AnalysisResult> & Record<string, unknown>;
+type GeminiPart = {
+  text?: string;
+};
+type GeminiRestResponse = {
+  candidates?: Array<{
+    content?: {
+      parts?: GeminiPart[];
+    };
+  }>;
+  error?: {
+    code?: number;
+    message?: string;
+    status?: string;
+  };
+};
 
 export interface AnalyzeImageResponse {
   result: AnalysisResult;
@@ -41,6 +57,34 @@ function getTimeoutMs(): number {
   const raw = Number(process.env.GEMMA_API_TIMEOUT_MS);
   if (!Number.isFinite(raw) || raw <= 0) return DEFAULT_TIMEOUT_MS;
   return raw;
+}
+
+function getRetryAttempts(): number {
+  const raw = Number(process.env.GEMMA_API_RETRY_ATTEMPTS);
+  if (!Number.isFinite(raw) || raw <= 0) return DEFAULT_RETRY_ATTEMPTS;
+  return Math.max(1, Math.min(3, Math.floor(raw)));
+}
+
+function getProxyUrl(): string | undefined {
+  return (
+    process.env.GEMMA_API_PROXY ||
+    process.env.HTTPS_PROXY ||
+    process.env.HTTP_PROXY ||
+    process.env.ALL_PROXY ||
+    process.env.https_proxy ||
+    process.env.http_proxy ||
+    process.env.all_proxy
+  );
+}
+
+function gemmaFetch(input: string, init: RequestInit): Promise<Response> {
+  const proxyUrl = getProxyUrl();
+  if (!proxyUrl) return fetch(input, init);
+
+  return undiciFetch(input, {
+    ...init,
+    dispatcher: new ProxyAgent(proxyUrl),
+  } as unknown as Parameters<typeof undiciFetch>[1]) as unknown as Promise<Response>;
 }
 
 function normalizePathStatus(raw: unknown): PathStatus {
@@ -292,24 +336,6 @@ function parseDataUrl(dataUrl: string): { mimeType: string; data: string } {
   return { mimeType: "image/jpeg", data: dataUrl };
 }
 
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => {
-      reject(new Error(`${label} timeout after ${timeoutMs}ms`));
-    }, timeoutMs);
-
-    promise
-      .then((value) => {
-        clearTimeout(timer);
-        resolve(value);
-      })
-      .catch((error) => {
-        clearTimeout(timer);
-        reject(error);
-      });
-  });
-}
-
 function buildAnalysisPrompt(
   targetDepartment: string,
   recordMode: RecordMode,
@@ -357,23 +383,98 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+function isRetryableGemmaError(error: unknown): boolean {
+  const message = errorMessage(error);
+  return /fetch failed|ECONNRESET|ETIMEDOUT|UND_ERR|network|socket/i.test(message);
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function requestGemmaContentOnce(
+  apiKey: string,
+  modelName: string,
+  body: Record<string, unknown>,
+  timeoutMs: number,
+): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+  try {
+    const response = await gemmaFetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    const text = await response.text();
+
+    if (!response.ok) {
+      throw new Error(`Gemma API HTTP ${response.status}: ${text.slice(0, 500)}`);
+    }
+
+    const parsed = JSON.parse(text) as GeminiRestResponse;
+    if (parsed.error) {
+      throw new Error(
+        `Gemma API ${parsed.error.status ?? parsed.error.code ?? "error"}: ${parsed.error.message ?? "unknown error"}`,
+      );
+    }
+
+    const content = parsed.candidates?.[0]?.content?.parts
+      ?.map((part) => part.text ?? "")
+      .join("")
+      .trim();
+    if (!content) {
+      throw new Error("Gemma API returned empty content");
+    }
+    return content;
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error(`Gemma API timeout after ${timeoutMs}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function requestGemmaContent(
+  apiKey: string,
+  modelName: string,
+  body: Record<string, unknown>,
+  timeoutMs: number,
+): Promise<string> {
+  const attempts = getRetryAttempts();
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await requestGemmaContentOnce(apiKey, modelName, body, timeoutMs);
+    } catch (error) {
+      lastError = error;
+      if (attempt >= attempts || !isRetryableGemmaError(error)) throw error;
+      await wait(350 * attempt);
+    }
+  }
+
+  throw lastError;
+}
+
 export async function callGemmaText(prompt: string): Promise<string> {
   const apiKey = getApiKey();
   if (!apiKey) {
     throw new Error("Missing GEMINI_API_KEY");
   }
 
-  const ai = new GoogleGenAI({ apiKey });
-  const response = await ai.models.generateContent({
-    model: getModelName(),
-    contents: prompt,
-  });
-
-  const text = response.text?.trim();
-  if (!text) {
-    throw new Error("Gemma API returned empty content");
-  }
-  return text;
+  return requestGemmaContent(apiKey, getModelName(), {
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: {
+      maxOutputTokens: 512,
+      temperature: 0.2,
+    },
+  }, getTimeoutMs());
 }
 
 async function callGemmaApi(request: AnalysisRequest): Promise<AnalysisResult> {
@@ -384,7 +485,6 @@ async function callGemmaApi(request: AnalysisRequest): Promise<AnalysisResult> {
 
   const modelName = getModelName();
   const timeoutMs = getTimeoutMs();
-  const ai = new GoogleGenAI({ apiKey });
   const prompt = buildAnalysisPrompt(
     request.targetDepartment,
     request.recordMode,
@@ -392,24 +492,19 @@ async function callGemmaApi(request: AnalysisRequest): Promise<AnalysisResult> {
   );
   const { mimeType, data } = parseDataUrl(request.imageBase64);
 
-  const response = await withTimeout(
-    ai.models.generateContent({
-      model: modelName,
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: prompt }, { inlineData: { mimeType, data } }],
-        },
-      ],
-    }),
-    timeoutMs,
-    "Gemma API",
-  );
-
-  const content = response.text?.trim();
-  if (!content) {
-    throw new Error("Gemma API returned empty content");
-  }
+  const content = await requestGemmaContent(apiKey, modelName, {
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: prompt }, { inlineData: { mimeType, data } }],
+      },
+    ],
+    generationConfig: {
+      maxOutputTokens: 1400,
+      responseMimeType: "application/json",
+      temperature: 0.2,
+    },
+  }, timeoutMs);
 
   return normalizeResult(parseGemmaJson(content), request);
 }
@@ -418,7 +513,7 @@ export async function analyzeImage(
   request: AnalysisRequest,
 ): Promise<AnalyzeImageResponse> {
   const modelName = getModelName();
-  const provider = "google-genai";
+  const provider = "google-gemini-rest";
 
   if (getApiKey()) {
     try {

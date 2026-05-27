@@ -250,7 +250,8 @@ async function main() {
   console.log("无碍 BarrierLens · 多轮测试");
   console.log(`Base URL: ${BASE_URL}`);
   console.log(`测试图片: ${images.length} 张`);
-  console.log(`Mock 模式: ${process.env.GEMMA_API_KEY ? "否（已配置 GEMMA_API_KEY）" : "是"}`);
+  const hasKey = Boolean(process.env.GEMINI_API_KEY || process.env.GEMMA_API_KEY);
+  console.log(`Mock 模式: ${hasKey ? "否（已配置 API Key）" : "是"}`);
 
   const ready = await waitForServer();
   if (!ready) {
@@ -293,7 +294,7 @@ async function main() {
   const report = {
     generatedAt: new Date().toISOString(),
     baseUrl: BASE_URL,
-    mockMode: !process.env.GEMMA_API_KEY,
+    mockMode: !hasKey,
     imageCount: images.length,
     images,
     roundSummaries,

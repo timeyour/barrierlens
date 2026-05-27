@@ -16,9 +16,9 @@ const TAGS = ["现场拍照", "AI 结构化分析", "证据归档", "合规导�
 export default function ParallaxVideoHero() {
   const containerRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const posterRef = useRef<HTMLDivElement>(null);
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [videoReady, setVideoReady] = useState(false);
-  const [isWeChat, setIsWeChat] = useState(false);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -29,7 +29,7 @@ export default function ParallaxVideoHero() {
   const scrollHintOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
 
   useLayoutEffect(() => {
-    setIsWeChat(isWeChatBrowser());
+    posterRef.current?.classList.toggle("hero-poster-wechat", isWeChatBrowser());
     const video = videoRef.current;
     if (!video) return;
     return bindHeroVideoPlayback(video, () => setVideoReady(true));
@@ -42,8 +42,7 @@ export default function ParallaxVideoHero() {
 
   const posterClassName =
     "absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-700 " +
-    (videoReady ? "opacity-0" : "opacity-100") +
-    (isWeChat && !videoReady ? " hero-poster-wechat" : "");
+    (videoReady ? "opacity-0" : "opacity-100");
 
   return (
     <header
@@ -54,6 +53,7 @@ export default function ParallaxVideoHero() {
         <div className="absolute inset-0 overflow-hidden bg-slate-950">
           {/* 加载占位：不用 <video poster>，避免微信 X5 一直显示静态图 */}
           <div
+            ref={posterRef}
             aria-hidden
             className={posterClassName}
             style={{ backgroundImage: `url(${HERO_POSTER})` }}

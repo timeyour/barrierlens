@@ -7,7 +7,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { GoogleGenAI } from "@google/genai";
+import { fetch as undiciFetch, ProxyAgent } from "undici";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -16,6 +16,72 @@ const TEST_IMAGE = path.join(ROOT, "public/images/scene-blocked-close.png");
 const apiKey = process.env.GEMINI_API_KEY || process.env.GEMMA_API_KEY;
 const modelName = process.env.GEMMA_MODEL_NAME || "gemma-4-26b-a4b-it";
 const timeoutMs = Number(process.env.GEMMA_API_TIMEOUT_MS || 30000);
+const retryRaw = Number(process.env.GEMMA_API_RETRY_ATTEMPTS || 2);
+const retryAttempts = Number.isFinite(retryRaw)
+  ? Math.max(1, Math.min(3, Math.floor(retryRaw)))
+  : 2;
+const proxyUrl =
+  process.env.GEMMA_API_PROXY ||
+  process.env.HTTPS_PROXY ||
+  process.env.HTTP_PROXY ||
+  process.env.ALL_PROXY ||
+  process.env.https_proxy ||
+  process.env.http_proxy ||
+  process.env.all_proxy;
+
+const proxyDispatcher = proxyUrl ? new ProxyAgent(proxyUrl) : undefined;
+const gemmaFetch = proxyDispatcher
+  ? (input, init) => undiciFetch(input, { ...init, dispatcher: proxyDispatcher })
+  : fetch;
+
+function isRetryable(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  return /fetch failed|ECONNRESET|ETIMEDOUT|UND_ERR|network|socket/i.test(message);
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function requestGemmaContentOnce(body) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+  try {
+    const response = await gemmaFetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    const text = await response.text();
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${text.slice(0, 300)}`);
+    }
+    const json = JSON.parse(text);
+    return json.candidates?.[0]?.content?.parts
+      ?.map((part) => part.text ?? "")
+      .join("")
+      .trim();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function requestGemmaContent(body) {
+  let lastError;
+  for (let attempt = 1; attempt <= retryAttempts; attempt += 1) {
+    try {
+      return await requestGemmaContentOnce(body);
+    } catch (error) {
+      lastError = error;
+      if (attempt >= retryAttempts || !isRetryable(error)) throw error;
+      await wait(350 * attempt);
+    }
+  }
+  throw lastError;
+}
 
 function section(title) {
   console.log(`\n${"─".repeat(50)}`);
@@ -44,13 +110,15 @@ if (apiKey?.trim()) {
 }
 ok(`模型: ${modelName}`);
 ok(`超时: ${timeoutMs}ms`);
+ok(`网络重试: ${retryAttempts} 次`);
+if (proxyUrl) ok(`代理: ${proxyUrl}`);
 
 section("2. 网络连通性（Google Generative Language API）");
 process.stdout.write("   正在连接 generativelanguage.googleapis.com（最多 12s）… ");
 try {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 12000);
-  const res = await fetch("https://generativelanguage.googleapis.com/", {
+  const res = await gemmaFetch("https://generativelanguage.googleapis.com/", {
     signal: controller.signal,
   });
   clearTimeout(timer);
@@ -69,16 +137,16 @@ try {
 section("3. 文本 API 冒烟");
 process.stdout.write(`   正在调用 ${modelName}（最多 ${timeoutMs / 1000}s）… `);
 try {
-  const ai = new GoogleGenAI({ apiKey });
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  const response = await ai.models.generateContent({
-    model: modelName,
-    contents: "用一句话说明盲道被占用为什么影响无障碍通行。只输出一句中文。",
-    config: { abortSignal: controller.signal },
+  const text = await requestGemmaContent({
+    contents: [
+      {
+        parts: [
+          { text: "用一句话说明盲道被占用为什么影响无障碍通行。只输出一句中文。" },
+        ],
+      },
+    ],
+    generationConfig: { maxOutputTokens: 128, temperature: 0.2 },
   });
-  clearTimeout(timer);
-  const text = response.text?.trim();
   console.log("完成");
   if (!text) {
     fail("API 返回空内容");
@@ -109,11 +177,7 @@ if (!fs.existsSync(TEST_IMAGE)) {
   try {
     const buffer = fs.readFileSync(TEST_IMAGE);
     const b64 = buffer.toString("base64");
-    const ai = new GoogleGenAI({ apiKey });
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    const response = await ai.models.generateContent({
-      model: modelName,
+    const text = await requestGemmaContent({
       contents: [
         {
           role: "user",
@@ -125,10 +189,12 @@ if (!fs.existsSync(TEST_IMAGE)) {
           ],
         },
       ],
-      config: { abortSignal: controller.signal },
+      generationConfig: {
+        maxOutputTokens: 256,
+        responseMimeType: "application/json",
+        temperature: 0.2,
+      },
     });
-    clearTimeout(timer);
-    const text = response.text?.trim();
     console.log("完成");
     if (!text) {
       fail("多模态 API 返回空内容");
