@@ -16,7 +16,7 @@ import type {
 
 const HUMAN_REVIEW_CONFIDENCE_THRESHOLD = 0.8;
 const DEFAULT_MODEL_NAME = "gemma-4-26b-a4b-it";
-const DEFAULT_TIMEOUT_MS = 8000;
+const DEFAULT_TIMEOUT_MS = 25000;
 
 type RawAnalysis = Partial<AnalysisResult> & Record<string, unknown>;
 

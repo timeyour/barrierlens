@@ -29,7 +29,7 @@ type WorkflowStatus = "idle" | "loading" | "success" | "error";
 type WizardStep = 1 | 2 | 3;
 
 const DEMO_IMAGE_URL = "/images/scene-blocked-close.png";
-const ANALYZE_CLIENT_TIMEOUT_MS = 12000;
+const ANALYZE_CLIENT_TIMEOUT_MS = 35000;
 
 type AnalyzeApiResponse = AnalysisResult & {
   mockMode?: boolean;

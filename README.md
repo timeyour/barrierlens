@@ -100,7 +100,7 @@ cp .env.example .env.local
 | `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/app/apikey) 创建的 Key；为空时使用 Mock |
 | `GEMMA_API_KEY` | 兼容旧变量名，与 `GEMINI_API_KEY` 二选一 |
 | `GEMMA_MODEL_NAME` | 默认 `gemma-4-26b-a4b-it` |
-| `GEMMA_API_TIMEOUT_MS` | 默认 `30000` |
+| `GEMMA_API_TIMEOUT_MS` | 默认 `25000`（Gemma 4 多模态常需 10–20s；Vercel Hobby 函数上限约 10s，易降级时需 Pro 或调 Key 在 Vercel 同步本变量） |
 | `NEXT_PUBLIC_V2_ENABLED` | 默认 `true`；设为 `false` 回退 MVP |
 | `NEXT_PUBLIC_V2_BARRIER_MAP_ENABLED` | 默认 `true` |
 | `NEXT_PUBLIC_V2_REVIEW_FLOW_ENABLED` | 默认 `true` |
