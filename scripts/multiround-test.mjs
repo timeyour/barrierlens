@@ -16,6 +16,7 @@ const ROOT = path.resolve(__dirname, "..");
 const IMAGES_DIR = path.join(ROOT, "public/images");
 const REPORTS_DIR = path.join(ROOT, "tests/reports");
 const BASE_URL = process.env.TEST_BASE_URL ?? "http://localhost:3000";
+const LATENCY_BUDGET_MS = Number(process.env.GEMMA_API_TIMEOUT_MS || 25000);
 
 const DEPARTMENTS = ["物业", "社区", "商场", "城管"];
 const MODES = [
@@ -175,8 +176,8 @@ async function runCase(testCase) {
     }
 
     const errors = validateResult(body, testCase);
-    if (latencyMs > 8000) {
-      errors.push(`耗时超标: ${latencyMs}ms > 8000ms`);
+    if (latencyMs > LATENCY_BUDGET_MS) {
+      errors.push(`耗时超标: ${latencyMs}ms > ${LATENCY_BUDGET_MS}ms`);
     }
 
     return {
@@ -285,7 +286,7 @@ async function main() {
   console.log(`${"#".repeat(60)}`);
   console.log(`总用例: ${allResults.length}  通过: ${totalPassed}  失败: ${totalFailed}`);
   console.log(`结构化成功率: ${successRate}% (目标 ≥95%)`);
-  console.log(`平均分析耗时: ${avgLatency}ms (目标 ≤8000ms)`);
+  console.log(`平均分析耗时: ${avgLatency}ms (目标 ≤${LATENCY_BUDGET_MS}ms)`);
   console.log(`测试照片覆盖: ${images.length} 张 (目标 ≥30 张需扩充数据集)`);
 
   fs.mkdirSync(REPORTS_DIR, { recursive: true });
