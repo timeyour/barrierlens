@@ -5,7 +5,7 @@ import HowItWorks from "@/components/HowItWorks";
 import OverlayShowcase from "@/components/OverlayShowcase";
 import HashScrollHandler from "@/components/HashScrollHandler";
 import PageBackground from "@/components/PageBackground";
-import ParallaxVideoHero from "@/components/ParallaxVideoHero";
+import OptimusHero from "@/components/OptimusHero";
 import RecordTimeline from "@/components/RecordTimeline";
 import ScrollProgressBar from "@/components/ScrollProgress";
 import ScrollReveal from "@/components/ScrollReveal";
@@ -33,7 +33,7 @@ export default async function Home({
       <HashScrollHandler />
       <ScrollProgressBar />
       <SiteNav />
-      <ParallaxVideoHero />
+      <OptimusHero />
 
       <main className="relative mx-auto flex max-w-6xl flex-col px-4 pb-4 pt-0 md:px-6 md:py-10 lg:py-16">
         <div className="mobile-snap-screen mobile-snap-screen-scroll order-0 flex flex-col gap-3 bg-[var(--background)] px-0 py-5 md:contents md:min-h-0 md:bg-transparent md:py-0">
