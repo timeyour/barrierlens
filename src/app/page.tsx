@@ -35,33 +35,37 @@ export default async function Home({
       <SiteNav />
       <ParallaxVideoHero />
 
-      <main className="relative mx-auto flex max-w-6xl flex-col px-4 pb-4 pt-0 md:px-6 md:py-10 lg:py-16">
+      <main className="relative mx-auto flex max-w-6xl flex-col px-4 pb-4 pt-0 md:px-6 md:py-10 lg:py-14">
         <div className="mobile-snap-screen mobile-snap-screen-scroll order-0 flex flex-col gap-3 bg-[var(--background)] px-0 py-5 md:contents md:min-h-0 md:bg-transparent md:py-0">
           <EvidenceStory />
           {!showMvpPanels && <V2ScenarioCards embedded />}
         </div>
 
+        <hr className="section-divider order-1 hidden md:block" />
+
         <ScrollReveal
           delay={0.05}
-          className="mobile-no-snap order-2 scroll-mt-20 pt-6 md:min-h-0 md:scroll-mt-20 md:py-0"
+          className="mobile-no-snap order-2 scroll-mt-20 md:scroll-mt-20"
         >
           <div id="tool" className="scroll-mt-20" aria-hidden="true" />
           <ReportToolIntro />
           <AnalysisWorkflow />
         </ScrollReveal>
 
-        <div className="mobile-no-snap order-3 scroll-mt-16 pt-10 md:min-h-0 md:pt-0">
+        <hr className="section-divider order-3 hidden md:block" />
+
+        <div className="mobile-no-snap order-4 scroll-mt-12 md:scroll-mt-0">
           <RecordTimeline />
         </div>
 
         {showMvpPanels && (
-          <div className="order-4 scroll-mt-0">
+          <div className="order-5 scroll-mt-0">
             <OverlayShowcase />
           </div>
         )}
 
         {showMvpPanels && (
-          <div className="order-5 hidden md:block">
+          <div className="order-6 hidden md:block">
             <HowItWorks />
           </div>
         )}

@@ -21,7 +21,7 @@ export default function SectionHeader({
     <div className={`mb-6 sm:mb-8 ${alignClass}`}>
       <p className="section-eyebrow">{eyebrow}</p>
       <h2
-        className={`mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl ${titleClassName}`}
+        className={`mt-2 text-2xl font-semibold tracking-tight text-slate-900 sm:text-[1.75rem] ${titleClassName}`}
       >
         {title}
       </h2>

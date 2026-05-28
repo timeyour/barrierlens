@@ -87,19 +87,11 @@ export default function ParallaxVideoHero() {
               <div className="hero-tag mb-3 inline-flex items-center gap-2 px-3 py-1 text-[11px] font-semibold text-blue-200 md:text-xs">
                 公共空间无障碍 · 通行风险记录
               </div>
-              <h1 className="text-[2rem] font-bold leading-[1.1] tracking-tight text-white md:text-4xl lg:text-5xl">
-                无碍{" "}
-                <span className="bg-gradient-to-r from-blue-300 via-sky-200 to-emerald-300 bg-clip-text text-transparent">
-                  BarrierLens
-                </span>
+              <h1 className="text-[2rem] font-semibold leading-[1.08] tracking-tight text-white md:text-4xl lg:text-[2.65rem]">
+                无碍 <span className="text-blue-100">BarrierLens</span>
               </h1>
-              <p className="mt-3 text-[15px] leading-relaxed text-white/85 md:max-w-md md:text-lg">
-                <span className="md:hidden">
-                  不必懂规范条文——拍现场、AI 归档、推动复查，把「过不去」变成可跟进的证据。
-                </span>
-                <span className="hidden md:inline">
-                  不必自备测量工具或专业规范知识：Gemma 4 识别盲道占用、入口受阻与通行链断点，生成可复查的现场证据。
-                </span>
+              <p className="mt-3 max-w-md text-[15px] leading-relaxed text-white/88 md:text-[17px]">
+                不必懂规范条文——拍现场、AI 写清楚、本机留证据，把通行受阻变成可跟进的记录。
               </p>
 
               <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -138,7 +130,9 @@ export default function ParallaxVideoHero() {
               className="pointer-events-none mt-6 hidden max-h-[min(480px,calc(100vh-8rem))] items-center justify-end md:mt-0 md:flex md:pr-2 lg:pr-4"
               aria-hidden
             >
-              <ProductPreview scrollProgress={scrollYProgress} variant="hero" />
+              <div className="rounded-2xl border border-white/15 bg-white/5 p-2 shadow-2xl shadow-black/20 backdrop-blur-sm">
+                <ProductPreview scrollProgress={scrollYProgress} variant="hero" />
+              </div>
             </div>
           </div>
         </div>
