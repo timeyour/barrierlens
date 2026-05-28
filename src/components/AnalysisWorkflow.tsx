@@ -49,6 +49,29 @@ async function fetchDemoFile(): Promise<File> {
   });
 }
 
+/** 让浏览器先绘制 loading，再跑图片压缩等重活 */
+function waitForPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  });
+}
+
+function SubmitLoadingOverlay({ label }: { label: string }) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-xl bg-white/95 px-6 text-center backdrop-blur-sm"
+    >
+      <span className="h-10 w-10 animate-spin rounded-full border-[3px] border-blue-600 border-t-transparent" />
+      <p className="mt-4 text-base font-bold text-slate-900">正在生成{label}</p>
+      <p className="mt-1 text-sm text-slate-600">Gemma 4 分析中，约需 15–30 秒</p>
+      <p className="mt-3 text-xs text-slate-500">请勿关闭页面</p>
+    </div>
+  );
+}
+
 export default function AnalysisWorkflow() {
   const [wizardStep, setWizardStep] = useState<WizardStep>(1);
   const [file, setFile] = useState<File | null>(null);
@@ -182,31 +205,17 @@ export default function AnalysisWorkflow() {
     setExportedMarked(true);
   }, [savedRecordId]);
 
-  const handleAnalyze = async () => {
-    let analyzeFile = file;
-
-    if (!analyzeFile) {
-      try {
-        analyzeFile = await fetchDemoFile();
-        const demoPreview = URL.createObjectURL(analyzeFile);
-        setFile(analyzeFile);
-        setPreviewUrl((prev) => {
-          if (prev) URL.revokeObjectURL(prev);
-          return demoPreview;
-        });
-        setUsedDemoImage(true);
-      } catch {
-        setErrorMessage("请先上传现场照片，或使用样例图");
-        return;
-      }
-    }
-
+  const beginAnalyzing = useCallback(() => {
     flushSync(() => {
       setErrorMessage(null);
       clearAnalysisOutput();
       setStatus("loading");
     });
-    window.requestAnimationFrame(() => scrollToAnchor("#tool-analyzing"));
+  }, [clearAnalysisOutput]);
+
+  const runAnalysis = async (analyzeFile: File) => {
+    await waitForPaint();
+    scrollToAnchor("#tool-analyzing", "auto");
 
     const formData = new FormData();
     const uploadFile = await compressImageForUpload(analyzeFile);
@@ -279,6 +288,34 @@ export default function AnalysisWorkflow() {
         error instanceof Error ? error.message : "分析失败，请稍后重试",
       );
     }
+  };
+
+  const handleSubmitClick = async () => {
+    if (status === "loading") return;
+
+    let analyzeFile = file;
+
+    if (!analyzeFile) {
+      try {
+        analyzeFile = await fetchDemoFile();
+        const demoPreview = URL.createObjectURL(analyzeFile);
+        setFile(analyzeFile);
+        setPreviewUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return demoPreview;
+        });
+        setUsedDemoImage(true);
+      } catch {
+        setErrorMessage("请先上传现场照片，或使用样例图");
+        return;
+      }
+    }
+
+    beginAnalyzing();
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      navigator.vibrate(12);
+    }
+    await runAnalysis(analyzeFile);
   };
 
   const handleCopy = async () => {
@@ -409,7 +446,10 @@ export default function AnalysisWorkflow() {
           )}
 
           {wizardStep === 3 && (
-            <div className="space-y-5">
+            <div id="tool-analyzing" className="relative space-y-5">
+              {isLoading && (
+                <SubmitLoadingOverlay label={RECORD_MODES[recordMode].label} />
+              )}
               <div>
                 <h3 className="text-lg font-bold text-slate-900">确认并提交</h3>
                 <p className="mt-1 text-sm text-slate-600">
@@ -442,10 +482,14 @@ export default function AnalysisWorkflow() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => void handleAnalyze()}
+                  onClick={() => void handleSubmitClick()}
                   disabled={isLoading}
                   aria-busy={isLoading}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-transform hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 sm:flex-none sm:min-w-[200px]"
+                  className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold text-white transition-transform sm:flex-none sm:min-w-[200px] ${
+                    isLoading
+                      ? "cursor-wait bg-blue-800 ring-2 ring-blue-300 ring-offset-1"
+                      : "bg-blue-600 hover:bg-blue-700 active:scale-[0.98]"
+                  }`}
                 >
                   {isLoading ? (
                     <>
@@ -458,9 +502,7 @@ export default function AnalysisWorkflow() {
                 </button>
               </div>
               {isLoading && (
-                <div id="tool-analyzing">
-                  <AiAnalysisPipeline running={isLoading} result={null} />
-                </div>
+                <AiAnalysisPipeline running={isLoading} result={null} />
               )}
             </div>
           )}
