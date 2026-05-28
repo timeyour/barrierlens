@@ -11,7 +11,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useLayoutEffect, useRef, useState } from "react";
 import ProductPreview from "@/components/ProductPreview";
 
-const TAGS = ["现场拍照", "AI 结构化分析", "证据归档", "合规导出"];
+const TAGS = ["现场拍照", "AI 分析", "本机归档"];
 
 export default function ParallaxVideoHero() {
   const containerRef = useRef<HTMLElement>(null);
@@ -47,7 +47,7 @@ export default function ParallaxVideoHero() {
   return (
     <header
       ref={containerRef}
-      className="mobile-snap-screen mobile-snap-screen-fixed relative md:h-[180vh] lg:h-[200vh]"
+      className="mobile-snap-screen mobile-snap-screen-fixed relative md:h-[130vh] lg:h-[140vh]"
     >
       <div className="relative h-[100svh] max-h-[100svh] overflow-hidden md:sticky md:top-0 md:h-screen md:max-h-none md:min-h-0">
         <div className="absolute inset-0 overflow-hidden bg-slate-950">
@@ -87,22 +87,15 @@ export default function ParallaxVideoHero() {
               <div className="hero-tag mb-3 inline-flex items-center gap-2 px-3 py-1 text-[11px] font-semibold text-blue-200 md:text-xs">
                 公共空间无障碍 · 通行风险记录
               </div>
-              <h1 className="text-[2rem] font-bold leading-[1.1] tracking-tight text-white md:text-4xl lg:text-5xl">
+              <h1 className="text-[2rem] font-semibold leading-[1.08] tracking-tight text-white md:text-4xl lg:text-[2.75rem]">
                 无碍{" "}
-                <span className="bg-gradient-to-r from-blue-300 via-sky-200 to-emerald-300 bg-clip-text text-transparent">
-                  BarrierLens
-                </span>
+                <span className="text-sky-200">BarrierLens</span>
               </h1>
-              <p className="mt-3 text-[15px] leading-relaxed text-white/85 md:max-w-md md:text-lg">
-                <span className="md:hidden">
-                  不必懂规范条文——拍现场、AI 归档、推动复查，把「过不去」变成可跟进的证据。
-                </span>
-                <span className="hidden md:inline">
-                  不必自备测量工具或专业规范知识：Gemma 4 识别盲道占用、入口受阻与通行链断点，生成可复查的现场证据。
-                </span>
+              <p className="mt-3 max-w-md text-[15px] leading-relaxed text-white/88 md:text-lg">
+                拍现场、AI 写清楚、本机留证据——把盲道占用和通行受阻变成可跟进的记录。
               </p>
 
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <AnchorLink
                   href="#tool"
                   className="btn-primary inline-flex w-full items-center justify-center rounded-xl px-5 py-3.5 text-sm font-semibold sm:w-auto sm:px-6"
@@ -111,13 +104,13 @@ export default function ParallaxVideoHero() {
                 </AnchorLink>
                 <AnchorLink
                   href="#story"
-                  className="inline-flex w-full items-center justify-center rounded-xl border border-white/35 bg-white/10 px-5 py-3 text-sm font-medium text-white transition hover:bg-white/20 sm:w-auto"
+                  className="inline-flex w-full items-center justify-center text-sm font-medium text-white/80 underline decoration-white/30 underline-offset-4 transition hover:text-white sm:w-auto"
                 >
-                  了解完整闭环
+                  了解背景故事
                 </AnchorLink>
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-1.5 lg:mt-5 lg:gap-2">
+              <div className="mt-5 flex flex-wrap gap-2">
                 {TAGS.map((tag) => (
                   <span
                     key={tag}

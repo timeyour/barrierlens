@@ -49,6 +49,26 @@ body {
   color: var(--primary);
 }
 
+/* Hero → 工具区衔接（FixMyStreet 式白底工具带） */
+.tool-rail {
+  position: relative;
+  z-index: 10;
+  margin-top: -2.5rem;
+  border-radius: 1.75rem 1.75rem 0 0;
+  border: 1px solid rgb(226 232 240 / 0.9);
+  border-bottom: none;
+  background: linear-gradient(180deg, #ffffff 0%, var(--background) 100%);
+  box-shadow: 0 -20px 48px -28px rgba(15, 23, 42, 0.18);
+  padding: 2rem 1rem 2.5rem;
+}
+
+@media (min-width: 768px) {
+  .tool-rail {
+    margin-top: -4rem;
+    padding: 2.75rem 1.5rem 3rem;
+  }
+}
+
 /* 工具区主卡片：扩散阴影 + 细边框，避免 generic card slop */
 .tool-card {
   border-radius: 1.25rem;

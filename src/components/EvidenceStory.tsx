@@ -230,7 +230,7 @@ export default function EvidenceStory({
 
   return (
     <section
-      id="story"
+      id="story-content"
       className={`relative scroll-mt-20 ${compact ? "mb-0" : "mb-8 md:mb-12"} ${className}`}
       aria-label="无碍故事线"
       aria-live="polite"

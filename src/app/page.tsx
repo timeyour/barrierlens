@@ -1,6 +1,5 @@
 import ReportToolIntro from "@/components/ReportToolIntro";
 import AnalysisWorkflow from "@/components/AnalysisWorkflow";
-import EvidenceStory from "@/components/EvidenceStory";
 import HowItWorks from "@/components/HowItWorks";
 import OverlayShowcase from "@/components/OverlayShowcase";
 import HashScrollHandler from "@/components/HashScrollHandler";
@@ -10,7 +9,7 @@ import RecordTimeline from "@/components/RecordTimeline";
 import ScrollProgressBar from "@/components/ScrollProgress";
 import ScrollReveal from "@/components/ScrollReveal";
 import SiteNav from "@/components/SiteNav";
-import V2ScenarioCards from "@/components/V2ScenarioCards";
+import StoryFold from "@/components/StoryFold";
 import { resolveUiMode } from "@/config/featureFlags";
 
 function firstValue(raw?: string | string[]): string | undefined {
@@ -35,40 +34,42 @@ export default async function Home({
       <SiteNav />
       <ParallaxVideoHero />
 
-      <main className="relative mx-auto flex max-w-6xl flex-col px-4 pb-4 pt-0 md:px-6 md:py-10 lg:py-16">
-        <div className="mobile-snap-screen mobile-snap-screen-scroll order-0 flex flex-col gap-3 bg-[var(--background)] px-0 py-5 md:contents md:min-h-0 md:bg-transparent md:py-0">
-          <EvidenceStory />
-          {!showMvpPanels && <V2ScenarioCards embedded />}
-        </div>
-
+      <main className="relative mx-auto flex max-w-6xl flex-col px-0 pb-4 md:px-6 md:py-6 lg:py-10">
         <ScrollReveal
-          delay={0.05}
-          className="mobile-no-snap order-2 scroll-mt-20 pt-6 md:min-h-0 md:scroll-mt-20 md:py-0"
+          delay={0.02}
+          className="mobile-no-snap order-1 scroll-mt-20 md:scroll-mt-20"
         >
-          <div id="tool" className="scroll-mt-20" aria-hidden="true" />
-          <ReportToolIntro />
-          <AnalysisWorkflow />
+          <section id="tool" className="tool-rail scroll-mt-20">
+            <div className="mx-auto max-w-6xl px-4 md:px-0">
+              <ReportToolIntro />
+              <AnalysisWorkflow />
+            </div>
+          </section>
         </ScrollReveal>
 
-        <div className="mobile-no-snap order-3 scroll-mt-16 pt-10 md:min-h-0 md:pt-0">
+        <div className="mobile-no-snap order-2 scroll-mt-12 px-4 md:px-0">
           <RecordTimeline />
         </div>
 
+        <div className="order-3 px-4 md:px-0">
+          <StoryFold />
+        </div>
+
         {showMvpPanels && (
-          <div className="order-4 scroll-mt-0">
+          <div className="order-4 mt-10 scroll-mt-0 px-4 md:px-0">
             <OverlayShowcase />
           </div>
         )}
 
         {showMvpPanels && (
-          <div className="order-5 hidden md:block">
+          <div className="order-5 mt-10 hidden px-4 md:block md:px-0">
             <HowItWorks />
           </div>
         )}
       </main>
 
       <ScrollReveal>
-        <footer className="border-t border-slate-200/60 bg-white/60 py-8 backdrop-blur-md md:py-12">
+        <footer className="mt-12 border-t border-slate-200/60 bg-white/80 py-8 backdrop-blur-md md:py-12">
           <div className="mx-auto max-w-6xl px-4 text-center text-xs text-slate-500 sm:px-6">
             <p className="font-medium text-slate-700">无碍 BarrierLens</p>
             <p className="mt-2 hidden md:block">

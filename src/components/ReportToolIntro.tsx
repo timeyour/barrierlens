@@ -3,11 +3,10 @@
 import { getRecords } from "@/lib/recordStore";
 import { useEffect, useState } from "react";
 
-const STEPS = [
-  { n: "01", title: "拍照或选样例", desc: "上传现场照片，AI 读取空间冲突" },
-  { n: "02", title: "选类别与模式", desc: "公众记录或物业自查，归类责任方" },
-  { n: "03", title: "生成诊断报告", desc: "结构化输出，可归档、导出、复查" },
-  { n: "04", title: "本机时间线", desc: "按地点聚合，跟踪整改状态" },
+const FLOW = [
+  { title: "拍照", desc: "现场或样例图" },
+  { title: "选类", desc: "模式与责任方" },
+  { title: "生成", desc: "结构化报告" },
 ];
 
 export default function ReportToolIntro() {
@@ -33,58 +32,63 @@ export default function ReportToolIntro() {
     };
   }, []);
 
-  const statRows = [
-    { label: "本机累计记录", value: stats.total, tone: "text-slate-900" },
-    { label: "待跟进", value: stats.pending, tone: "text-amber-700" },
-    { label: "已整改", value: stats.fixed, tone: "text-emerald-700" },
-  ];
-
   return (
-    <div className="tool-card mb-8 overflow-hidden p-0">
-      <div className="px-5 py-8 sm:px-10 sm:py-10">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.35fr)_minmax(220px,0.65fr)] lg:items-start">
-          <div>
-            <p className="section-eyebrow">现场记录工具</p>
-            <h2 className="mt-3 text-balance text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-              记录、查看无障碍空间问题
-            </h2>
-            <p className="mt-3 max-w-[65ch] text-base leading-relaxed text-slate-600">
-              如盲道占用、入口受阻、通行链断点——拍照即可生成结构化证据。记录默认保存在本机，对外分享前请核对内容并避免可识别路人面部、车牌。
-            </p>
-          </div>
-
-          <dl className="divide-y divide-slate-200 border-y border-slate-200 lg:border-y-0 lg:border-l lg:pl-8">
-            {statRows.map((row) => (
-              <div key={row.label} className="flex items-baseline justify-between gap-4 py-3 first:pt-0 last:pb-0 lg:first:pt-0">
-                <dt className="text-sm font-medium text-slate-600">{row.label}</dt>
-                <dd className={`font-mono text-2xl font-semibold tabular-nums tracking-tight ${row.tone}`}>
-                  {row.value}
-                </dd>
-              </div>
-            ))}
-          </dl>
+    <header className="mb-6 space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="max-w-2xl">
+          <p className="section-eyebrow">开始记录</p>
+          <h2 className="mt-2 text-balance text-2xl font-semibold tracking-tight text-slate-900 sm:text-[1.75rem]">
+            拍照上传，生成无障碍通行证据
+          </h2>
+          <p className="mt-2 max-w-[60ch] text-sm leading-relaxed text-slate-600 sm:text-base">
+            盲道占用、入口受阻、通行链断点——Gemma 4 输出可归档、可复查的结构化报告。数据默认保存在本机。
+          </p>
         </div>
+
+        <dl className="flex flex-wrap gap-2 sm:gap-3">
+          {[
+            { label: "累计", value: stats.total },
+            { label: "待跟进", value: stats.pending, accent: true },
+            { label: "已整改", value: stats.fixed },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-center shadow-sm"
+            >
+              <dt className="text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                {item.label}
+              </dt>
+              <dd
+                className={`font-mono text-lg font-semibold tabular-nums leading-none ${
+                  item.accent ? "text-amber-700" : "text-slate-900"
+                }`}
+              >
+                {item.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
       </div>
 
-      <div className="border-t border-slate-200/80 bg-slate-50/60 px-5 py-8 sm:px-10">
-        <p className="section-eyebrow text-slate-500">如何记录一个问题</p>
-        <ol className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {STEPS.map((step) => (
-            <li
-              key={step.n}
-              className="flex h-full gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-            >
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 font-mono text-[10px] font-semibold text-slate-600">
-                {step.n}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-slate-900">{step.title}</p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-500">{step.desc}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </div>
+      <ol className="step-timeline flex flex-wrap items-center gap-2 text-sm sm:gap-0">
+        {FLOW.map((step, index) => (
+          <li key={step.title} className="flex min-w-0 items-center gap-2 sm:flex-1">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
+              {index + 1}
+            </span>
+            <span className="min-w-0">
+              <span className="block font-semibold text-slate-900">{step.title}</span>
+              <span className="block text-xs text-slate-500">{step.desc}</span>
+            </span>
+            {index < FLOW.length - 1 && (
+              <span
+                className="mx-2 hidden h-px flex-1 bg-slate-200 sm:block"
+                aria-hidden
+              />
+            )}
+          </li>
+        ))}
+      </ol>
+    </header>
   );
 }
