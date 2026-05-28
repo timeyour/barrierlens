@@ -2,6 +2,7 @@
 
 import AnchorLink from "@/components/AnchorLink";
 import { useCallback, useState } from "react";
+import { flushSync } from "react-dom";
 import ImageUploader from "@/components/ImageUploader";
 import TargetSelector from "@/components/TargetSelector";
 import ModeSelector from "@/components/ModeSelector";
@@ -71,18 +72,22 @@ export default function AnalysisWorkflow() {
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
   const [usedDemoImage, setUsedDemoImage] = useState(false);
 
-  const resetAnalysis = useCallback(() => {
+  const clearAnalysisOutput = useCallback(() => {
     setResult(null);
     setAnalysisSource(null);
     setModelName(null);
     setFallbackReason(null);
     setAnalysisTimeMs(null);
-    setStatus("idle");
     setSavedNotice(false);
     setSavedRecordId(null);
     setExportedMarked(false);
     setStorageWarning(null);
   }, []);
+
+  const resetAnalysis = useCallback(() => {
+    clearAnalysisOutput();
+    setStatus("idle");
+  }, [clearAnalysisOutput]);
 
   const handleImageSelect = useCallback(
     (selected: File, url: string) => {
@@ -196,9 +201,12 @@ export default function AnalysisWorkflow() {
       }
     }
 
-    setStatus("loading");
-    setErrorMessage(null);
-    resetAnalysis();
+    flushSync(() => {
+      setErrorMessage(null);
+      clearAnalysisOutput();
+      setStatus("loading");
+    });
+    window.requestAnimationFrame(() => scrollToAnchor("#tool-analyzing"));
 
     const formData = new FormData();
     const uploadFile = await compressImageForUpload(analyzeFile);
@@ -436,7 +444,8 @@ export default function AnalysisWorkflow() {
                   type="button"
                   onClick={() => void handleAnalyze()}
                   disabled={isLoading}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 sm:flex-none sm:min-w-[200px]"
+                  aria-busy={isLoading}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-transform hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 sm:flex-none sm:min-w-[200px]"
                 >
                   {isLoading ? (
                     <>
@@ -449,7 +458,9 @@ export default function AnalysisWorkflow() {
                 </button>
               </div>
               {isLoading && (
-                <AiAnalysisPipeline running={isLoading} result={null} />
+                <div id="tool-analyzing">
+                  <AiAnalysisPipeline running={isLoading} result={null} />
+                </div>
               )}
             </div>
           )}
