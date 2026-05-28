@@ -68,20 +68,18 @@ export default function ReportToolIntro() {
 
       <div className="border-t border-slate-200/80 bg-slate-50/60 px-5 py-8 sm:px-10">
         <p className="section-eyebrow text-slate-500">如何记录一个问题</p>
-        <ol className="mt-5 grid gap-4 sm:grid-cols-2">
-          {STEPS.map((step, index) => (
+        <ol className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {STEPS.map((step) => (
             <li
               key={step.n}
-              className={`flex gap-4 rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 ${
-                index % 2 === 1 ? "sm:mt-5" : ""
-              }`}
+              className="flex h-full gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
             >
-              <span className="font-mono text-xs font-semibold tracking-wider text-slate-400">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 font-mono text-[10px] font-semibold text-slate-600">
                 {step.n}
               </span>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-slate-900">{step.title}</p>
-                <p className="mt-1 text-sm leading-relaxed text-slate-500">{step.desc}</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">{step.desc}</p>
               </div>
             </li>
           ))}
