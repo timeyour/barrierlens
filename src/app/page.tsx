@@ -35,7 +35,7 @@ export default async function Home({
       <SiteNav />
       <ParallaxVideoHero />
 
-      <main className="relative mx-auto flex max-w-5xl flex-col px-4 pb-4 pt-0 md:px-6 md:py-10 lg:py-16">
+      <main className="relative mx-auto flex max-w-6xl flex-col px-4 pb-4 pt-0 md:px-6 md:py-10 lg:py-16">
         <div className="mobile-snap-screen mobile-snap-screen-scroll order-0 flex flex-col gap-3 bg-[var(--background)] px-0 py-5 md:contents md:min-h-0 md:bg-transparent md:py-0">
           <EvidenceStory />
           {!showMvpPanels && <V2ScenarioCards embedded />}
@@ -69,7 +69,7 @@ export default async function Home({
 
       <ScrollReveal>
         <footer className="border-t border-slate-200/60 bg-white/60 py-8 backdrop-blur-md md:py-12">
-          <div className="mx-auto max-w-5xl px-4 text-center text-xs text-slate-500 sm:px-6">
+          <div className="mx-auto max-w-6xl px-4 text-center text-xs text-slate-500 sm:px-6">
             <p className="font-medium text-slate-700">无碍 BarrierLens</p>
             <p className="mt-2 hidden md:block">
               让分散的无障碍发现变成可被看见、被汇总的记录——可归档、可复查、可导出。

@@ -62,12 +62,25 @@ function SubmitLoadingOverlay({ label }: { label: string }) {
       role="status"
       aria-live="polite"
       aria-busy="true"
-      className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-xl bg-white/95 px-6 text-center backdrop-blur-sm"
+      className="absolute inset-0 z-20 flex flex-col justify-center rounded-xl border border-blue-100/80 bg-white/96 px-6 py-8 backdrop-blur-md"
     >
-      <span className="h-10 w-10 animate-spin rounded-full border-[3px] border-blue-600 border-t-transparent" />
-      <p className="mt-4 text-base font-bold text-slate-900">正在生成{label}</p>
-      <p className="mt-1 text-sm text-slate-600">Gemma 4 分析中，约需 15–30 秒</p>
-      <p className="mt-3 text-xs text-slate-500">请勿关闭页面</p>
+      <div className="mx-auto w-full max-w-sm space-y-4">
+        <div className="space-y-2">
+          <div className="skeleton-shimmer h-3 w-28 rounded-md" />
+          <div className="skeleton-shimmer h-8 w-full rounded-lg" />
+          <div className="skeleton-shimmer h-4 w-[80%] rounded-md" />
+        </div>
+        <div className="space-y-2 pt-2">
+          <div className="skeleton-shimmer h-16 w-full rounded-xl" />
+          <div className="skeleton-shimmer h-10 w-2/3 max-w-[220px] rounded-lg" />
+        </div>
+        <p className="pt-2 text-center text-sm font-semibold text-slate-900">
+          正在生成{label}
+        </p>
+        <p className="text-center text-xs leading-relaxed text-slate-500">
+          Gemma 4 分析中，约需 15–30 秒，请勿关闭页面
+        </p>
+      </div>
     </div>
   );
 }
@@ -346,7 +359,7 @@ export default function AnalysisWorkflow() {
   return (
     <div className="space-y-6">
       {showWizard && (
-        <div className="tool-card p-5 sm:p-8">
+        <div className="tool-card p-6 sm:p-10">
           <WizardStepIndicator current={wizardStep} />
 
           {wizardStep === 1 && (
@@ -369,7 +382,7 @@ export default function AnalysisWorkflow() {
                   type="button"
                   disabled={isLoading}
                   onClick={() => void loadDemoImage()}
-                  className="w-full rounded-lg border-2 border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition hover:border-blue-400 hover:bg-slate-50 disabled:opacity-50"
+                  className="btn-secondary w-full rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 disabled:opacity-50"
                 >
                   没有照片？使用样例图体验
                 </button>
@@ -379,7 +392,7 @@ export default function AnalysisWorkflow() {
                   <button
                     type="button"
                     onClick={() => setWizardStep(2)}
-                    className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+                    className="btn-primary rounded-xl px-6 py-2.5 text-sm font-semibold"
                   >
                     下一步：选类别
                   </button>
@@ -430,14 +443,14 @@ export default function AnalysisWorkflow() {
                 <button
                   type="button"
                   onClick={() => setWizardStep(1)}
-                  className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700"
+                  className="btn-secondary rounded-xl px-5 py-2.5 text-sm font-semibold text-slate-700"
                 >
                   上一步
                 </button>
                 <button
                   type="button"
                   onClick={() => setWizardStep(3)}
-                  className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+                  className="btn-primary rounded-xl px-6 py-2.5 text-sm font-semibold"
                 >
                   下一步：提交
                 </button>
@@ -485,10 +498,8 @@ export default function AnalysisWorkflow() {
                   onClick={() => void handleSubmitClick()}
                   disabled={isLoading}
                   aria-busy={isLoading}
-                  className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold text-white transition-transform sm:flex-none sm:min-w-[200px] ${
-                    isLoading
-                      ? "cursor-wait bg-blue-800 ring-2 ring-blue-300 ring-offset-1"
-                      : "bg-blue-600 hover:bg-blue-700 active:scale-[0.98]"
+                  className={`btn-primary flex flex-1 items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold sm:flex-none sm:min-w-[200px] ${
+                    isLoading ? "cursor-wait ring-2 ring-blue-200 ring-offset-1" : ""
                   }`}
                 >
                   {isLoading ? (
@@ -562,7 +573,7 @@ export default function AnalysisWorkflow() {
             exportedMarked={exportedMarked}
           />
 
-          <div className="tool-card p-5 sm:p-8">
+          <div className="tool-card p-6 sm:p-10">
             <h2 className="text-lg font-bold text-slate-900">诊断结果</h2>
             <p className="mt-1 text-sm text-slate-500">
               {RECORD_MODES[recordMode].label} · AI 结构化输出
@@ -579,21 +590,21 @@ export default function AnalysisWorkflow() {
             <button
               type="button"
               onClick={handleCopy}
-              className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700 sm:min-w-[140px]"
+              className="btn-primary rounded-xl px-5 py-3 text-sm font-semibold sm:min-w-[140px]"
             >
               {copySuccess ? "已复制 ✓" : `复制${reportTitle}`}
             </button>
             <button
               type="button"
               onClick={handleExport}
-              className="rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 sm:min-w-[140px]"
+              className="btn-secondary rounded-xl px-5 py-3 text-sm font-semibold text-slate-700 sm:min-w-[140px]"
             >
               导出 Markdown
             </button>
             <button
               type="button"
               onClick={handleReset}
-              className="rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 sm:min-w-[140px]"
+              className="btn-secondary rounded-xl px-5 py-3 text-sm font-semibold text-slate-700 sm:min-w-[140px]"
             >
               继续记录
             </button>

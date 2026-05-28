@@ -22,13 +22,13 @@ export default function SiteNav() {
 
   return (
     <header
-      className={`fixed left-0 right-0 top-0 z-50 px-4 py-3 transition-colors duration-300 sm:px-6 ${
+      className={`fixed left-0 right-0 top-0 z-50 px-4 py-3 transition-[background,box-shadow,border-color] duration-300 sm:px-6 ${
         scrolled
-          ? "border-b border-slate-200/80 bg-white/90 backdrop-blur-xl shadow-sm"
+          ? "border-b border-slate-200/80 bg-white/92 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.12)] backdrop-blur-xl [box-shadow:inset_0_1px_0_rgba(255,255,255,0.95)]"
           : "border-b border-white/10 bg-slate-950/20"
       }`}
     >
-      <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
         <span
           className={`text-sm font-semibold transition-colors ${scrolled ? "text-slate-900" : "text-white"}`}
         >
@@ -51,10 +51,10 @@ export default function SiteNav() {
         </nav>
         <AnchorLink
           href="#tool"
-          className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+          className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-300 ${
             scrolled
-              ? "bg-blue-600 text-white hover:bg-blue-700"
-              : "bg-white/90 text-slate-900 hover:bg-white"
+              ? "btn-primary"
+              : "bg-white/92 text-slate-900 shadow-sm hover:bg-white"
           }`}
         >
           开始记录

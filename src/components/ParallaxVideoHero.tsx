@@ -105,7 +105,7 @@ export default function ParallaxVideoHero() {
               <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <AnchorLink
                   href="#tool"
-                  className="inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-500 sm:w-auto sm:px-6"
+                  className="btn-primary inline-flex w-full items-center justify-center rounded-xl px-5 py-3.5 text-sm font-semibold sm:w-auto sm:px-6"
                 >
                   开始记录
                 </AnchorLink>
