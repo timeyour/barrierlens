@@ -59,6 +59,15 @@ function obstaclePoints(
   ];
 }
 
+/** 现场照片上均匀分布障碍标注，避免套用示意图固定坐标 */
+function photoObstaclePoints(count: number): Array<{ x: number; y: number }> {
+  const n = Math.max(1, Math.min(count, 3));
+  return Array.from({ length: n }, (_, index) => ({
+    x: Math.round(100 + ((320 / (n + 1)) * (index + 1))),
+    y: 95 + (index % 2) * 55,
+  }));
+}
+
 function getSceneConfig(sceneType: AnalysisResult["sceneType"]): SceneConfig {
   if (sceneType === "accessible_entrance_blocked") {
     return {
@@ -124,7 +133,6 @@ export default function BarrierMap({ result }: BarrierMapProps) {
     compareView === "before" ? statusPair.before : statusPair.after;
   const dangerColor = statusColor(activeStatus);
   const config = getSceneConfig(result.sceneType);
-  const points = config.obstaclePoints;
   const obstacles = result.obstacles.slice(0, 3);
 
   const mapPhoto =
@@ -134,6 +142,15 @@ export default function BarrierMap({ result }: BarrierMapProps) {
 
   const usingFallbackPhoto =
     !(compareView === "after" && result.reviewImageDataUrl) && !result.imageDataUrl;
+
+  const usingUserPhoto = !usingFallbackPhoto;
+  const mapTitle = usingUserPhoto ? result.issueType : config.title;
+  const markerPoints = usingUserPhoto
+    ? photoObstaclePoints(obstacles.length || 1)
+    : config.obstaclePoints;
+  const pinPoint = usingUserPhoto
+    ? markerPoints[0] ?? { x: 260, y: 130 }
+    : config.pin;
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5">
@@ -145,7 +162,7 @@ export default function BarrierMap({ result }: BarrierMapProps) {
           )}
         </div>
         <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600">
-          {config.title}
+          {mapTitle}
         </span>
       </div>
 
@@ -190,7 +207,7 @@ export default function BarrierMap({ result }: BarrierMapProps) {
           role="img"
           aria-label="无障碍通行风险标注"
         >
-          {config.zones.map((zone) => (
+          {!usingUserPhoto && config.zones.map((zone) => (
             <g key={`${zone.x}-${zone.label}`}>
               <rect
                 x={zone.x}
@@ -207,44 +224,61 @@ export default function BarrierMap({ result }: BarrierMapProps) {
             </g>
           ))}
 
-          <path
-            d={config.mainPath}
-            stroke="#94A3B8"
-            strokeWidth="8"
-            strokeLinecap="round"
-            fill="none"
-            opacity="0.85"
-          />
-          <path
-            d={config.riskPath}
-            stroke={dangerColor}
-            strokeWidth="8"
-            strokeLinecap="round"
-            fill="none"
+          {!usingUserPhoto && (
+            <>
+              <path
+                d={config.mainPath}
+                stroke="#94A3B8"
+                strokeWidth="8"
+                strokeLinecap="round"
+                fill="none"
+                opacity="0.85"
+              />
+              <path
+                d={config.riskPath}
+                stroke={dangerColor}
+                strokeWidth="8"
+                strokeLinecap="round"
+                fill="none"
+              />
+            </>
+          )}
+
+          <circle cx={pinPoint.x} cy={pinPoint.y} r="14" fill={dangerColor} opacity="0.35" />
+          <circle
+            cx={pinPoint.x}
+            cy={pinPoint.y}
+            r="6"
+            fill={dangerColor}
+            stroke="#fff"
+            strokeWidth="2"
           />
 
-          <circle cx={config.pin.x} cy={config.pin.y} r="14" fill={dangerColor} opacity="0.35" />
-          <circle cx={config.pin.x} cy={config.pin.y} r="6" fill={dangerColor} stroke="#fff" strokeWidth="2" />
-
-          {obstacles.map((obstacle, index) => {
-            const point = points[index] ?? points[0];
-            return (
-              <g key={`${obstacle.name}-${index}`}>
-                <rect
-                  x={point.x - 10}
-                  y={point.y - 10}
-                  width="20"
-                  height="20"
-                  rx="4"
-                  fill="#DC2626"
-                  opacity="0.95"
-                />
-                <text x={point.x + 14} y={point.y + 4} fontSize="11" fill="#FEE2E2">
-                  {obstacle.name}
-                </text>
-              </g>
-            );
-          })}
+          {obstacles.length > 0 ? (
+            obstacles.map((obstacle, index) => {
+              const point = markerPoints[index] ?? markerPoints[0];
+              return (
+                <g key={`${obstacle.name}-${index}`}>
+                  <rect
+                    x={point.x - 10}
+                    y={point.y - 10}
+                    width="20"
+                    height="20"
+                    rx="4"
+                    fill="#DC2626"
+                    opacity="0.95"
+                  />
+                  <text x={point.x + 14} y={point.y + 4} fontSize="11" fill="#FEE2E2">
+                    {obstacle.name}
+                  </text>
+                </g>
+              );
+            })
+          ) : usingUserPhoto ? (
+            <text x="16" y="24" fontSize="11" fill="#E2E8F0">
+              风险区域（见下方摘要）
+            </text>
+          ) : null}
         </svg>
 
         <div className="absolute bottom-3 left-3 right-3 rounded-lg bg-slate-950/70 px-3 py-2 text-[11px] text-slate-100 backdrop-blur-sm">
@@ -257,9 +291,11 @@ export default function BarrierMap({ result }: BarrierMapProps) {
       </div>
 
       <p className="mt-2 text-[11px] text-slate-500">
-        {usingFallbackPhoto
-          ? "底图为街景示意（归档后可替换为本条记录现场照片）；路径与风险点为叠加标注。"
-          : "底图为本条记录现场照片；叠加路径与风险点位标注。"}
+        {usingUserPhoto
+          ? "底图为本条记录现场照片；红框与标签来自诊断摘要，为示意标注而非精确测绘。"
+          : usingFallbackPhoto
+            ? "底图为街景示意（归档后可替换为本条记录现场照片）；路径与风险点为叠加标注。"
+            : "底图为本条记录现场照片；叠加路径与风险点位标注。"}
       </p>
     </div>
   );

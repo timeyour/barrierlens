@@ -249,6 +249,21 @@ body {
   display: none !important;
 }
 
+@keyframes story-slide-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.story-slide-enter {
+  animation: story-slide-enter 0.45s ease-out;
+}
+
 @media (max-width: 767px) {
   html {
     scroll-snap-type: y proximity;
@@ -286,6 +301,10 @@ body {
   html {
     scroll-behavior: auto;
     scroll-snap-type: none;
+  }
+
+  .story-slide-enter {
+    animation: none;
   }
 
   .bento-card:hover {

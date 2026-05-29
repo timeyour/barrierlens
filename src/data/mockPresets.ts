@@ -219,6 +219,14 @@ function hashString(input: string): number {
   return Math.abs(hash);
 }
 
+/** 手机/相机上传常见文件名无法匹配 demo 图，默认用「盲道动态占用」而非 hash 随机 */
+function defaultUserUploadPreset(): MockPreset {
+  const bikeBlocking = MOCK_PRESETS.find((preset) =>
+    preset.filePatterns?.some((pattern) => pattern.includes("scene-blocked-street")),
+  );
+  return bikeBlocking ?? MOCK_PRESETS[0];
+}
+
 export function pickMockPreset(fileName?: string, seed?: string): MockPreset {
   const name = fileName?.toLowerCase() ?? "";
   if (name) {
@@ -226,6 +234,10 @@ export function pickMockPreset(fileName?: string, seed?: string): MockPreset {
       preset.filePatterns?.some((pattern) => name.includes(pattern)),
     );
     if (matched) return matched;
+  }
+  // 真实用户上传（IMG_*.jpg 等）不再 hash 随机，避免与照片内容完全不符
+  if (fileName && !name.includes("scene-")) {
+    return defaultUserUploadPreset();
   }
   const index = hashString(fileName ?? seed ?? "default") % MOCK_PRESETS.length;
   return MOCK_PRESETS[index];

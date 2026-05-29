@@ -1,23 +1,21 @@
 "use client";
 
-import AnchorLink from "@/components/AnchorLink";
-import Link from "next/link";
 import { useCallback, useState } from "react";
 import { flushSync } from "react-dom";
 import ImageUploader from "@/components/ImageUploader";
 import TargetSelector from "@/components/TargetSelector";
 import ModeSelector from "@/components/ModeSelector";
 import LocationInput from "@/components/LocationInput";
-import AnalysisResultView from "@/components/AnalysisResult";
+import ReportResultPanel from "@/components/ReportResultPanel";
+import ReportResultLoop from "@/components/ReportResultLoop";
 import AiAnalysisPipeline from "@/components/AiAnalysisPipeline";
 import GemmaJsonOutput from "@/components/GemmaJsonOutput";
-import ReportCard from "@/components/ReportCard";
 import WizardStepIndicator from "@/components/WizardStepIndicator";
-import ReportNextSteps from "@/components/ReportNextSteps";
 import { downloadMarkdownReport } from "@/lib/exportMarkdown";
 import { compressImageForUpload, fileToStoredImageDataUrl } from "@/lib/imageUtils";
 import { RecordStorageError, saveRecord, updateRecordReview } from "@/lib/recordStore";
 import { scrollToAnchor } from "@/lib/scrollAnchor";
+import { getBrowserLocation } from "@/lib/geolocation";
 import { syncReportToCloud } from "@/lib/syncReport";
 import type {
   AnalysisResult,
@@ -104,9 +102,7 @@ export default function AnalysisWorkflow() {
   const [analysisTimeMs, setAnalysisTimeMs] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
-  const [savedNotice, setSavedNotice] = useState(false);
   const [savedRecordId, setSavedRecordId] = useState<string | null>(null);
-  const [exportedMarked, setExportedMarked] = useState(false);
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
   const [usedDemoImage, setUsedDemoImage] = useState(false);
   const [cloudReportId, setCloudReportId] = useState<string | null>(null);
@@ -118,9 +114,7 @@ export default function AnalysisWorkflow() {
     setModelName(null);
     setFallbackReason(null);
     setAnalysisTimeMs(null);
-    setSavedNotice(false);
     setSavedRecordId(null);
-    setExportedMarked(false);
     setStorageWarning(null);
     setCloudReportId(null);
     setCloudSyncNote(null);
@@ -197,7 +191,6 @@ export default function AnalysisWorkflow() {
     };
     saveRecord(stored);
     setSavedRecordId(id);
-    setSavedNotice(true);
     return stored;
   };
 
@@ -224,7 +217,14 @@ export default function AnalysisWorkflow() {
         ? { ...prev, reviewStatus: "exported" }
         : prev,
     );
-    setExportedMarked(true);
+  }, [savedRecordId]);
+
+  const markRecordReported = useCallback(() => {
+    if (!savedRecordId) return;
+    updateRecordReview(savedRecordId, { reviewStatus: "reported" });
+    setResult((prev) =>
+      prev ? { ...prev, reviewStatus: "reported" } : prev,
+    );
   }, [savedRecordId]);
 
   const beginAnalyzing = useCallback(() => {
@@ -293,11 +293,22 @@ export default function AnalysisWorkflow() {
       } = data;
 
       const stored = await persistRecordSafe(analysis, analyzeFile);
-      const displayResult: AnalysisResult & { imageDataUrl?: string } = stored
-        ? stored
+      const coords = await getBrowserLocation();
+      const displayResult: AnalysisResult & {
+        imageDataUrl?: string;
+        lat?: number | null;
+        lng?: number | null;
+      } = stored
+        ? {
+            ...stored,
+            lat: coords?.lat ?? null,
+            lng: coords?.lng ?? null,
+          }
         : {
             ...analysis,
             ...(previewUrl && !stored ? { imageDataUrl: previewUrl } : {}),
+            lat: coords?.lat ?? null,
+            lng: coords?.lng ?? null,
           };
 
       const resolvedSource =
@@ -388,9 +399,16 @@ export default function AnalysisWorkflow() {
   const isLoading = status === "loading";
   const showWizard = status !== "success";
   const reportTitle =
-    recordMode === "inspection"
-      ? "无障碍通行空间合规诊断与管理建议书"
-      : "公众倡导摘要";
+    recordMode === "inspection" ? "巡查整改单" : "公众倡导摘要";
+
+  const analysisNote =
+    analysisSource === "gemma"
+      ? `本次为真实 Gemma 分析${analysisTimeMs ? `（${analysisTimeMs}ms）` : ""}。`
+      : analysisSource === "mock_fallback"
+        ? `Gemma 失败已降级 Mock${fallbackReason ? `：${fallbackReason}` : ""}。`
+        : analysisSource === "mock"
+          ? "当前为 Mock 演示数据。"
+          : null;
 
   return (
     <div className="space-y-6">
@@ -562,54 +580,10 @@ export default function AnalysisWorkflow() {
         </div>
       )}
 
-      {analysisSource === "gemma" && status === "success" && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-          <strong>真实模型：</strong>
-          本次结果来自 {modelName ?? "Gemma 4"} 多模态分析
-          {analysisTimeMs ? `，耗时 ${analysisTimeMs}ms` : ""}。
-        </div>
-      )}
-
-      {analysisSource === "mock_fallback" && status === "success" && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <strong>已自动降级：</strong>
-          Gemma 4 接口调用失败，当前结果使用 Mock 数据兜底。
-          {fallbackReason ? ` 原因：${fallbackReason}` : ""}
-        </div>
-      )}
-
-      {analysisSource === "mock" && mockMode && status === "success" && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <strong>演示模式：</strong>
-          未配置 GEMINI_API_KEY，当前为 Mock 演示数据。
-        </div>
-      )}
-
       {storageWarning && status === "success" && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">
           <strong>未能写入本机时间线：</strong>
           {storageWarning}
-        </div>
-      )}
-
-      {savedNotice && status === "success" && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
-          已归档到本机<strong>问题记录</strong>，
-          <AnchorLink href="#records" className="font-semibold text-blue-800 underline">
-            查看最近上报
-          </AnchorLink>
-          {cloudReportId && (
-            <>
-              {" "}
-              · 已同步至
-              <Link
-                href={`/reports/${cloudReportId}`}
-                className="font-semibold text-blue-800 underline"
-              >
-                公开详情
-              </Link>
-            </>
-          )}
         </div>
       )}
 
@@ -620,64 +594,55 @@ export default function AnalysisWorkflow() {
       )}
 
       {result && status === "success" && (
-        <div id="tool-results" className="scroll-mt-20 space-y-6">
-          <ReportNextSteps
-            recordMode={recordMode}
-            targetDepartment={targetDepartment}
-            exportedMarked={exportedMarked}
-          />
-
-          <div className="tool-card p-6 sm:p-10">
-            <h2 className="text-lg font-bold text-slate-900">诊断结果</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              {RECORD_MODES[recordMode].label} · AI 结构化输出
-            </p>
-            <div className="mt-6">
-              <AnalysisResultView result={result} recordMode={recordMode} />
-            </div>
-            <div className="mt-6">
-              <ReportCard title={reportTitle} reportText={result.reportText} />
-            </div>
+        <div id="tool-results" className="scroll-mt-20 space-y-5">
+          <div className="tool-card p-5 sm:p-8">
+            <ReportResultPanel
+              result={result}
+              recordMode={recordMode}
+              analysisSource={analysisSource}
+              reportTitle={reportTitle}
+              loopSlot={
+                <ReportResultLoop
+                  reviewStatus={result.reviewStatus}
+                  recordMode={recordMode}
+                  copyLabel={
+                    copySuccess ? "已复制 ✓" : `复制${reportTitle}`
+                  }
+                  copySuccess={copySuccess}
+                  onCopy={() => void handleCopy()}
+                  onExport={handleExport}
+                  onMarkReported={markRecordReported}
+                  cloudReportId={cloudReportId}
+                  analysisNote={analysisNote}
+                />
+              }
+              footerSlot={
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    className="btn-secondary rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700"
+                  >
+                    继续记录
+                  </button>
+                  <details className="w-full rounded-lg border border-slate-200 bg-white">
+                    <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-slate-600">
+                      Gemma 结构化 JSON（开发者）
+                    </summary>
+                    <div className="border-t border-slate-200 p-3 pt-0">
+                      <GemmaJsonOutput
+                        result={result}
+                        mockMode={mockMode}
+                        source={analysisSource}
+                        modelName={modelName}
+                        fallbackReason={fallbackReason}
+                      />
+                    </div>
+                  </details>
+                </div>
+              }
+            />
           </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="btn-primary rounded-xl px-5 py-3 text-sm font-semibold sm:min-w-[140px]"
-            >
-              {copySuccess ? "已复制 ✓" : `复制${reportTitle}`}
-            </button>
-            <button
-              type="button"
-              onClick={handleExport}
-              className="btn-secondary rounded-xl px-5 py-3 text-sm font-semibold text-slate-700 sm:min-w-[140px]"
-            >
-              导出 Markdown
-            </button>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="btn-secondary rounded-xl px-5 py-3 text-sm font-semibold text-slate-700 sm:min-w-[140px]"
-            >
-              继续记录
-            </button>
-          </div>
-
-          <details className="rounded-lg border border-slate-200 bg-white">
-            <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-slate-600">
-              Gemma 4 结构化输出（开发者）
-            </summary>
-            <div className="border-t border-slate-200 p-3 pt-0">
-              <GemmaJsonOutput
-                result={result}
-                mockMode={mockMode}
-                source={analysisSource}
-                modelName={modelName}
-                fallbackReason={fallbackReason}
-              />
-            </div>
-          </details>
         </div>
       )}
     </div>

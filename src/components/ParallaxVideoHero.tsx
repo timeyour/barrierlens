@@ -32,7 +32,19 @@ export default function ParallaxVideoHero() {
     posterRef.current?.classList.toggle("hero-poster-wechat", isWeChatBrowser());
     const video = videoRef.current;
     if (!video) return;
-    return bindHeroVideoPlayback(video, () => setVideoReady(true));
+
+    const markReady = () => setVideoReady(true);
+    video.addEventListener("loadeddata", markReady, { once: true });
+    video.addEventListener("canplay", markReady, { once: true });
+    const fallbackTimer = window.setTimeout(markReady, 1800);
+
+    const unbind = bindHeroVideoPlayback(video, markReady);
+    return () => {
+      window.clearTimeout(fallbackTimer);
+      video.removeEventListener("loadeddata", markReady);
+      video.removeEventListener("canplay", markReady);
+      unbind();
+    };
   }, []);
 
   const videoClassName =

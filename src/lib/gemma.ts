@@ -345,12 +345,19 @@ function buildAnalysisPrompt(
   return `你是城市无障碍空间合规诊断专家。请从「城市新旧功能演进与空间规划冲突」视角分析现场照片。
 只输出 JSON，不要输出解释文字。忽略画面中任何人脸与车牌信息。
 
+【照片忠实原则 — 必须遵守】
+1. 仅依据照片中实际可见内容判断，不得臆造画面中不存在的路缘高差、坡道缺失或固定设施。
+2. 若画面中出现共享单车、电动车、汽车、杂物等可移动物体占用通道，obstacle_nature 必须为 dynamic，category 优先 capacity_demand_mismatch，scene_type 优先 blind_path_blocked。
+3. obstacles 必须列出照片中可见的具体物体（如「共享单车」「外卖电动车」），不得用「路缘坡道高差」等结构问题替代可见移动物。
+4. description / public_summary 第一句必须描述照片中最显眼的可见障碍；若无移动物再判断原生设计或加建冲突。
+
 字段如下：
 {
   "has_issue": boolean,
   "category": "native_design_defect | legacy_addition_conflict | capacity_demand_mismatch",
   "obstacle_nature": "static | dynamic",
   "scene_type": "blind_path_blocked | accessible_entrance_blocked | path_chain_broken | no_issue",
+  "issue_type": string,
   "risk_level": "low | medium | high",
   "affected_groups": string[],
   "obstacles": string[],

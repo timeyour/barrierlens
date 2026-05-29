@@ -256,21 +256,18 @@ export default function EvidenceStory({
       <div
         className={`relative overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-blue-50/40 shadow-sm ${
           compact
-            ? "min-h-[min(420px,52svh)]"
-            : "min-h-[min(480px,78vh)] sm:min-h-[min(520px,72vh)]"
+            ? "min-h-[min(380px,48svh)]"
+            : "min-h-[min(440px,62vh)] sm:min-h-[min(480px,58vh)]"
         }`}
       >
         {STORY_STEPS.map((step, index) => {
           const isActive = activeIndex === index;
+          if (!isActive) return null;
           return (
           <article
-            key={step.id}
-            className={`absolute inset-0 flex flex-col justify-center p-4 transition-all duration-500 ease-out sm:p-6 lg:p-8 ${
-              isActive
-                ? "z-10 translate-y-0 opacity-100"
-                : "pointer-events-none z-0 translate-y-3 opacity-0 invisible"
-            }`}
-            aria-hidden={!isActive}
+            key={`${step.id}-${activeIndex}`}
+            className="story-slide-enter absolute inset-0 z-10 flex flex-col justify-center p-4 sm:p-6 lg:p-8"
+            aria-hidden={false}
           >
             <div
               className={
