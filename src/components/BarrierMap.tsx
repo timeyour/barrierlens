@@ -276,7 +276,9 @@ export default function BarrierMap({ result }: BarrierMapProps) {
             })
           ) : usingUserPhoto ? (
             <text x="16" y="24" fontSize="11" fill="#E2E8F0">
-              风险区域（见下方摘要）
+              {result.blockedPath.length > 28
+                ? `${result.blockedPath.slice(0, 28)}…`
+                : result.blockedPath}
             </text>
           ) : null}
         </svg>

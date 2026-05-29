@@ -34,20 +34,22 @@ const BASE_PRESETS: Omit<MockPreset, "id">[] = [
     obstacleNature: "dynamic",
     sceneType: "tactile_paving_blocked",
     locationType: "transport_hub",
-    issueType: "盲道动态占用",
-    blockedPath: "视障人士沿盲道连续通行路径",
+    issueType: "共享单车、电动车占用人行便道",
+    blockedPath: "画面中部贴墙一侧的人行便道（近端通道被占用；请补充路名/路口）",
     pathStatus: "blocked",
     obstacles: [
-      { name: "共享单车/电瓶车", position: "盲道中心段", blocks: "盲道连续通行路径" },
+      { name: "共享单车", position: "盲道中心段", blocks: "盲道连续通行路径" },
+      { name: "电动车", position: "盲道侧", blocks: "盲道连续通行路径" },
     ],
     riskLevel: "中",
     affectedGroups: ["视障人士", "老年人", "行动不便者"],
     sceneDescription:
-      "地铁口缺乏专用停放区，高峰时段移动障碍物潮汐式占用盲道，通行链周期性断裂。",
+      "地铁口缺乏专用停放区，高峰时段共享单车、电动车潮汐式占用盲道，通行链周期性断裂。",
     problemSummary:
-      "基础设施容量与当代共享出行需求错配，导致盲道成为默认临停区。",
+      "基础设施容量与当代共享出行、即时配送需求错配，共享单车与电动车挤占盲道临停区。",
     evidencePoints: [
-      "障碍物位于盲道中心段",
+      "可见共享单车或电动车占用盲道",
+      "障碍物位于盲道中心段或侧缘",
       "占用形态符合高峰动态潮汐特征",
       "附近缺少等效替代路径提示",
     ],

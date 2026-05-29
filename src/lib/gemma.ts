@@ -186,6 +186,12 @@ function normalizeConfidence(raw: unknown): number {
   return Math.max(0, Math.min(1, value));
 }
 
+function normalizeObstacleName(name: string): string {
+  return name
+    .replace(/共享单车\/电瓶车/g, "共享单车、电动车")
+    .replace(/电瓶车/g, "电动车");
+}
+
 function normalizeObstacles(raw: unknown): Obstacle[] {
   if (!Array.isArray(raw)) return [];
   return raw
@@ -193,13 +199,13 @@ function normalizeObstacles(raw: unknown): Obstacle[] {
     .map((item) => {
       if (typeof item === "string") {
         return {
-          name: item,
+          name: normalizeObstacleName(item),
           position: "照片中可见通行路径附近",
           blocks: "无障碍通行路径",
         };
       }
       return {
-        name: stringValue(item.name, "待人工确认障碍物"),
+        name: normalizeObstacleName(stringValue(item.name, "待人工确认障碍物")),
         position: stringValue(item.position, "照片中可见通行路径附近"),
         blocks: stringValue(item.blocks, "无障碍通行路径"),
       };
@@ -347,9 +353,11 @@ function buildAnalysisPrompt(
 
 【照片忠实原则 — 必须遵守】
 1. 仅依据照片中实际可见内容判断，不得臆造画面中不存在的路缘高差、坡道缺失或固定设施。
-2. 若画面中出现共享单车、电动车、汽车、杂物等可移动物体占用通道，obstacle_nature 必须为 dynamic，category 优先 capacity_demand_mismatch，scene_type 优先 blind_path_blocked。
-3. obstacles 必须列出照片中可见的具体物体（如「共享单车」「外卖电动车」），不得用「路缘坡道高差」等结构问题替代可见移动物。
-4. description / public_summary 第一句必须描述照片中最显眼的可见障碍；若无移动物再判断原生设计或加建冲突。
+2. 若画面中出现共享单车、电动车、外卖电动车、汽车、杂物等可移动物体占用通道，obstacle_nature 必须为 dynamic，category 优先 capacity_demand_mismatch，scene_type 优先 blind_path_blocked。
+3. obstacles 必须列出照片中可见的具体物体；命名优先用国内常用词「共享单车」「电动车」「外卖电动车」，勿单独使用「电瓶车」而不写「电动车」。
+4. issue_type 应点明可见占用物与路径类型，如「共享单车占用右侧人行便道」；若看不清黄色盲道，写「人行便道」勿强行写「盲道」。
+5. blocked_path 必须回答「哪条路/哪段通道」：结合画面方位（左/右/中、贴墙/临机动车道/近路口）描述可见步行通道；禁止只写「视障人士沿盲道连续通行路径」等空泛模板句。
+6. description / public_summary 第一句须含：路径位置 + 可见障碍物。
 
 字段如下：
 {
@@ -378,6 +386,8 @@ function buildAnalysisPrompt(
 3. capacity_demand_mismatch：地铁口缺停放区导致单车/外卖潮汐占用盲道
 
 obstacle_nature：static=固定硬伤；dynamic=高频易逝移动占用
+blocked_path 示例（好）：「画面右侧贴墙人行便道，介于机动车道与围墙之间，近端被占用」
+blocked_path 反例（差）：「视障人士沿盲道连续通行路径」
 management_action：面向管理方的合规建议，中文，不超过40字
 
 当前记录模式：${recordMode === "inspection" ? "物业自查" : "公众记录"}

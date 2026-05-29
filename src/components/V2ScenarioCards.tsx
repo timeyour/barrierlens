@@ -7,7 +7,7 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 const SCENES = [
   {
     title: "盲道占用",
-    desc: "识别共享单车、电瓶车、杂物对盲道连续通行的阻断风险。",
+    desc: "识别共享单车、电动车、杂物对盲道连续通行的阻断风险。",
     tag: "tactile_paving_blocked",
   },
   {
