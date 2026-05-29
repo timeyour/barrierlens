@@ -1,6 +1,7 @@
 "use client";
 
 import AnchorLink from "@/components/AnchorLink";
+import Link from "next/link";
 import { useCallback, useState } from "react";
 import { flushSync } from "react-dom";
 import ImageUploader from "@/components/ImageUploader";
@@ -17,6 +18,7 @@ import { downloadMarkdownReport } from "@/lib/exportMarkdown";
 import { compressImageForUpload, fileToStoredImageDataUrl } from "@/lib/imageUtils";
 import { RecordStorageError, saveRecord, updateRecordReview } from "@/lib/recordStore";
 import { scrollToAnchor } from "@/lib/scrollAnchor";
+import { syncReportToCloud } from "@/lib/syncReport";
 import type {
   AnalysisResult,
   AnalysisSource,
@@ -107,6 +109,8 @@ export default function AnalysisWorkflow() {
   const [exportedMarked, setExportedMarked] = useState(false);
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
   const [usedDemoImage, setUsedDemoImage] = useState(false);
+  const [cloudReportId, setCloudReportId] = useState<string | null>(null);
+  const [cloudSyncNote, setCloudSyncNote] = useState<string | null>(null);
 
   const clearAnalysisOutput = useCallback(() => {
     setResult(null);
@@ -118,6 +122,8 @@ export default function AnalysisWorkflow() {
     setSavedRecordId(null);
     setExportedMarked(false);
     setStorageWarning(null);
+    setCloudReportId(null);
+    setCloudSyncNote(null);
   }, []);
 
   const resetAnalysis = useCallback(() => {
@@ -165,7 +171,10 @@ export default function AnalysisWorkflow() {
     setWizardStep(1);
   }, [handleClearImage]);
 
-  const persistRecord = async (data: AnalysisResult, imageFile: File | null) => {
+  const persistRecord = async (
+    data: AnalysisResult,
+    imageFile: File | null,
+  ): Promise<StoredRecord> => {
     let imageDataUrl: string | undefined;
     if (imageFile) {
       try {
@@ -189,13 +198,13 @@ export default function AnalysisWorkflow() {
     saveRecord(stored);
     setSavedRecordId(id);
     setSavedNotice(true);
-    return id;
+    return stored;
   };
 
   const persistRecordSafe = async (
     data: AnalysisResult,
     imageFile: File | null,
-  ): Promise<string | null> => {
+  ): Promise<StoredRecord | null> => {
     try {
       return await persistRecord(data, imageFile);
     } catch (error) {
@@ -282,14 +291,41 @@ export default function AnalysisWorkflow() {
         analysisTimeMs: responseAnalysisTimeMs,
         ...analysis
       } = data;
-      setResult(analysis);
+
+      const stored = await persistRecordSafe(analysis, analyzeFile);
+      const displayResult: AnalysisResult & { imageDataUrl?: string } = stored
+        ? stored
+        : {
+            ...analysis,
+            ...(previewUrl && !stored ? { imageDataUrl: previewUrl } : {}),
+          };
+
+      const resolvedSource =
+        responseSource ?? (responseMockMode ? "mock" : "gemma");
+
+      if (stored) {
+        const sync = await syncReportToCloud({
+          stored,
+          imageFile: analyzeFile,
+          analysisSource: resolvedSource,
+        });
+        if (sync.ok) {
+          setCloudReportId(sync.id);
+          setCloudSyncNote(null);
+        } else if (sync.reason === "not_configured") {
+          setCloudSyncNote("云端公开列表未配置，记录已保存在本机时间线。");
+        } else {
+          setCloudSyncNote("云端同步失败，记录已保存在本机，可稍后重试。");
+        }
+      }
+
+      setResult(displayResult);
       setMockMode(Boolean(responseMockMode));
-      setAnalysisSource(responseSource ?? (responseMockMode ? "mock" : "gemma"));
+      setAnalysisSource(resolvedSource);
       setModelName(responseModelName ?? null);
       setFallbackReason(responseFallbackReason ?? null);
       setAnalysisTimeMs(responseAnalysisTimeMs ?? null);
       setStatus("success");
-      await persistRecordSafe(analysis, analyzeFile);
       window.requestAnimationFrame(() => scrollToAnchor("#tool-results"));
     } catch (error) {
       setStatus("error");
@@ -562,6 +598,24 @@ export default function AnalysisWorkflow() {
           <AnchorLink href="#records" className="font-semibold text-blue-800 underline">
             查看最近上报
           </AnchorLink>
+          {cloudReportId && (
+            <>
+              {" "}
+              · 已同步至
+              <Link
+                href={`/reports/${cloudReportId}`}
+                className="font-semibold text-blue-800 underline"
+              >
+                公开详情
+              </Link>
+            </>
+          )}
+        </div>
+      )}
+
+      {cloudSyncNote && status === "success" && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {cloudSyncNote}
         </div>
       )}
 
