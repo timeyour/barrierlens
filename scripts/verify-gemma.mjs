@@ -48,11 +48,19 @@ async function requestGemmaContentOnce(body) {
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
+  const payload = { ...body };
+  if (modelName.includes("26b-a4b")) {
+    payload.generationConfig = {
+      ...(payload.generationConfig ?? {}),
+      thinkingConfig: { thinkingLevel: "MINIMAL" },
+    };
+  }
+
   try {
     const response = await gemmaFetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
       signal: controller.signal,
     });
     const text = await response.text();
@@ -60,10 +68,10 @@ async function requestGemmaContentOnce(body) {
       throw new Error(`HTTP ${response.status}: ${text.slice(0, 300)}`);
     }
     const json = JSON.parse(text);
-    return json.candidates?.[0]?.content?.parts
-      ?.map((part) => part.text ?? "")
-      .join("")
-      .trim();
+    const parts = json.candidates?.[0]?.content?.parts ?? [];
+    const answerParts = parts.filter((part) => !part.thought);
+    const source = answerParts.length > 0 ? answerParts : parts;
+    return source.map((part) => part.text ?? "").join("").trim();
   } finally {
     clearTimeout(timer);
   }

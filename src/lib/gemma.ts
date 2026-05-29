@@ -22,6 +22,7 @@ const DEFAULT_RETRY_ATTEMPTS = 2;
 type RawAnalysis = Partial<AnalysisResult> & Record<string, unknown>;
 type GeminiPart = {
   text?: string;
+  thought?: boolean;
 };
 type GeminiRestResponse = {
   candidates?: Array<{
@@ -75,6 +76,32 @@ function getProxyUrl(): string | undefined {
     process.env.http_proxy ||
     process.env.all_proxy
   );
+}
+
+function buildGenerationConfig(
+  overrides: Record<string, unknown>,
+): Record<string, unknown> {
+  const modelName = getModelName();
+  const config: Record<string, unknown> = { ...overrides };
+
+  // Gemma 4 MoE 默认输出英文推理链，会淹没 JSON；MINIMAL 可拿到正式答案 part
+  if (modelName.includes("26b-a4b")) {
+    config.thinkingConfig = { thinkingLevel: "MINIMAL" };
+  }
+
+  return config;
+}
+
+function extractAnswerText(parts: GeminiPart[] | undefined): string {
+  if (!parts?.length) return "";
+
+  const answerParts = parts.filter((part) => !part.thought);
+  const source = answerParts.length > 0 ? answerParts : parts;
+
+  return source
+    .map((part) => part.text ?? "")
+    .join("")
+    .trim();
 }
 
 function gemmaFetch(input: string, init: RequestInit): Promise<Response> {
@@ -439,10 +466,7 @@ async function requestGemmaContentOnce(
       );
     }
 
-    const content = parsed.candidates?.[0]?.content?.parts
-      ?.map((part) => part.text ?? "")
-      .join("")
-      .trim();
+    const content = extractAnswerText(parsed.candidates?.[0]?.content?.parts);
     if (!content) {
       throw new Error("Gemma API returned empty content");
     }
@@ -487,10 +511,10 @@ export async function callGemmaText(prompt: string): Promise<string> {
 
   return requestGemmaContent(apiKey, getModelName(), {
     contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: {
+    generationConfig: buildGenerationConfig({
       maxOutputTokens: 512,
       temperature: 0.2,
-    },
+    }),
   }, getTimeoutMs());
 }
 
@@ -516,11 +540,11 @@ async function callGemmaApi(request: AnalysisRequest): Promise<AnalysisResult> {
         parts: [{ text: prompt }, { inlineData: { mimeType, data } }],
       },
     ],
-    generationConfig: {
+    generationConfig: buildGenerationConfig({
       maxOutputTokens: 1400,
       responseMimeType: "application/json",
       temperature: 0.2,
-    },
+    }),
   }, timeoutMs);
 
   return normalizeResult(parseGemmaJson(content), request);
