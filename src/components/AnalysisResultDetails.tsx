@@ -1,4 +1,8 @@
 import {
+  displayLocationLabel,
+  sanitizeLocationForStorage,
+} from "@/lib/locationValidation";
+import {
   PATH_STATUS_LABELS,
   REVIEW_STATUS_LABELS,
   SCENE_TYPE_LABELS,
@@ -39,7 +43,10 @@ export default function AnalysisResultDetails({
       />
       <DetailRow label="归类部门" value={result.targetDepartment} />
       <DetailRow label="受阻路径" value={result.blockedPath} />
-      <DetailRow label="路名/位置" value={result.location ?? "未填写"} />
+      <DetailRow
+        label="路名/位置"
+        value={displayLocationLabel(result.location, "未填写")}
+      />
       {result.obstacles.length > 0 && (
         <DetailRow
           label="障碍物"
@@ -111,16 +118,19 @@ export function ResultConclusionHeader({
         {result.blockedPath}
       </p>
       <p className="text-xs text-slate-500">
-        {result.location && result.location !== "地点未标注" ? (
-          <>
-            路名/位置：{result.location}
-            {recordMode === "inspection" ? " · 物业自查" : " · 公众记录"}
-          </>
-        ) : (
-          <span className="text-amber-700">
-            路名/位置未填写 — 请在提交前补充「哪条路」，否则公开记录无法对应具体路段
-          </span>
-        )}
+        {(() => {
+          const placeLabel = sanitizeLocationForStorage(result.location);
+          return placeLabel ? (
+            <>
+              路名/位置：{placeLabel}
+              {recordMode === "inspection" ? " · 物业自查" : " · 公众记录"}
+            </>
+          ) : (
+            <span className="text-amber-700">
+              路名/位置未填写 — 请在提交前补充「哪条路」，否则公开记录无法对应具体路段
+            </span>
+          );
+        })()}
       </p>
     </header>
   );

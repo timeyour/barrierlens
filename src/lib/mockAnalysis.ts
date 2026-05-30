@@ -1,4 +1,6 @@
+import { isHackathonFlagEnabled } from "@/config/hackathonFlags";
 import { pickMockPreset, type MockPreset } from "@/data/mockPresets";
+import { ensureObstaclesFromEvidence } from "@/lib/obstacleFallback";
 import type {
   AnalysisResult,
   RecordMode,
@@ -102,7 +104,7 @@ export async function mockAnalyze(
   const inspectionText = buildInspectionText(preset, place, targetDepartment);
   const reportText = recordMode === "inspection" ? inspectionText : advocacyText;
 
-  return {
+  const baseResult = {
     hasIssue: true,
     category: preset.category,
     obstacleNature: preset.obstacleNature,
@@ -123,7 +125,7 @@ export async function mockAnalyze(
     suggestedActions: preset.suggestedActions,
     confidence: preset.confidence,
     needsHumanReview: preset.confidence < 0.8,
-    reviewStatus: "pending",
+    reviewStatus: "pending" as const,
     targetDepartment,
     reportText,
     advocacyText,
@@ -132,6 +134,11 @@ export async function mockAnalyze(
     recordMode,
     recordedAt,
   };
+
+  if (isHackathonFlagEnabled("obstacleFallback")) {
+    return ensureObstaclesFromEvidence(baseResult);
+  }
+  return baseResult;
 }
 
 export function isMockMode(): boolean {

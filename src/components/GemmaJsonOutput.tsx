@@ -24,6 +24,8 @@ export default function GemmaJsonOutput({
   const sourceText =
     source === "gemma"
       ? `真实模型 · ${modelName ?? "Gemma 4"}`
+      : source === "ollama"
+        ? `本地 Ollama · ${modelName ?? "gemma4:latest"}`
       : source === "mock_fallback"
         ? "Mock 兜底 · 接口失败后自动降级"
         : mockMode

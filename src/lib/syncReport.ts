@@ -1,18 +1,30 @@
 import type { AnalysisSource, StoredRecord } from "@/types/analysis";
 import { compressImageForUpload } from "@/lib/imageUtils";
 import { getBrowserLocation } from "@/lib/geolocation";
+import { isLocationUsable } from "@/lib/locationValidation";
 
 export type CloudSyncResult =
   | { ok: true; id: string; url: string }
-  | { ok: false; reason: "not_configured" | "no_image" | "network" | "server" };
+  | {
+      ok: false;
+      reason: "not_configured" | "no_image" | "network" | "server" | "location";
+    };
 
 export async function syncReportToCloud(input: {
   stored: StoredRecord;
   imageFile: File | null;
   analysisSource?: AnalysisSource | null;
+  requireLocationForCloud?: boolean;
 }): Promise<CloudSyncResult> {
   if (!input.imageFile) {
     return { ok: false, reason: "no_image" };
+  }
+
+  if (
+    input.requireLocationForCloud &&
+    !isLocationUsable(input.stored.location)
+  ) {
+    return { ok: false, reason: "location" };
   }
 
   const coords = await getBrowserLocation();

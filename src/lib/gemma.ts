@@ -1,5 +1,7 @@
 import { fetch as undiciFetch, ProxyAgent } from "undici";
 import { mockAnalyze } from "@/lib/mockAnalysis";
+import { isHackathonFlagEnabled } from "@/config/hackathonFlags";
+import { ensureObstaclesFromEvidence } from "@/lib/obstacleFallback";
 import type {
   AnalysisRequest,
   AnalysisResult,
@@ -104,14 +106,54 @@ function extractAnswerText(parts: GeminiPart[] | undefined): string {
     .trim();
 }
 
-function gemmaFetch(input: string, init: RequestInit): Promise<Response> {
+function formatGemmaNetworkError(
+  error: unknown,
+  proxyUrl?: string,
+  directError?: unknown,
+): string {
+  const message = errorMessage(error);
+  const directMessage = directError ? errorMessage(directError) : message;
+
+  if (proxyUrl && isRetryableGemmaError(error)) {
+    if (/fetch failed|ECONNREFUSED|ECONNRESET|ETIMEDOUT|socket|connect/i.test(message)) {
+      return `无法访问 Google API：代理 ${proxyUrl} 未连通。请启动 Clash/VPN 并确认 GEMMA_API_PROXY 端口（常见 7890 或 7897）。`;
+    }
+    if (directError && isRetryableGemmaError(directError)) {
+      return `经代理 ${proxyUrl} 与直连均失败。请检查 VPN 或改用 Vercel 线上环境测试 Gemma。`;
+    }
+    return `经代理 ${proxyUrl} 访问失败：${message}`;
+  }
+
+  if (/fetch failed|abort|timeout|ETIMEDOUT/i.test(message)) {
+    return "无法连接 Google API（网络超时或被墙）。本地请配置 GEMMA_API_PROXY，或在线上 Vercel 环境验证。";
+  }
+
+  return directMessage;
+}
+
+async function gemmaFetch(input: string, init: RequestInit): Promise<Response> {
   const proxyUrl = getProxyUrl();
   if (!proxyUrl) return fetch(input, init);
 
-  return undiciFetch(input, {
-    ...init,
-    dispatcher: new ProxyAgent(proxyUrl),
-  } as unknown as Parameters<typeof undiciFetch>[1]) as unknown as Promise<Response>;
+  try {
+    return (await undiciFetch(input, {
+      ...init,
+      dispatcher: new ProxyAgent(proxyUrl),
+    } as unknown as Parameters<typeof undiciFetch>[1])) as unknown as Response;
+  } catch (proxyError) {
+    if (!isRetryableGemmaError(proxyError)) throw proxyError;
+
+    console.warn(
+      "[gemma] proxy request failed, retrying direct:",
+      errorMessage(proxyError),
+    );
+
+    try {
+      return await fetch(input, init);
+    } catch (directError) {
+      throw new Error(formatGemmaNetworkError(proxyError, proxyUrl, directError));
+    }
+  }
 }
 
 function normalizePathStatus(raw: unknown): PathStatus {
@@ -353,15 +395,20 @@ function normalizeResult(parsed: RawAnalysis, request: AnalysisRequest): Analysi
     buildDefaultInspection(baseResult),
   );
 
-  return {
+  const normalized = {
     ...baseResult,
     advocacyText,
     inspectionText,
     reportText: request.recordMode === "inspection" ? inspectionText : advocacyText,
   };
+
+  if (isHackathonFlagEnabled("obstacleFallback")) {
+    return ensureObstaclesFromEvidence(normalized);
+  }
+  return normalized;
 }
 
-function parseDataUrl(dataUrl: string): { mimeType: string; data: string } {
+export function parseDataUrl(dataUrl: string): { mimeType: string; data: string } {
   const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
   if (match) {
     return { mimeType: match[1], data: match[2] };
@@ -369,7 +416,7 @@ function parseDataUrl(dataUrl: string): { mimeType: string; data: string } {
   return { mimeType: "image/jpeg", data: dataUrl };
 }
 
-function buildAnalysisPrompt(
+export function buildAnalysisPrompt(
   targetDepartment: string,
   recordMode: RecordMode,
   location?: string,
@@ -550,11 +597,51 @@ async function callGemmaApi(request: AnalysisRequest): Promise<AnalysisResult> {
   return normalizeResult(parseGemmaJson(content), request);
 }
 
+export function parseAndNormalizeGemmaContent(
+  content: string,
+  request: AnalysisRequest,
+): AnalysisResult {
+  return normalizeResult(parseGemmaJson(content), request);
+}
+
+async function tryOllamaAnalyze(
+  request: AnalysisRequest,
+): Promise<AnalyzeImageResponse | null> {
+  const {
+    analyzeWithOllama,
+    isOllamaEnabled,
+    isOllamaReachable,
+    ollamaProviderLabel,
+  } = await import("@/lib/ollama");
+
+  if (!isOllamaEnabled()) return null;
+  if (!(await isOllamaReachable())) return null;
+
+  const modelName = process.env.OLLAMA_MODEL?.trim() || "gemma4:latest";
+  return {
+    result: await analyzeWithOllama(request),
+    source: "ollama",
+    mockMode: false,
+    modelName,
+    provider: ollamaProviderLabel(),
+  };
+}
+
 export async function analyzeImage(
   request: AnalysisRequest,
 ): Promise<AnalyzeImageResponse> {
   const modelName = getModelName();
   const provider = "google-gemini-rest";
+  const ollamaPreferred = process.env.OLLAMA_PREFERRED === "true";
+
+  if (ollamaPreferred) {
+    try {
+      const ollamaResult = await tryOllamaAnalyze(request);
+      if (ollamaResult) return ollamaResult;
+    } catch (error) {
+      console.error("Ollama preferred but failed:", errorMessage(error));
+    }
+  }
 
   if (getApiKey()) {
     try {
@@ -567,7 +654,20 @@ export async function analyzeImage(
       };
     } catch (error) {
       const fallbackReason = errorMessage(error);
-      console.error("Gemma API failed, falling back to mock:", fallbackReason);
+      console.error("Gemma API failed:", fallbackReason);
+
+      try {
+        const ollamaResult = await tryOllamaAnalyze(request);
+        if (ollamaResult) {
+          return {
+            ...ollamaResult,
+            fallbackReason: `Google API 不可用，已改用本地 Ollama：${fallbackReason}`,
+          };
+        }
+      } catch (ollamaError) {
+        console.error("Ollama fallback failed:", errorMessage(ollamaError));
+      }
+
       return {
         result: await mockAnalyze(
           request.imageBase64,
@@ -583,6 +683,13 @@ export async function analyzeImage(
         fallbackReason,
       };
     }
+  }
+
+  try {
+    const ollamaResult = await tryOllamaAnalyze(request);
+    if (ollamaResult) return ollamaResult;
+  } catch (error) {
+    console.error("Ollama analyze failed:", errorMessage(error));
   }
 
   return {

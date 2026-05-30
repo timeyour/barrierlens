@@ -82,6 +82,10 @@ export function getRecords(): StoredRecord[] {
   );
 }
 
+export function getRecordByLocalId(id: string): StoredRecord | null {
+  return readAll().find((record) => record.id === id) ?? null;
+}
+
 export function saveRecord(record: StoredRecord): void {
   const existing = readAll();
   writeAll([record, ...existing.filter((r) => r.id !== record.id)]);

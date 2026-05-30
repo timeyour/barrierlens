@@ -5,6 +5,7 @@ import {
   type RecordMode,
 } from "@/types/analysis";
 import type { CloudReportSummary } from "@/types/cloudReport";
+import { displayLocationLabel } from "@/lib/locationValidation";
 
 function formatCloudTime(iso: string): string {
   return new Date(iso).toLocaleString("zh-CN", {
@@ -67,7 +68,7 @@ export default function PublicReportCard({ report }: { report: CloudReportSummar
             {report.problem_summary ?? report.location}
           </p>
           <p className="mt-2 text-[11px] text-slate-500">
-            {report.location} · {formatCloudTime(report.created_at)}
+            {displayLocationLabel(report.location)} · {formatCloudTime(report.created_at)}
           </p>
         </div>
       </div>

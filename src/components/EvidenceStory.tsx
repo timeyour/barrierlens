@@ -11,29 +11,29 @@ const STORY_STEPS = [
   {
     id: "blocked",
     step: "01",
-    title: "这里过不去",
-    body: "盲道被占、坡道受阻——单次投诉容易被忽略，但问题会反复出现。",
+    title: "过不去",
+    body: "盲道被占、坡道受阻。",
     accent: "text-red-600",
   },
   {
     id: "capture",
     step: "02",
-    title: "拍一张，AI 帮你写清楚",
-    body: "上传现场照片，Gemma 4 输出问题类型、风险等级与可传播摘要，不用自己组织长文。",
+    title: "拍一张",
+    body: "AI 帮你写清楚。",
     accent: "text-blue-600",
   },
   {
     id: "archive",
     step: "03",
-    title: "攒成证据链",
-    body: "每条记录归档到本机时间线，按地点聚合——分散发现变成可被汇总的证据。",
+    title: "存下来",
+    body: "本机时间线归档。",
     accent: "text-amber-600",
   },
   {
     id: "advocate",
     step: "04",
-    title: "推动被看见",
-    body: "导出倡导摘要或巡查整改单，交给物业、社区或媒体——让整改有迹可循。",
+    title: "递出去",
+    body: "导出 · 跟进 · 复拍。",
     accent: "text-emerald-600",
   },
 ] as const;
@@ -200,7 +200,7 @@ function StoryCta({ index }: { index: number }) {
         href="#tool"
         className="btn-primary mt-4 inline-flex rounded-xl px-5 py-2.5 text-sm font-semibold text-white sm:mt-5"
       >
-        生成倡导摘要
+        生成摘要
       </AnchorLink>
     );
   }
@@ -236,21 +236,13 @@ export default function EvidenceStory({
       aria-live="polite"
     >
       <div className={`text-center ${compact ? "mb-2" : "mb-4 md:mb-6"}`}>
-        <p className="section-eyebrow">Story</p>
         <h2
-          className={`mt-2 font-bold tracking-tight text-slate-900 ${
+          className={`font-bold tracking-tight text-slate-900 ${
             compact ? "text-xl" : "text-2xl sm:text-3xl"
           }`}
         >
-          从「过不去」到「被看见」
+          拍 · 存 · 递
         </h2>
-        <p
-          className={`mx-auto max-w-xl text-slate-600 ${
-            compact ? "mt-1 text-xs" : "mt-2 text-sm"
-          }`}
-        >
-          四步自动循环 · 看一条记录如何变成可复查、可导出的无障碍证据
-        </p>
       </div>
 
       <div

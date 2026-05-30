@@ -1,7 +1,14 @@
+import Link from "next/link";
 import ReportToolIntro from "@/components/ReportToolIntro";
 import AnalysisWorkflow from "@/components/AnalysisWorkflow";
 import EvidenceStory from "@/components/EvidenceStory";
+import FixMyStreetHomeStrip from "@/components/FixMyStreetHomeStrip";
+import FixMyStreetHowStrip from "@/components/FixMyStreetHowStrip";
+import FixMyStreetRecentReports from "@/components/FixMyStreetRecentReports";
 import HowItWorks from "@/components/HowItWorks";
+import MixedHomeWorkbench from "@/components/MixedHomeWorkbench";
+import MobileBottomNav from "@/components/MobileBottomNav";
+import NavLayoutPreviewBanner from "@/components/NavLayoutPreviewBanner";
 import OverlayShowcase from "@/components/OverlayShowcase";
 import HashScrollHandler from "@/components/HashScrollHandler";
 import PageBackground from "@/components/PageBackground";
@@ -11,6 +18,8 @@ import ScrollProgressBar from "@/components/ScrollProgress";
 import ScrollReveal from "@/components/ScrollReveal";
 import SiteNav from "@/components/SiteNav";
 import V2ScenarioCards from "@/components/V2ScenarioCards";
+import { resolveNavLayoutFromSearchParam, type NavLayout } from "@/config/navLayout";
+import { resolveWorkbenchLayout } from "@/config/workbenchLayout";
 import { resolveUiMode } from "@/config/featureFlags";
 
 function firstValue(raw?: string | string[]): string | undefined {
@@ -25,56 +34,120 @@ export default async function Home({
 }) {
   const resolvedParams = (await searchParams) ?? {};
   const { mode } = resolveUiMode(firstValue(resolvedParams.mode));
+  const navLayout: NavLayout = resolveNavLayoutFromSearchParam(
+    firstValue(resolvedParams.nav),
+  );
+  const workbenchLayout = resolveWorkbenchLayout(firstValue(resolvedParams.layout));
   const showMvpPanels = mode === "mvp";
+  const isClassic = navLayout === "classic";
+  const isMixed = navLayout === "mixed";
+  const isFixMyStreet = navLayout === "fixmystreet";
+  const mobileNavPad = isMixed || isFixMyStreet;
 
   return (
     <div className="relative min-h-screen">
       <PageBackground />
       <HashScrollHandler />
       <ScrollProgressBar />
-      <SiteNav />
+      <SiteNav initialLayout={navLayout} />
       <ParallaxVideoHero />
 
-      <main className="relative mx-auto flex max-w-6xl flex-col px-4 pb-4 pt-0 md:px-6 md:py-10 lg:py-16">
-        <div className="mobile-snap-screen order-0 flex flex-col gap-3 bg-[var(--background)] px-0 py-5 md:contents md:min-h-0 md:bg-transparent md:py-0">
-          <EvidenceStory />
-          {!showMvpPanels && <V2ScenarioCards embedded />}
-        </div>
+      {isFixMyStreet && <FixMyStreetHomeStrip />}
+      {isFixMyStreet && <FixMyStreetRecentReports />}
+      {isFixMyStreet && <FixMyStreetHowStrip />}
 
-        <ScrollReveal
-          delay={0.05}
-          className="mobile-no-snap order-2 scroll-mt-20 pt-6 md:min-h-0 md:scroll-mt-20 md:py-0"
-        >
-          <div id="tool" className="scroll-mt-20" aria-hidden="true" />
-          <ReportToolIntro />
-          <AnalysisWorkflow />
-        </ScrollReveal>
+      <main className={`relative mx-auto flex max-w-6xl flex-col px-4 pb-4 pt-0 md:px-6 md:py-10 lg:py-16 ${mobileNavPad ? "pb-24 md:pb-16" : ""}`}>
+        {isMixed ? (
+          <>
+            <MixedHomeWorkbench layout={workbenchLayout} />
+            <div className="mobile-no-snap scroll-mt-16 pt-10 md:min-h-0 md:pt-0">
+              <RecordTimeline />
+            </div>
+          </>
+        ) : (
+          <>
+            {(isClassic || isFixMyStreet) && (
+              <div className="mobile-snap-screen order-0 flex flex-col gap-3 bg-[var(--background)] px-0 py-5 md:contents md:min-h-0 md:bg-transparent md:py-0">
+                {isClassic && (
+                  <>
+                    <EvidenceStory />
+                    {!showMvpPanels && <V2ScenarioCards embedded />}
+                  </>
+                )}
+              </div>
+            )}
 
-        <div className="mobile-no-snap order-3 scroll-mt-16 pt-10 md:min-h-0 md:pt-0">
-          <RecordTimeline />
-        </div>
+            <ScrollReveal
+              delay={0.05}
+              className="mobile-no-snap order-2 scroll-mt-20 pt-6 md:min-h-0 md:scroll-mt-20 md:py-0"
+            >
+              <div id="tool" className="scroll-mt-20" aria-hidden="true" />
+              {isClassic && <ReportToolIntro />}
+              {isFixMyStreet && (
+                <div className="mb-4">
+                  <h2 className="text-lg font-bold text-slate-900">报告问题</h2>
+                </div>
+              )}
+              <AnalysisWorkflow />
+            </ScrollReveal>
 
-        {showMvpPanels && (
-          <div className="order-4 scroll-mt-0">
-            <OverlayShowcase />
-          </div>
-        )}
+            <div className="mobile-no-snap order-3 scroll-mt-16 pt-10 md:min-h-0 md:pt-0">
+              <RecordTimeline />
+            </div>
 
-        {showMvpPanels && (
-          <div className="order-5 hidden md:block">
-            <HowItWorks />
-          </div>
+            {showMvpPanels && isClassic && (
+              <>
+                <div className="order-4 scroll-mt-0">
+                  <OverlayShowcase />
+                </div>
+                <div className="order-5 hidden md:block">
+                  <HowItWorks />
+                </div>
+              </>
+            )}
+          </>
         )}
       </main>
+
+      <MobileBottomNav layout={navLayout} />
+      <NavLayoutPreviewBanner
+        initialLayout={navLayout}
+        initialWorkbenchLayout={workbenchLayout}
+      />
 
       <ScrollReveal>
         <footer className="border-t border-slate-200/60 bg-white/60 py-8 backdrop-blur-md md:py-12">
           <div className="mx-auto max-w-6xl px-4 text-center text-xs text-slate-500 sm:px-6">
             <p className="font-medium text-slate-700">无碍 BarrierLens</p>
-            <p className="mt-2 hidden md:block">
-              让分散的无障碍发现变成可被看见、被汇总的记录——可归档、可复查、可导出。
-            </p>
-            <p className="mt-2 md:hidden">让无障碍问题被看见、被记录</p>
+            {isMixed && (
+              <p className="mt-2 text-[11px]">
+                <Link href="/?nav=classic" className="text-blue-700 underline">
+                  经典版
+                </Link>
+                {" · "}
+                <Link href="/?layout=compact" className="text-blue-700 underline">
+                  紧凑版
+                </Link>
+              </p>
+            )}
+            {isFixMyStreet && (
+              <p className="mt-2 text-[11px]">
+                <Link href="/?nav=classic" className="text-blue-700 underline">
+                  经典版
+                </Link>
+                {" · "}
+                <Link href="/" className="text-blue-700 underline">
+                  混合版
+                </Link>
+              </p>
+            )}
+            {isClassic && (
+              <p className="mt-2 text-[11px]">
+                <Link href="/" className="text-blue-700 underline">
+                  混合首页
+                </Link>
+              </p>
+            )}
           </div>
         </footer>
       </ScrollReveal>

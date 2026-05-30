@@ -2,6 +2,7 @@
 
 import { UI_ASSETS } from "@/config/uiAssets";
 import { useMemo, useState } from "react";
+import { displayLocationLabel } from "@/lib/locationValidation";
 import { PATH_STATUS_LABELS, type AnalysisResult } from "@/types/analysis";
 
 interface BarrierMapProps {
@@ -157,8 +158,10 @@ export default function BarrierMap({ result }: BarrierMapProps) {
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold text-slate-900">风险地图 · 现场标注</h3>
-          {result.location && (
-            <p className="mt-0.5 text-[11px] text-slate-500">{result.location}</p>
+          {displayLocationLabel(result.location, "") && (
+            <p className="mt-0.5 text-[11px] text-slate-500">
+              {displayLocationLabel(result.location, "")}
+            </p>
           )}
         </div>
         <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600">

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { sanitizeLocationForStorage } from "@/lib/locationValidation";
 import type { AnalysisResult, AnalysisSource, RecordMode } from "@/types/analysis";
 import AnalysisResultDetails, {
   ResultConclusionHeader,
@@ -37,6 +38,7 @@ export default function ReportResultPanel({
   showLocationMap = true,
 }: ReportResultPanelProps) {
   const hasCoords = result.lat != null && result.lng != null;
+  const locationLabel = sanitizeLocationForStorage(result.location);
 
   return (
     <div className="space-y-5">
@@ -49,13 +51,14 @@ export default function ReportResultPanel({
       <AnalysisVerificationBanner
         analysisSource={analysisSource}
         needsHumanReview={result.needsHumanReview}
+        obstaclesInferredFromEvidence={result.obstaclesInferredFromEvidence}
       />
 
       <BarrierMap result={result} />
 
-      {showLocationMap && hasCoords && result.location && (
+      {showLocationMap && hasCoords && (
         <ReportLocationMap
-          location={result.location}
+          location={locationLabel || "已定位路段"}
           lat={result.lat ?? null}
           lng={result.lng ?? null}
         />

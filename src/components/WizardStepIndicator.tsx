@@ -1,4 +1,4 @@
-const LABELS = ["拍照", "选类别", "提交"] as const;
+const LABELS = ["拍照", "类型", "提交"] as const;
 
 function StepCheckIcon() {
   return (
@@ -16,11 +16,12 @@ function StepCheckIcon() {
 
 interface WizardStepIndicatorProps {
   current: 1 | 2 | 3;
+  flow?: boolean;
 }
 
-export default function WizardStepIndicator({ current }: WizardStepIndicatorProps) {
+export default function WizardStepIndicator({ current, flow = false }: WizardStepIndicatorProps) {
   return (
-    <nav aria-label="记录步骤" className="mb-8 flex items-center gap-2">
+    <nav aria-label="记录步骤" className={`mb-8 flex items-center gap-2 ${flow ? "home-flow-steps" : ""}`}>
       {LABELS.map((label, index) => {
         const step = (index + 1) as 1 | 2 | 3;
         const active = step === current;
@@ -29,18 +30,32 @@ export default function WizardStepIndicator({ current }: WizardStepIndicatorProp
           <div key={label} className="flex min-w-0 flex-1 items-center gap-2">
             <span
               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
-                active
-                  ? "bg-[var(--primary)] text-white shadow-sm shadow-blue-900/15"
-                  : done
-                    ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/80"
-                    : "bg-slate-100 text-slate-500"
+                flow
+                  ? active
+                    ? "bg-sky-400 text-slate-950"
+                    : done
+                      ? "bg-white/15 text-white ring-1 ring-white/25"
+                      : "bg-white/5 text-white/45 ring-1 ring-white/10"
+                  : active
+                    ? "bg-[var(--primary)] text-white shadow-sm shadow-blue-900/15"
+                    : done
+                      ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/80"
+                      : "bg-slate-100 text-slate-500"
               }`}
             >
               {done ? <StepCheckIcon /> : step}
             </span>
             <span
               className={`truncate text-sm font-medium ${
-                active ? "text-slate-900" : "text-slate-500"
+                flow
+                  ? active
+                    ? "text-white"
+                    : done
+                      ? "text-white/70"
+                      : "text-white/40"
+                  : active
+                    ? "text-slate-900"
+                    : "text-slate-500"
               }`}
             >
               {label}
@@ -48,7 +63,13 @@ export default function WizardStepIndicator({ current }: WizardStepIndicatorProp
             {index < LABELS.length - 1 && (
               <span
                 className={`mx-1 hidden h-px flex-1 sm:block ${
-                  done ? "bg-emerald-300/80" : "bg-slate-200"
+                  flow
+                    ? done
+                      ? "bg-white/30"
+                      : "bg-white/10"
+                    : done
+                      ? "bg-emerald-300/80"
+                      : "bg-slate-200"
                 }`}
                 aria-hidden
               />

@@ -3,11 +3,13 @@ import type { AnalysisSource } from "@/types/analysis";
 interface AnalysisVerificationBannerProps {
   analysisSource?: AnalysisSource | null;
   needsHumanReview?: boolean;
+  obstaclesInferredFromEvidence?: boolean;
 }
 
 export default function AnalysisVerificationBanner({
   analysisSource,
   needsHumanReview,
+  obstaclesInferredFromEvidence,
 }: AnalysisVerificationBannerProps) {
   if (analysisSource === "mock") {
     return (
@@ -20,6 +22,17 @@ export default function AnalysisVerificationBanner({
     );
   }
 
+  if (analysisSource === "ollama") {
+    return (
+      <div
+        className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs leading-relaxed text-emerald-900"
+        role="status"
+      >
+        本次由本机 Ollama（Gemma 4）分析，无需 Google API。请核对摘要是否与照片中的可见障碍一致。
+      </div>
+    );
+  }
+
   if (analysisSource === "mock_fallback") {
     return (
       <div
@@ -27,6 +40,10 @@ export default function AnalysisVerificationBanner({
         role="status"
       >
         AI 暂不可用，已降级为演示数据。请核对诊断摘要是否与照片中的可见障碍物一致。
+        <span className="mt-1 block text-[11px] text-amber-800/90">
+          本地开发若走 Mock：先启动 VPN/Clash，并确认 .env.local 里 GEMMA_API_PROXY 端口正确（如
+          http://127.0.0.1:7897）。
+        </span>
       </div>
     );
   }
@@ -38,6 +55,17 @@ export default function AnalysisVerificationBanner({
         role="status"
       >
         模型置信度偏低，请核对摘要是否准确描述了照片中的可见障碍。
+      </div>
+    );
+  }
+
+  if (obstaclesInferredFromEvidence) {
+    return (
+      <div
+        className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs leading-relaxed text-blue-900"
+        role="status"
+      >
+        模型未单独列出 obstacles，已根据 evidencePoints 补全地图标注，请对照照片核对。
       </div>
     );
   }

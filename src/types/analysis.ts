@@ -16,7 +16,7 @@ export type SceneType =
   | "accessible_entrance_blocked"
   | "access_route_discontinuity";
 export type PathStatus = "clear" | "partial" | "blocked";
-export type AnalysisSource = "gemma" | "mock" | "mock_fallback";
+export type AnalysisSource = "gemma" | "ollama" | "mock" | "mock_fallback";
 export type ReviewStatus =
   | "pending"
   | "exported"
@@ -66,6 +66,8 @@ export interface AnalysisResult {
   location?: string;
   recordMode?: RecordMode;
   recordedAt?: string;
+  /** obstacles 为空时由 evidencePoints 补全 */
+  obstaclesInferredFromEvidence?: boolean;
 }
 
 export interface AnalysisRequest {
@@ -85,6 +87,9 @@ export interface StoredRecord extends AnalysisResult {
   imageDataUrl?: string;
   /** 整改复查时上传的复拍照片 */
   reviewImageDataUrl?: string;
+  /** 上报时浏览器定位（供档案页 OSM 地图） */
+  lat?: number | null;
+  lng?: number | null;
 }
 
 export const TARGET_DEPARTMENTS: TargetDepartment[] = [

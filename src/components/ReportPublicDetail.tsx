@@ -4,7 +4,10 @@ import {
   type RecordMode,
 } from "@/types/analysis";
 import type { CloudReport } from "@/types/cloudReport";
+import PublicReportLocalBanner from "@/components/PublicReportLocalBanner";
+import PublicReportReadOnlyBanner from "@/components/PublicReportReadOnlyBanner";
 import ReportResultPanel from "@/components/ReportResultPanel";
+import { isHackathonFlagEnabled } from "@/config/hackathonFlags";
 
 function formatCloudTime(iso: string): string {
   return new Date(iso).toLocaleString("zh-CN", {
@@ -22,6 +25,7 @@ interface ReportPublicDetailProps {
 }
 
 export default function ReportPublicDetail({ report }: ReportPublicDetailProps) {
+  const publicReadOnly = isHackathonFlagEnabled("publicReadOnly");
   const diagnosis = {
     ...report.diagnosis,
     imageDataUrl: report.image_url ?? undefined,
@@ -36,12 +40,15 @@ export default function ReportPublicDetail({ report }: ReportPublicDetailProps) 
 
   return (
     <div className="space-y-5">
+      <PublicReportReadOnlyBanner enabled={publicReadOnly} />
+      <PublicReportLocalBanner localId={report.local_id} />
+
       <div className="tool-card p-5 sm:p-8">
         <ReportResultPanel
           result={diagnosis}
           recordMode={recordMode}
           analysisSource={report.analysis_source}
-          subtitle={`公开上报 · ${formatCloudTime(report.created_at)} · ${RECORD_MODES[recordMode].label}`}
+          subtitle={`${formatCloudTime(report.created_at)} · ${RECORD_MODES[recordMode].label}`}
           reportTitle={reportTitle}
           footerSlot={
             <div className="flex flex-wrap gap-3 pt-1">
@@ -49,13 +56,13 @@ export default function ReportPublicDetail({ report }: ReportPublicDetailProps) 
                 href="/reports"
                 className="btn-secondary rounded-xl px-5 py-3 text-sm font-semibold"
               >
-                返回公开列表
+                返回列表
               </Link>
               <Link
                 href="/#tool"
                 className="btn-primary rounded-xl px-5 py-3 text-sm font-semibold"
               >
-                我也要上报
+                我也要拍
               </Link>
             </div>
           }

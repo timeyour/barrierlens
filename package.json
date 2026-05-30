@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
+    "dev": "WATCHPACK_POLLING=true next dev --webpack -H 127.0.0.1",
     "build": "next build --webpack",
     "start": "next start",
     "preview": "npm run build --webpack && next start -H 127.0.0.1 -p 3000",
@@ -12,6 +12,7 @@
     "test:multiround": "node scripts/multiround-test.mjs",
     "test:gemma": "node --env-file=.env.local test-gemma.mjs",
     "verify:gemma": "node --env-file=.env.local scripts/verify-gemma.mjs",
+    "verify:ollama": "node --env-file=.env.local scripts/verify-ollama.mjs",
     "test:production": "node scripts/test-production-analyze.mjs",
     "setup:supabase": "node scripts/setup-supabase.mjs"
   },

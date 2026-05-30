@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   clearAllRecords,
   formatRecordTime,
@@ -12,6 +13,7 @@ import {
   REVIEW_STATUS_LABELS,
   type ReviewStatus,
 } from "@/types/analysis";
+import { displayLocationLabel } from "@/lib/locationValidation";
 import type { StoredRecord } from "@/types/analysis";
 import BarrierMap from "@/components/BarrierMap";
 import PhotoCompareSlider from "@/components/PhotoCompareSlider";
@@ -19,6 +21,7 @@ import RecordEvidencePreview from "@/components/RecordEvidencePreview";
 import RecordTimelineFilters from "@/components/RecordTimelineFilters";
 import ReviewStatusFlow from "@/components/ReviewStatusFlow";
 import ScrollReveal from "@/components/ScrollReveal";
+import HomeFlowSection from "@/components/HomeFlowSection";
 import SectionHeader from "@/components/SectionHeader";
 import SpatialDiagnosisTags from "@/components/SpatialDiagnosisTags";
 import { REVIEW_STATUS_BADGE, REVIEW_STATUS_BAR } from "@/lib/reviewStatusStyles";
@@ -165,7 +168,7 @@ function ReviewPhotoCompare({
   );
 }
 
-function RecordItem({ record }: { record: StoredRecord }) {
+function RecordItem({ record, flow = false }: { record: StoredRecord; flow?: boolean }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [nextStatus, setNextStatus] = useState<ReviewStatus>(record.reviewStatus);
   const [reviewNote, setReviewNote] = useState(record.reviewNote ?? "");
@@ -212,7 +215,14 @@ function RecordItem({ record }: { record: StoredRecord }) {
   };
 
   return (
-    <li data-record-item="" className="flex overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <li
+      data-record-item=""
+      className={
+        flow
+          ? "flex overflow-hidden rounded-xl border border-white/10 bg-white/[0.04] shadow-none"
+          : "flex overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+      }
+    >
       <div
         className={`w-1.5 shrink-0 ${REVIEW_STATUS_BAR[record.reviewStatus]}`}
         aria-hidden
@@ -241,15 +251,28 @@ function RecordItem({ record }: { record: StoredRecord }) {
               {formatRecordTime(record.recordedAt)}
             </span>
           </div>
-          <p className="mt-2 text-sm font-semibold text-slate-900">
+          <p className={`mt-2 text-sm font-semibold ${flow ? "text-white" : "text-slate-900"}`}>
             {record.issueType}
           </p>
-          <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">
-            {record.location || "地点未标注"} · {record.problemSummary}
+          <p className={`mt-0.5 line-clamp-1 text-xs ${flow ? "text-white/50" : "text-slate-500"}`}>
+            {displayLocationLabel(record.location)} · {record.problemSummary}
           </p>
-          <p className="mt-2 text-xs font-medium text-blue-600 group-open:hidden">
-            展开详情与整改复查 ↓
+          <p
+            className={`mt-2 text-xs font-medium group-open:hidden ${
+              flow ? "text-sky-300" : "text-blue-600"
+            }`}
+          >
+            展开 ↓
           </p>
+          <Link
+            href={`/saved/${record.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className={`mt-2 inline-block text-xs font-semibold ${
+              flow ? "text-emerald-300 hover:text-emerald-200" : "text-emerald-700 hover:text-emerald-800"
+            }`}
+          >
+            档案 →
+          </Link>
         </summary>
 
         <div className="border-t border-slate-100 px-4 pb-4 pt-3">
@@ -342,7 +365,8 @@ function RecordItem({ record }: { record: StoredRecord }) {
   );
 }
 
-export default function RecordTimeline() {
+export default function RecordTimeline({ variant = "default" }: { variant?: "default" | "flow" }) {
+  const flow = variant === "flow";
   const [records, setRecords] = useState<StoredRecord[]>(EMPTY_RECORDS);
   const [filters, setFilters] = useState<RecordFilterState>(DEFAULT_RECORD_FILTERS);
 
@@ -362,52 +386,91 @@ export default function RecordTimeline() {
   const visibleRecords = filterRecords(records, filters);
   const grouped = groupRecordsByLocation(visibleRecords);
 
+  const content = (
+    <>
+      <RecordTimelineFilters
+        filters={filters}
+        onChange={setFilters}
+        counts={counts}
+        flow={flow}
+      />
+
+      {visibleRecords.length === 0 ? (
+        <p
+          className={
+            flow
+              ? "rounded-xl border border-dashed border-white/15 px-4 py-8 text-center text-sm text-white/45"
+              : "rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500"
+          }
+        >
+          没有匹配记录
+        </p>
+      ) : (
+        <div className="space-y-6">
+          {grouped.map(({ location, records: groupRecords }) => (
+            <div key={location}>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <h3 className={`text-sm font-semibold ${flow ? "text-white/85" : "text-slate-800"}`}>
+                  {location}
+                </h3>
+                <span className={`text-[11px] ${flow ? "text-white/35" : "text-slate-400"}`}>
+                  {groupRecords.length} 条
+                </span>
+              </div>
+              <ul className="space-y-3">
+                {groupRecords.map((record) => (
+                  <RecordItem
+                    key={`${record.id}-${record.reviewStatus}-${record.reviewNote ?? ""}`}
+                    record={record}
+                    flow={flow}
+                  />
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {flow && records.length > 0 && (
+        <p className="mt-4 text-center">
+          <button
+            type="button"
+            className="text-[11px] font-medium text-white/35 underline decoration-white/20 underline-offset-2 hover:text-red-300"
+            onClick={() => {
+              if (window.confirm("清空本机全部记录？")) {
+                clearAllRecords();
+                setRecords([]);
+              }
+            }}
+          >
+            清空本机记录
+          </button>
+        </p>
+      )}
+    </>
+  );
+
+  if (flow) {
+    return (
+      <ScrollReveal>
+        <HomeFlowSection
+          id="records"
+          index="03 · 我的"
+          title="记录"
+          hint="本机保存"
+          className="mb-6 md:mb-10 lg:mb-14"
+        >
+          {content}
+        </HomeFlowSection>
+      </ScrollReveal>
+    );
+  }
+
   return (
     <ScrollReveal>
-      <section
-        id="records"
-        className="mb-6 scroll-mt-20 md:mb-10 lg:mb-14"
-      >
-        <SectionHeader
-          eyebrow="Recent"
-          title="最近上报"
-          description="像 FixMyStreet 一样按 feed 浏览；点击展开详情与整改复查。"
-          align="center"
-          descriptionClassName="hidden md:block"
-        />
-
-        <RecordTimelineFilters
-          filters={filters}
-          onChange={setFilters}
-          counts={counts}
-        />
-
-        {visibleRecords.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-            没有匹配的记录。试试切换「全部」或清空搜索关键词。
-          </p>
-        ) : (
-          <div className="space-y-6">
-            {grouped.map(({ location, records: groupRecords }) => (
-              <div key={location}>
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <h3 className="text-sm font-semibold text-slate-800">{location}</h3>
-                  <span className="text-[11px] text-slate-400">
-                    {groupRecords.length} 条
-                  </span>
-                </div>
-                <ul className="space-y-3">
-                  {groupRecords.map((record) => (
-                    <RecordItem
-                      key={`${record.id}-${record.reviewStatus}-${record.reviewNote ?? ""}`}
-                      record={record}
-                    />
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        )}
+      <section id="records" className="mb-6 scroll-mt-20 md:mb-10 lg:mb-14">
+        <SectionHeader eyebrow="Records" title="我的记录" align="center" />
+        {content}
 
         <p className="mt-4 text-center text-[11px] text-slate-400">
           记录保存在本机浏览器 · 共 {records.length} 条 · 当前显示 {visibleRecords.length} 条

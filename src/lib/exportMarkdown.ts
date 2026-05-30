@@ -8,6 +8,7 @@ import {
   type RecordMode,
 } from "@/types/analysis";
 import { inferObstacleNature, inferSpatialCategory } from "@/lib/spatialDiagnosis";
+import { displayLocationLabel } from "@/lib/locationValidation";
 
 function formatMeta(result: AnalysisResult): string {
   const groups = result.affectedGroups.join("、");
@@ -22,7 +23,7 @@ function formatMeta(result: AnalysisResult): string {
   return `| 字段 | 内容 |
 |------|------|
 | 记录时间 | ${time} |
-| 地点 | ${result.location || "未标注"} |
+| 地点 | ${displayLocationLabel(result.location, "未标注")} |
 | 冲突源 | ${SPATIAL_CONFLICT_LABELS[category]} |
 | 物理属性 | ${OBSTACLE_NATURE_LABELS[nature]} |
 | 问题类型 | ${result.issueType} |

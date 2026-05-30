@@ -2,16 +2,16 @@
 
 import { useCallback, useRef, useState } from "react";
 
-const PRIVACY_HINT =
-  "上传前请确认影像不含可识别路人正脸、车牌；地点建议概括描述。";
+const PRIVACY_HINT = "避免正脸与车牌";
 
 interface ImageUploaderProps {
   previewUrl: string | null;
   onImageSelect: (file: File, previewUrl: string) => void;
   onClear?: () => void;
   disabled?: boolean;
-  /** photo-first 大上传区（FixMyStreet 风格） */
-  variant?: "default" | "hero";
+  /** default 标准 | hero 大上传区 | compact 工作台一屏 */
+  variant?: "default" | "hero" | "compact";
+  flow?: boolean;
 }
 
 export default function ImageUploader({
@@ -20,6 +20,7 @@ export default function ImageUploader({
   onClear,
   disabled = false,
   variant = "default",
+  flow = false,
 }: ImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -51,7 +52,12 @@ export default function ImageUploader({
     if (!disabled) inputRef.current?.click();
   };
 
-  const dropMinH = variant === "hero" ? "min-h-[220px] sm:min-h-[260px]" : "min-h-[180px]";
+  const dropMinH =
+    variant === "hero"
+      ? "min-h-[220px] sm:min-h-[260px]"
+      : variant === "compact"
+        ? "min-h-[120px] sm:min-h-[140px]"
+        : "min-h-[180px]";
 
   return (
     <div>
@@ -68,7 +74,11 @@ export default function ImageUploader({
       />
 
       {previewUrl ? (
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div
+          className={`relative overflow-hidden rounded-2xl border ${
+            flow ? "border-white/15 bg-white/5" : "border-slate-200 bg-white"
+          }`}
+        >
           <button
             type="button"
             disabled={disabled}
@@ -82,8 +92,12 @@ export default function ImageUploader({
               className="max-h-48 w-full object-cover sm:max-h-72"
             />
             {!disabled && (
-              <p className="bg-slate-50 px-3 py-2 text-center text-xs text-slate-500">
-                点击照片可更换 · 支持 JPG、PNG、WEBP
+              <p
+                className={`px-3 py-2 text-center text-xs ${
+                  flow ? "bg-white/5 text-white/50" : "bg-slate-50 text-slate-500"
+                }`}
+              >
+                点击更换
               </p>
             )}
           </button>
@@ -115,13 +129,17 @@ export default function ImageUploader({
           onDragLeave={() => setIsDragging(false)}
           onDrop={onDrop}
           className={`relative flex ${dropMinH} cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-10 transition-colors ${
-            isDragging
-              ? "border-blue-600 bg-blue-50"
-              : "border-slate-300 bg-white hover:border-blue-500 hover:bg-slate-50"
+            flow
+              ? isDragging
+                ? "border-sky-400/80 bg-white/10"
+                : "border-white/20 bg-white/[0.03] hover:border-sky-400/50 hover:bg-white/[0.06]"
+              : isDragging
+                ? "border-blue-600 bg-blue-50"
+                : "border-slate-300 bg-white hover:border-blue-500 hover:bg-slate-50"
           } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
         >
           <svg
-            className="mb-4 h-12 w-12 text-blue-600"
+            className={`mb-4 h-12 w-12 ${flow ? "text-sky-300" : "text-blue-600"}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -134,13 +152,17 @@ export default function ImageUploader({
               d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
             />
           </svg>
-          <p className="text-base font-semibold text-slate-800">
-            {variant === "hero" ? "拖入或选择现场照片" : "点击或拖拽上传现场照片"}
+          <p className={`text-base font-semibold ${flow ? "text-white" : "text-slate-800"}`}>
+            {variant === "hero" ? "拖入或选择照片" : "上传现场照片"}
           </p>
-          <p className="mt-1.5 text-sm text-slate-500">支持 JPG、PNG、WEBP · 也可使用样例图</p>
+          {!flow && (
+            <p className="mt-1.5 text-sm text-slate-500">支持 JPG、PNG、WEBP · 也可使用样例图</p>
+          )}
         </div>
       )}
-      <p className="mt-2 text-xs leading-relaxed text-slate-500">{PRIVACY_HINT}</p>
+      <p className={`mt-2 text-xs ${flow ? "text-white/40" : "leading-relaxed text-slate-500"}`}>
+        {PRIVACY_HINT}
+      </p>
     </div>
   );
 }
