@@ -145,10 +145,29 @@ export function updateRecordReview(
 
 const DEMO_RECORD_ID_PREFIX = "demo-";
 
-/** 清除历史注入的演示时间线数据（id 以 demo- 开头） */
+const LEGACY_DEMO_LOCATIONS = new Set([
+  "某市地铁 2 号线 A 出入口",
+  "社区商业综合体北门",
+  "XX 花园 3 号楼南侧",
+]);
+
+function usesBundledDemoImage(url: string | undefined): boolean {
+  if (!url) return false;
+  return url.startsWith("/images/") && !url.startsWith("data:");
+}
+
+function isLegacyDemoRecord(record: StoredRecord): boolean {
+  if (record.id.startsWith(DEMO_RECORD_ID_PREFIX)) return true;
+  if (usesBundledDemoImage(record.imageDataUrl)) return true;
+  if (usesBundledDemoImage(record.reviewImageDataUrl)) return true;
+  if (LEGACY_DEMO_LOCATIONS.has(record.location)) return true;
+  return false;
+}
+
+/** 清除历史注入或引用内置样例图的演示时间线数据 */
 export function purgeDemoRecords(): number {
   const existing = readAll();
-  const next = existing.filter((record) => !record.id.startsWith(DEMO_RECORD_ID_PREFIX));
+  const next = existing.filter((record) => !isLegacyDemoRecord(record));
   if (next.length === existing.length) return 0;
   writeAll(next);
   return existing.length - next.length;
