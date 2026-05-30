@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Suspense } from "react";
-import HackathonFlagsPreviewBanner from "@/components/HackathonFlagsPreviewBanner";
 import LocalDevBanner from "@/components/LocalDevBanner";
 import { HERO_POSTER, HERO_VIDEO } from "@/config/uiAssets";
 import "./globals.css";
@@ -34,9 +32,6 @@ export default function RootLayout({
         <link rel="preload" href={HERO_VIDEO.split("#")[0]} as="fetch" crossOrigin="anonymous" />
       </head>
       <body className="min-h-screen font-sans antialiased">
-        <Suspense fallback={null}>
-          <HackathonFlagsPreviewBanner />
-        </Suspense>
         <LocalDevBanner />
         {children}
       </body>
