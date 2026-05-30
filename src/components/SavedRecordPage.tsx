@@ -4,7 +4,7 @@ import Link from "next/link";
 import PageBackground from "@/components/PageBackground";
 import SavedRecordArchive from "@/components/SavedRecordArchive";
 import SiteNav from "@/components/SiteNav";
-import { getRecordByLocalId, seedDemoRecordsIfEmpty } from "@/lib/recordStore";
+import { getRecordByLocalId } from "@/lib/recordStore";
 import type { StoredRecord } from "@/types/analysis";
 import { use, useEffect, useState } from "react";
 
@@ -18,8 +18,7 @@ export default function SavedRecordPage({
   const [bootstrapped, setBootstrapped] = useState(false);
 
   useEffect(() => {
-    seedDemoRecordsIfEmpty();
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- mark client store ready after seeding demo data
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- mark client store ready on mount
     setBootstrapped(true);
     const onSave = () => setRefreshToken((token) => token + 1);
     window.addEventListener("barrierlens-record-saved", onSave);

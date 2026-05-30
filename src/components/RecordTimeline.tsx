@@ -5,7 +5,7 @@ import {
   clearAllRecords,
   formatRecordTime,
   getRecords,
-  seedDemoRecordsIfEmpty,
+  purgeDemoRecords,
   updateRecordReview,
 } from "@/lib/recordStore";
 import { fileToStoredImageDataUrl } from "@/lib/imageUtils";
@@ -371,7 +371,7 @@ export default function RecordTimeline({ variant = "default" }: { variant?: "def
   const [filters, setFilters] = useState<RecordFilterState>(DEFAULT_RECORD_FILTERS);
 
   useEffect(() => {
-    seedDemoRecordsIfEmpty();
+    purgeDemoRecords();
     const sync = () => setRecords(getRecords());
     sync();
     window.addEventListener("storage", sync);

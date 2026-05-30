@@ -1,4 +1,3 @@
-import Link from "next/link";
 import ReportToolIntro from "@/components/ReportToolIntro";
 import AnalysisWorkflow from "@/components/AnalysisWorkflow";
 import EvidenceStory from "@/components/EvidenceStory";
@@ -8,7 +7,6 @@ import FixMyStreetRecentReports from "@/components/FixMyStreetRecentReports";
 import HowItWorks from "@/components/HowItWorks";
 import MixedHomeWorkbench from "@/components/MixedHomeWorkbench";
 import MobileBottomNav from "@/components/MobileBottomNav";
-import NavLayoutPreviewBanner from "@/components/NavLayoutPreviewBanner";
 import OverlayShowcase from "@/components/OverlayShowcase";
 import HashScrollHandler from "@/components/HashScrollHandler";
 import PageBackground from "@/components/PageBackground";
@@ -110,44 +108,11 @@ export default async function Home({
       </main>
 
       <MobileBottomNav layout={navLayout} />
-      <NavLayoutPreviewBanner
-        initialLayout={navLayout}
-        initialWorkbenchLayout={workbenchLayout}
-      />
 
       <ScrollReveal>
         <footer className="border-t border-slate-200/60 bg-white/60 py-8 backdrop-blur-md md:py-12">
           <div className="mx-auto max-w-6xl px-4 text-center text-xs text-slate-500 sm:px-6">
             <p className="font-medium text-slate-700">无碍 BarrierLens</p>
-            {isMixed && (
-              <p className="mt-2 text-[11px]">
-                <Link href="/?nav=classic" className="text-blue-700 underline">
-                  经典版
-                </Link>
-                {" · "}
-                <Link href="/?layout=compact" className="text-blue-700 underline">
-                  紧凑版
-                </Link>
-              </p>
-            )}
-            {isFixMyStreet && (
-              <p className="mt-2 text-[11px]">
-                <Link href="/?nav=classic" className="text-blue-700 underline">
-                  经典版
-                </Link>
-                {" · "}
-                <Link href="/" className="text-blue-700 underline">
-                  混合版
-                </Link>
-              </p>
-            )}
-            {isClassic && (
-              <p className="mt-2 text-[11px]">
-                <Link href="/" className="text-blue-700 underline">
-                  混合首页
-                </Link>
-              </p>
-            )}
           </div>
         </footer>
       </ScrollReveal>
