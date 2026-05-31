@@ -12,7 +12,7 @@ import ReportResultLoop from "@/components/ReportResultLoop";
 import AiAnalysisPipeline from "@/components/AiAnalysisPipeline";
 import GemmaJsonOutput from "@/components/GemmaJsonOutput";
 import WizardStepIndicator from "@/components/WizardStepIndicator";
-import { downloadMarkdownReport } from "@/lib/exportMarkdown";
+import { downloadPdfReport } from "@/lib/exportPdf";
 import { buildDispatchScript } from "@/lib/dispatchScript";
 import { compressImageForUpload, fileToStoredImageDataUrl } from "@/lib/imageUtils";
 import { RecordStorageError, saveRecord, updateRecordReview } from "@/lib/recordStore";
@@ -486,10 +486,17 @@ export default function AnalysisWorkflow({
     }
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!result) return;
-    downloadMarkdownReport(result, undefined, recordMode);
-    markRecordExported();
+    try {
+      await downloadPdfReport(result, {
+        mode: recordMode,
+        imageDataUrl: previewUrl ?? undefined,
+      });
+      markRecordExported();
+    } catch {
+      setErrorMessage("PDF 导出失败，请稍后重试");
+    }
   };
 
   const isLoading = status === "loading";

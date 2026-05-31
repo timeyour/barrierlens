@@ -137,7 +137,7 @@ export default function ReportResultLoop({
           onClick={onExport}
           className="btn-secondary rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700"
         >
-          导出
+          导出 PDF
         </button>
         {!reported && (
           <button

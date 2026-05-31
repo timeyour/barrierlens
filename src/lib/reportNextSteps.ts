@@ -82,7 +82,7 @@ export function buildReportNextSteps(
     },
     {
       title: templates[1].title,
-      detail: `复制或导出 Markdown 后，发给：${delivery}`,
+      detail: `复制或导出 PDF 后，发给：${delivery}`,
     },
     {
       title: templates[2].title,

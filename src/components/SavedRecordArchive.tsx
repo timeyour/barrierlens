@@ -5,7 +5,7 @@ import BarrierMap from "@/components/BarrierMap";
 import PhotoCompareSlider from "@/components/PhotoCompareSlider";
 import ReportLocationMap from "@/components/ReportLocationMap";
 import SpatialDiagnosisTags from "@/components/SpatialDiagnosisTags";
-import { downloadMarkdownReport } from "@/lib/exportMarkdown";
+import { downloadPdfReport } from "@/lib/exportPdf";
 import { displayLocationLabel } from "@/lib/locationValidation";
 import { formatRecordTime } from "@/lib/recordStore";
 import {
@@ -144,10 +144,15 @@ export default function SavedRecordArchive({ record }: SavedRecordArchiveProps) 
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={() => downloadMarkdownReport(record, undefined, record.recordMode)}
+          onClick={() =>
+            void downloadPdfReport(record, {
+              mode: record.recordMode,
+              imageDataUrl: record.imageDataUrl,
+            })
+          }
           className="btn-primary rounded-xl px-4 py-2.5 text-sm font-semibold"
         >
-          导出
+          导出 PDF
         </button>
         <Link
           href="/#records"

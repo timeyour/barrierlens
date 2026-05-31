@@ -168,7 +168,7 @@ function StoryVisual({ index, compact = false }: { index: number; compact?: bool
       <p className={`mt-2 leading-relaxed text-slate-700 ${compact ? "text-xs" : "text-sm"}`}>
         「地铁口盲道被共享单车占用，视障人士通行路径中断，建议高峰时段加强巡查。」
       </p>
-      <p className="mt-2 text-[10px] text-slate-500 sm:mt-3 sm:text-[11px]">可复制 · 可导出 Markdown</p>
+      <p className="mt-2 text-[10px] text-slate-500 sm:mt-3 sm:text-[11px]">可复制 · 可导出 PDF</p>
     </div>
   );
 }
