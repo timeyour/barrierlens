@@ -18,6 +18,11 @@ export default function AnalysisVerificationBanner({
         role="status"
       >
         当前为演示数据（未连接 AI），摘要可能与照片不符，请以现场照片为准并人工核对。
+        <span className="mt-1 block text-[11px] text-amber-800/90">
+          线上要启用 Gemma 4：Vercel → 项目 Settings → Environment Variables → 添加{" "}
+          <strong>GEMINI_API_KEY</strong>（Google AI Studio 申请）和{" "}
+          <strong>GEMMA_API_TIMEOUT_MS=55000</strong> → 保存后点 Redeploy 重新部署。
+        </span>
       </div>
     );
   }
