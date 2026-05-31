@@ -122,6 +122,11 @@ export default async function Home({
         <footer className="border-t border-slate-200/60 bg-white/60 py-8 backdrop-blur-md md:py-12">
           <div className="mx-auto max-w-6xl px-4 text-center text-xs text-slate-500 sm:px-6">
             <p className="font-medium text-slate-700">无碍 BarrierLens</p>
+            {process.env.VERCEL_GIT_COMMIT_SHA && (
+              <p className="mt-1 font-mono text-[10px] text-slate-400">
+                构建 {process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7)}
+              </p>
+            )}
           </div>
         </footer>
       </ScrollReveal>
