@@ -1,5 +1,6 @@
 import {
   displayLocationLabel,
+  formatLocationBrief,
   sanitizeLocationForStorage,
 } from "@/lib/locationValidation";
 import {
@@ -93,6 +94,11 @@ export function ResultConclusionHeader({
         ? "bg-amber-100 text-amber-900"
         : "bg-emerald-100 text-emerald-800";
 
+  const showBlockedPath =
+    result.blockedPath.trim() &&
+    result.blockedPath.trim() !== result.problemSummary.trim() &&
+    !result.problemSummary.includes(result.blockedPath.slice(0, 18));
+
   return (
     <header className="space-y-3">
       {subtitle && (
@@ -113,14 +119,16 @@ export function ResultConclusionHeader({
       <p className="text-sm leading-relaxed text-slate-600">
         {result.problemSummary}
       </p>
-      <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-700">
-        <span className="font-semibold text-slate-800">哪段路：</span>
-        {result.blockedPath}
-      </p>
+      {showBlockedPath && (
+        <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-700">
+          <span className="font-semibold text-slate-800">哪段路：</span>
+          {result.blockedPath}
+        </p>
+      )}
       <p className="text-xs text-slate-500">
         {(() => {
-          const placeLabel = sanitizeLocationForStorage(result.location);
-          return placeLabel ? (
+          const placeLabel = formatLocationBrief(result.location);
+          return placeLabel !== "地点未标注" ? (
             <>
               路名/位置：{placeLabel}
               {recordMode === "inspection" ? " · 物业自查" : " · 公众记录"}

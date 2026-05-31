@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useId, useRef, useState } from "react";
 
 const PRIVACY_HINT = "避免正脸与车牌";
 
@@ -22,6 +22,7 @@ export default function ImageUploader({
   variant = "default",
   flow = false,
 }: ImageUploaderProps) {
+  const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -35,6 +36,7 @@ export default function ImageUploader({
   );
 
   const handleClear = (event: React.MouseEvent) => {
+    event.preventDefault();
     event.stopPropagation();
     if (inputRef.current) inputRef.current.value = "";
     onClear?.();
@@ -48,10 +50,6 @@ export default function ImageUploader({
     if (file) handleFile(file);
   };
 
-  const openFilePicker = () => {
-    if (!disabled) inputRef.current?.click();
-  };
-
   const dropMinH =
     variant === "hero"
       ? "min-h-[220px] sm:min-h-[260px]"
@@ -59,13 +57,31 @@ export default function ImageUploader({
         ? "min-h-[120px] sm:min-h-[140px]"
         : "min-h-[180px]";
 
+  const previewMaxH =
+    variant === "hero"
+      ? "max-h-[min(56vh,520px)]"
+      : variant === "compact"
+        ? "max-h-40 sm:max-h-48"
+        : "max-h-[min(48vh,420px)] sm:max-h-[min(52vh,480px)]";
+
+  const dropZoneClass = `relative flex ${dropMinH} cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-10 transition-colors ${
+    flow
+      ? isDragging
+        ? "border-sky-400/80 bg-white/10"
+        : "border-white/20 bg-white/[0.03] hover:border-sky-400/50 hover:bg-white/[0.06]"
+      : isDragging
+        ? "border-blue-600 bg-blue-50"
+        : "border-slate-300 bg-white hover:border-blue-500 hover:bg-slate-50"
+  } ${disabled ? "cursor-not-allowed opacity-60" : ""}`;
+
   return (
-    <div>
+    <div className="relative z-10">
       <input
         ref={inputRef}
+        id={inputId}
         type="file"
         accept="image/*"
-        className="hidden"
+        className="sr-only"
         disabled={disabled}
         onChange={(e) => {
           const file = e.target.files?.[0];
@@ -79,18 +95,22 @@ export default function ImageUploader({
             flow ? "border-white/15 bg-white/5" : "border-slate-200 bg-white"
           }`}
         >
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={openFilePicker}
-            className={`block w-full text-left ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
+          <label
+            htmlFor={inputId}
+            className={`relative block w-full text-left ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={previewUrl}
-              alt="现场照片预览"
-              className="max-h-48 w-full object-cover sm:max-h-72"
-            />
+            <div
+              className={`flex min-h-[140px] items-center justify-center sm:min-h-[180px] ${
+                flow ? "bg-slate-950/40" : "bg-slate-900"
+              }`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previewUrl}
+                alt="现场照片预览"
+                className={`w-full object-contain ${previewMaxH}`}
+              />
+            </div>
             {!disabled && (
               <p
                 className={`px-3 py-2 text-center text-xs ${
@@ -100,44 +120,28 @@ export default function ImageUploader({
                 点击更换
               </p>
             )}
-          </button>
+          </label>
           {onClear && !disabled && (
             <button
               type="button"
               onClick={handleClear}
-              className="absolute right-2 top-2 rounded-lg border border-white/80 bg-slate-900/75 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-slate-900"
+              className="absolute right-2 top-2 z-10 rounded-lg border border-white/80 bg-slate-900/75 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-slate-900"
             >
               删除重拍
             </button>
           )}
         </div>
       ) : (
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={openFilePicker}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
+        <label htmlFor={inputId} className={`relative block ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
+          <div
+            onDragOver={(e) => {
               e.preventDefault();
-              openFilePicker();
-            }
-          }}
-          onDragOver={(e) => {
-            e.preventDefault();
-            if (!disabled) setIsDragging(true);
-          }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={onDrop}
-          className={`relative flex ${dropMinH} cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-10 transition-colors ${
-            flow
-              ? isDragging
-                ? "border-sky-400/80 bg-white/10"
-                : "border-white/20 bg-white/[0.03] hover:border-sky-400/50 hover:bg-white/[0.06]"
-              : isDragging
-                ? "border-blue-600 bg-blue-50"
-                : "border-slate-300 bg-white hover:border-blue-500 hover:bg-slate-50"
-          } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
-        >
+              if (!disabled) setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={onDrop}
+            className={dropZoneClass}
+          >
           <svg
             className={`mb-4 h-12 w-12 ${flow ? "text-sky-300" : "text-blue-600"}`}
             fill="none"
@@ -158,7 +162,8 @@ export default function ImageUploader({
           {!flow && (
             <p className="mt-1.5 text-sm text-slate-500">支持 JPG、PNG、WEBP · 也可使用样例图</p>
           )}
-        </div>
+          </div>
+        </label>
       )}
       <p className={`mt-2 text-xs ${flow ? "text-white/40" : "leading-relaxed text-slate-500"}`}>
         {PRIVACY_HINT}

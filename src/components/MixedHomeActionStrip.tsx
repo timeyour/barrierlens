@@ -3,11 +3,13 @@
 import { locationValidationHint, isLocationUsable, sanitizeLocationForStorage } from "@/lib/locationValidation";
 import { requestUserLocation, userLocationSuccessNote } from "@/lib/userLocation";
 import { scrollToAnchor } from "@/lib/scrollAnchor";
+import {
+  FOCUS_UPLOAD_KEY,
+  PREFILL_LOCATION_EVENT,
+  PREFILL_LOCATION_KEY,
+} from "@/lib/prefillLocation";
 import { useHackathonFlags } from "@/hooks/useHackathonFlags";
 import { FormEvent, useState } from "react";
-
-const PREFILL_KEY = "barrierlens_prefill_location";
-const FOCUS_UPLOAD_KEY = "barrierlens_focus_upload";
 
 interface MixedHomeActionStripProps {
   embedded?: boolean;
@@ -27,7 +29,8 @@ export default function MixedHomeActionStrip({
   const goTool = (place?: string) => {
     const value = sanitizeLocationForStorage(place ?? location);
     if (value) {
-      sessionStorage.setItem(PREFILL_KEY, value);
+      sessionStorage.setItem(PREFILL_LOCATION_KEY, value);
+      window.dispatchEvent(new Event(PREFILL_LOCATION_EVENT));
     }
     if (embedded) {
       sessionStorage.setItem(FOCUS_UPLOAD_KEY, "1");
@@ -123,7 +126,7 @@ export default function MixedHomeActionStrip({
               disabled={!canProceed}
               className="btn-primary hidden shrink-0 rounded-xl px-5 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 md:inline-flex"
             >
-              拍照
+              去拍照
             </button>
           )}
         </div>
@@ -139,7 +142,7 @@ export default function MixedHomeActionStrip({
             disabled={!canProceed}
             className="btn-primary rounded-xl px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
           >
-            拍照上报
+            去拍照
           </button>
         </div>
       </form>

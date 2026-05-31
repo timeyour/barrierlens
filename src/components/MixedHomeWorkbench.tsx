@@ -1,40 +1,10 @@
-import MixedHomeActionStrip from "@/components/MixedHomeActionStrip";
-import AnalysisWorkflow from "@/components/AnalysisWorkflow";
+import HomeRecentReportsPanel from "@/components/HomeRecentReportsPanel";
+import MixedWorkbenchToolCard from "@/components/MixedWorkbenchToolCard";
+import WorkflowFocusGate from "@/components/WorkflowFocusGate";
 import type { WorkbenchLayout } from "@/config/workbenchLayout";
 
 interface MixedHomeWorkbenchProps {
   layout?: WorkbenchLayout;
-}
-
-/** 双卡片：取证条 + wizard 分开（默认） */
-function DefaultWorkbench() {
-  return (
-    <div className="min-w-0 space-y-4 md:space-y-5">
-      <MixedHomeActionStrip />
-      <div id="tool" className="scroll-mt-24">
-        <AnalysisWorkflow />
-      </div>
-    </div>
-  );
-}
-
-/** 单卡片：路名一行 + 紧凑上传（?layout=compact） */
-function CompactWorkbench() {
-  return (
-    <div className="min-w-0">
-      <div
-        id="tool"
-        className="scroll-mt-24 space-y-4 md:space-y-0 md:overflow-hidden md:rounded-2xl md:border md:border-slate-200 md:bg-white md:shadow-lg"
-      >
-        <div className="md:border-b md:border-slate-100 md:px-4 md:py-3 lg:px-5">
-          <MixedHomeActionStrip embedded />
-        </div>
-        <div className="md:px-4 md:pb-4 lg:px-5 lg:pb-5">
-          <AnalysisWorkflow compact embedded />
-        </div>
-      </div>
-    </div>
-  );
 }
 
 export default function MixedHomeWorkbench({
@@ -45,10 +15,24 @@ export default function MixedHomeWorkbench({
   return (
     <section
       aria-label="记录工作台"
-      className="relative z-10 bg-[var(--background)] pt-4 md:-mt-14 md:bg-transparent md:pt-0 lg:-mt-16"
+      className="mobile-no-snap relative z-30 isolate bg-[var(--background)] pt-2 md:pt-4"
     >
-      <div className="mx-auto max-w-6xl">
-        {isCompact ? <CompactWorkbench /> : <DefaultWorkbench />}
+      <div className="mx-auto max-w-6xl px-0">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_272px] lg:items-start lg:gap-5">
+          <MixedWorkbenchToolCard compact={isCompact} />
+
+          <WorkflowFocusGate>
+            <div className="hidden min-w-0 lg:block lg:sticky lg:top-24">
+              <HomeRecentReportsPanel variant="sidebar" limit={4} />
+            </div>
+          </WorkflowFocusGate>
+        </div>
+
+        <WorkflowFocusGate>
+          <div className="mt-4 lg:hidden">
+            <HomeRecentReportsPanel variant="inline" limit={3} />
+          </div>
+        </WorkflowFocusGate>
       </div>
     </section>
   );

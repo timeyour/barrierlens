@@ -85,7 +85,11 @@ export default function LocationInput({
           <button
             type="button"
             disabled={disabled || geoLoading}
-            onClick={() => void handleGeo()}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              void handleGeo();
+            }}
             className={
               flow
                 ? "flow-btn-secondary shrink-0 rounded-xl px-4 py-3 text-sm font-semibold disabled:cursor-wait disabled:opacity-50"

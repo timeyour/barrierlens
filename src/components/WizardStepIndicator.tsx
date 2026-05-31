@@ -1,4 +1,4 @@
-const LABELS = ["拍照", "类型", "提交"] as const;
+const LABELS = ["现场", "生成"] as const;
 
 function StepCheckIcon() {
   return (
@@ -15,15 +15,15 @@ function StepCheckIcon() {
 }
 
 interface WizardStepIndicatorProps {
-  current: 1 | 2 | 3;
+  current: 1 | 2;
   flow?: boolean;
 }
 
 export default function WizardStepIndicator({ current, flow = false }: WizardStepIndicatorProps) {
   return (
-    <nav aria-label="记录步骤" className={`mb-8 flex items-center gap-2 ${flow ? "home-flow-steps" : ""}`}>
+    <nav aria-label="记录步骤" className={`mb-6 flex items-center gap-2 sm:mb-8 ${flow ? "home-flow-steps" : ""}`}>
       {LABELS.map((label, index) => {
-        const step = (index + 1) as 1 | 2 | 3;
+        const step = (index + 1) as 1 | 2;
         const active = step === current;
         const done = step < current;
         return (

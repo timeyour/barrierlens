@@ -32,19 +32,15 @@ export default function PublicReportCard({ report }: { report: CloudReportSummar
       className="group block overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:border-blue-200 hover:shadow-md"
     >
       <div className="grid gap-0 sm:grid-cols-[140px_1fr]">
-        <div className="relative aspect-[4/3] bg-slate-100 sm:aspect-auto sm:min-h-[120px]">
-          {report.image_url ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={report.image_url}
-              alt=""
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full min-h-[120px] items-center justify-center text-xs text-slate-400">
-              无照片
-            </div>
-          )}
+        <div className="relative flex aspect-[4/3] items-center justify-center bg-slate-100 sm:aspect-auto sm:min-h-[120px]">
+          <div className="px-3 text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+              摘要公开
+            </p>
+            <p className="mt-1 text-[11px] leading-snug text-slate-500">
+              现场照片未公开
+            </p>
+          </div>
         </div>
         <div className="p-4">
           <div className="flex flex-wrap items-center gap-2">

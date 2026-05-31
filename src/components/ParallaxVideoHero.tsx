@@ -10,7 +10,40 @@ import {
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useLayoutEffect, useRef, useState } from "react";
 
-export default function ParallaxVideoHero() {
+type HeroVariant = "full" | "workbench";
+
+interface ParallaxVideoHeroProps {
+  /** workbench：短静态头图，不 sticky，不挡表单点击 */
+  variant?: HeroVariant;
+}
+
+function WorkbenchHero() {
+  return (
+    <header className="mobile-no-snap relative z-0 overflow-hidden border-b border-white/10 bg-slate-950">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-40"
+        style={{ backgroundImage: `url(${HERO_POSTER})` }}
+      />
+      <div className="pointer-events-none absolute inset-0 bg-slate-950/70" />
+      <div className="pointer-events-none relative px-4 py-12 sm:py-14 md:py-16">
+        <div className="pointer-events-auto mx-auto max-w-3xl">
+          <HeroKineticType />
+        </div>
+      </div>
+    </header>
+  );
+}
+
+export default function ParallaxVideoHero({ variant = "full" }: ParallaxVideoHeroProps) {
+  if (variant === "workbench") {
+    return <WorkbenchHero />;
+  }
+
+  return <FullParallaxHero />;
+}
+
+function FullParallaxHero() {
   const containerRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const posterRef = useRef<HTMLDivElement>(null);
@@ -66,9 +99,9 @@ export default function ParallaxVideoHero() {
   return (
     <header
       ref={containerRef}
-      className="mobile-snap-screen mobile-snap-screen-fixed relative md:h-[160vh] lg:h-[180vh]"
+      className="mobile-snap-screen mobile-snap-screen-fixed relative z-0 md:h-[160vh] lg:h-[180vh]"
     >
-      <div className="relative h-[100svh] max-h-[100svh] overflow-hidden md:sticky md:top-0 md:h-screen md:max-h-none md:min-h-0">
+      <div className="relative h-[100svh] max-h-[100svh] overflow-hidden pointer-events-none md:sticky md:top-0 md:h-screen md:max-h-none md:min-h-0">
         <div className="absolute inset-0 overflow-hidden bg-slate-950">
           <div
             ref={posterRef}
@@ -77,7 +110,7 @@ export default function ParallaxVideoHero() {
             style={{ backgroundImage: `url(${HERO_POSTER})` }}
           />
 
-          <motion.div className="absolute inset-0 overflow-hidden" style={{ scale: bgScale }}>
+          <motion.div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ scale: bgScale }}>
             <video
               ref={videoRef}
               className={videoClassName}
@@ -98,12 +131,14 @@ export default function ParallaxVideoHero() {
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/25 to-slate-950/40" />
         </div>
 
-        <div className="relative z-10 flex h-full items-center justify-center px-4 py-20 md:px-6">
-          <HeroKineticType />
+        <div className="pointer-events-none relative z-10 flex h-full items-center justify-center px-4 py-20 md:px-6">
+          <div className="pointer-events-auto">
+            <HeroKineticType />
+          </div>
         </div>
 
         <motion.div
-          className="absolute bottom-8 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 text-white/45 md:flex"
+          className="pointer-events-none absolute bottom-8 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 text-white/45 md:flex"
           style={{ opacity: scrollHintOpacity }}
         >
           <span className="text-[10px] uppercase tracking-[0.28em]">scroll</span>

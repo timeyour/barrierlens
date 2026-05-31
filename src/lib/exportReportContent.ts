@@ -9,6 +9,7 @@ import {
 } from "@/types/analysis";
 import { inferObstacleNature, inferSpatialCategory } from "@/lib/spatialDiagnosis";
 import { displayLocationLabel } from "@/lib/locationValidation";
+import { buildAnnotatedPhotoSectionHtml } from "@/lib/scenePhotoModel";
 
 export interface ExportReportOptions {
   mode?: RecordMode;
@@ -275,7 +276,8 @@ const PDF_STYLES = `
   table { width: 100%; border-collapse: collapse; font-size: 11px; }
   th, td { border: 1px solid #e2e8f0; padding: 6px 8px; text-align: left; vertical-align: top; }
   th { background: #f8fafc; width: 28%; color: #475569; }
-  .photo { width: 100%; max-height: 120mm; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 6px; }
+  .photo-wrap { position: relative; width: 100%; aspect-ratio: 4 / 3; background: #0f172a; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-top: 6px; }
+  .photo-note { font-size: 10px; color: #64748b; margin: 0 0 6px; }
   .full-text { white-space: pre-wrap; background: #f8fafc; border-radius: 8px; padding: 10px 12px; border: 1px solid #e2e8f0; }
   footer { margin-top: 16px; padding-top: 10px; border-top: 1px dashed #cbd5e1; font-size: 10px; color: #64748b; }
   footer p { margin-bottom: 4px; }
@@ -342,10 +344,7 @@ export function buildReportHtml(
   );
 
   const photoBlock = imageDataUrl
-    ? `<section>
-        <h2>现场照片</h2>
-        <img class="photo" src="${imageDataUrl}" alt="现场照片" />
-      </section>`
+    ? buildAnnotatedPhotoSectionHtml(result, imageDataUrl)
     : "";
 
   return `<!DOCTYPE html>

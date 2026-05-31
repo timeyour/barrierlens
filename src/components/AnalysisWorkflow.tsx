@@ -15,11 +15,22 @@ import WizardStepIndicator from "@/components/WizardStepIndicator";
 import { downloadPdfReport } from "@/lib/exportPdf";
 import { buildDispatchScript } from "@/lib/dispatchScript";
 import { compressImageForUpload, fileToStoredImageDataUrl } from "@/lib/imageUtils";
-import { RecordStorageError, saveRecord, updateRecordReview } from "@/lib/recordStore";
-import { scrollToAnchor } from "@/lib/scrollAnchor";
+import { RecordStorageError, getRecordByLocalId, saveRecord, updateRecordReview } from "@/lib/recordStore";
+import { scrollResultsIntoView, scrollToAnchor } from "@/lib/scrollAnchor";
+import {
+  dispatchWorkflowPhase,
+  resolveWorkflowPhase,
+} from "@/lib/workflowPhase";
 import { getBrowserLocation } from "@/lib/geolocation";
-import { syncReportToCloud } from "@/lib/syncReport";
-import { isLocationUsable, locationValidationHint, sanitizeLocationForStorage } from "@/lib/locationValidation";
+import PublishSummaryCard, { previewFuzzyLocation } from "@/components/PublishSummaryCard";
+import { publishReportToCloud } from "@/lib/syncReport";
+import {
+  displayLocationLabel,
+  isLocationUsable,
+  locationValidationHint,
+  sanitizeLocationForStorage,
+} from "@/lib/locationValidation";
+import { PREFILL_LOCATION_EVENT, PREFILL_LOCATION_KEY } from "@/lib/prefillLocation";
 import { useHackathonFlags } from "@/hooks/useHackathonFlags";
 import type {
   AnalysisResult,
@@ -31,7 +42,7 @@ import type {
 import { RECORD_MODES } from "@/types/analysis";
 
 type WorkflowStatus = "idle" | "loading" | "success" | "error";
-type WizardStep = 1 | 2 | 3;
+type WizardStep = 1 | 2;
 
 const DEMO_IMAGE_URL = "/images/scene-blocked-close.png";
 const DEFAULT_ANALYZE_TIMEOUT_MS = 55_000;
@@ -101,28 +112,32 @@ function SubmitLoadingOverlay({ label }: { label: string }) {
   );
 }
 
+const PREFILL_KEY = PREFILL_LOCATION_KEY;
+
 function readPrefillLocation(): string {
   if (typeof window === "undefined") return "";
-  const prefill = sessionStorage.getItem("barrierlens_prefill_location");
-  const cleanedPrefill = sanitizeLocationForStorage(prefill);
-  if (cleanedPrefill) {
-    sessionStorage.removeItem("barrierlens_prefill_location");
-    return cleanedPrefill;
+  return sanitizeLocationForStorage(sessionStorage.getItem(PREFILL_KEY));
+}
+
+function consumePrefillLocation(): string {
+  if (typeof window === "undefined") return "";
+  const cleaned = sanitizeLocationForStorage(sessionStorage.getItem(PREFILL_KEY));
+  if (cleaned) {
+    sessionStorage.removeItem(PREFILL_KEY);
   }
-  if (prefill) {
-    sessionStorage.removeItem("barrierlens_prefill_location");
-  }
-  return "";
+  return cleaned;
 }
 
 export default function AnalysisWorkflow({
   compact = false,
   embedded = false,
   flow = false,
+  showIntro = false,
 }: {
   compact?: boolean;
   embedded?: boolean;
   flow?: boolean;
+  showIntro?: boolean;
 } = {}) {
   const flags = useHackathonFlags();
   const [wizardStep, setWizardStep] = useState<WizardStep>(1);
@@ -146,7 +161,9 @@ export default function AnalysisWorkflow({
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
   const [usedDemoImage, setUsedDemoImage] = useState(false);
   const [cloudReportId, setCloudReportId] = useState<string | null>(null);
-  const [cloudSyncNote, setCloudSyncNote] = useState<string | null>(null);
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
   useEffect(() => {
     if (sessionStorage.getItem("barrierlens_focus_upload") === "1") {
@@ -154,6 +171,25 @@ export default function AnalysisWorkflow({
       window.requestAnimationFrame(() => scrollToAnchor("#tool-upload", "smooth"));
     }
   }, []);
+
+  useEffect(() => {
+    const syncPrefill = () => {
+      const prefill = readPrefillLocation();
+      if (!prefill) return;
+      setLocation(prefill);
+    };
+    syncPrefill();
+    window.addEventListener(PREFILL_LOCATION_EVENT, syncPrefill);
+    return () => window.removeEventListener(PREFILL_LOCATION_EVENT, syncPrefill);
+  }, []);
+
+  useEffect(() => {
+    if (wizardStep !== 2) return;
+    const prefill = consumePrefillLocation();
+    if (prefill) {
+      setLocation(prefill);
+    }
+  }, [wizardStep]);
 
   const clearAnalysisOutput = useCallback(() => {
     setResult(null);
@@ -164,7 +200,9 @@ export default function AnalysisWorkflow({
     setSavedRecordId(null);
     setStorageWarning(null);
     setCloudReportId(null);
-    setCloudSyncNote(null);
+    setPublishError(null);
+    setPublishing(false);
+    setShowAdvancedOptions(false);
   }, []);
 
   const resetAnalysis = useCallback(() => {
@@ -179,7 +217,6 @@ export default function AnalysisWorkflow({
       setUsedDemoImage(false);
       resetAnalysis();
       setErrorMessage(null);
-      setWizardStep(2);
     },
     [resetAnalysis],
   );
@@ -282,6 +319,72 @@ export default function AnalysisWorkflow({
     );
   }, [savedRecordId]);
 
+  const handlePublishSummary = async () => {
+    if (!savedRecordId || !file) {
+      setPublishError("无法公开：缺少本机档案或照片");
+      return;
+    }
+    const stored = getRecordByLocalId(savedRecordId);
+    if (!stored) {
+      setPublishError("本机档案未找到，请重新分析");
+      return;
+    }
+
+    setPublishing(true);
+    setPublishError(null);
+    try {
+      const publish = await publishReportToCloud({
+        stored,
+        imageFile: file,
+        analysisSource,
+        requireLocationForCloud: flags.locationRequired,
+      });
+
+      if (publish.ok) {
+        updateRecordReview(savedRecordId, {
+          cloudReportId: publish.id,
+          reviewToken: publish.reviewToken,
+        });
+        setCloudReportId(publish.id);
+        return;
+      }
+
+      if (publish.reason === "location") {
+        setPublishError("路名未通过校验，请填写具体路段后再公开");
+      } else if (publish.reason === "not_configured") {
+        setPublishError("云端未配置，无法公开摘要（本机档案仍可用）");
+      } else if (publish.reason === "already_published") {
+        setCloudReportId(stored.cloudReportId ?? null);
+        setPublishError("该记录已公开");
+      } else {
+        setPublishError("公开失败，请稍后重试");
+      }
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  useEffect(() => {
+    dispatchWorkflowPhase(
+      resolveWorkflowPhase({ status, wizardStep }),
+    );
+  }, [status, wizardStep]);
+
+  useEffect(() => {
+    if (status !== "success" || !result) return;
+    const scroll = () => scrollResultsIntoView("#tool-results", "smooth");
+    scroll();
+    const timer1 = window.setTimeout(scroll, 120);
+    const timer2 = window.setTimeout(scroll, 350);
+    if (window.location.hash !== "#tool-results") {
+      window.history.replaceState(null, "", "#tool-results");
+    }
+    return () => {
+      window.clearTimeout(timer1);
+      window.clearTimeout(timer2);
+    };
+  }, [status, result]);
+
   const beginAnalyzing = useCallback(() => {
     flushSync(() => {
       setErrorMessage(null);
@@ -372,27 +475,6 @@ export default function AnalysisWorkflow({
       const resolvedSource =
         responseSource ?? (responseMockMode ? "mock" : "gemma");
 
-      if (stored) {
-        const sync = await syncReportToCloud({
-          stored,
-          imageFile: analyzeFile,
-          analysisSource: resolvedSource,
-          requireLocationForCloud: flags.locationRequired,
-        });
-        if (sync.ok) {
-          setCloudReportId(sync.id);
-          setCloudSyncNote(null);
-        } else if (sync.reason === "location") {
-          setCloudSyncNote(
-            "路名未通过校验，记录已保存在本机；填写具体路段后可再次上报同步公开池。",
-          );
-        } else if (sync.reason === "not_configured") {
-          setCloudSyncNote("云端公开列表未配置，记录已保存在本机时间线。");
-        } else {
-          setCloudSyncNote("云端同步失败，记录已保存在本机，可稍后重试。");
-        }
-      }
-
       setResult(displayResult);
       setMockMode(Boolean(responseMockMode));
       setAnalysisSource(resolvedSource);
@@ -400,7 +482,6 @@ export default function AnalysisWorkflow({
       setFallbackReason(responseFallbackReason ?? null);
       setAnalysisTimeMs(responseAnalysisTimeMs ?? null);
       setStatus("success");
-      window.requestAnimationFrame(() => scrollToAnchor("#tool-results"));
     } catch (error) {
       setStatus("error");
       if (error instanceof Error && error.name === "AbortError") {
@@ -519,8 +600,8 @@ export default function AnalysisWorkflow({
   const wizardShellClass = flow
     ? "p-0"
     : embedded
-      ? "tool-card p-6 sm:p-10 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none"
-      : "tool-card p-6 sm:p-10";
+      ? "p-0"
+      : "";
   const stepTitleClass = flow ? "text-base font-bold text-white" : "text-base font-bold text-slate-900";
   const mutedTextClass = flow ? "text-white/50" : "text-slate-600";
   const previewBoxClass = flow
@@ -535,108 +616,46 @@ export default function AnalysisWorkflow({
           <WizardStepIndicator current={wizardStep} flow={flow} />
 
           {wizardStep === 1 && (
-            <div id="tool-upload" className="scroll-mt-24 space-y-3 md:space-y-4">
-              <h3 className="sr-only">上传照片</h3>
-              <ImageUploader
-                variant={uploadVariant}
-                previewUrl={previewUrl}
-                onImageSelect={handleImageSelect}
-                onClear={handleClearImage}
-                disabled={isLoading}
-                flow={flow}
-              />
-              {!previewUrl && (
-                <button
-                  type="button"
-                  disabled={isLoading}
-                  onClick={() => void loadDemoImage()}
-                  className={
-                    flow
-                      ? "flow-btn-secondary w-full rounded-xl px-4 py-3 text-sm font-semibold disabled:opacity-50"
-                      : "btn-secondary w-full rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 disabled:opacity-50"
-                  }
-                >
-                  使用样例图
-                </button>
+            <div id="tool-upload" className="scroll-mt-24 space-y-5">
+              {showIntro && !flow && (
+                <div>
+                  <h2 className="text-base font-bold text-slate-900 md:text-lg">
+                    在哪？拍一张
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-600">
+                    选现场照片并填写路名，然后继续。
+                  </p>
+                </div>
               )}
-              {previewUrl && (
-                <div className="flex justify-end">
+
+              <div className="space-y-3">
+                <p className={`text-sm font-medium ${flow ? "text-white/75" : "text-slate-700"}`}>
+                  现场照片
+                </p>
+                <ImageUploader
+                  variant={uploadVariant}
+                  previewUrl={previewUrl}
+                  onImageSelect={handleImageSelect}
+                  onClear={handleClearImage}
+                  disabled={isLoading}
+                  flow={flow}
+                />
+                {!previewUrl && (
                   <button
                     type="button"
-                    onClick={() => setWizardStep(2)}
-                    className="btn-primary rounded-xl px-6 py-2.5 text-sm font-semibold"
+                    disabled={isLoading}
+                    onClick={() => void loadDemoImage()}
+                    className={
+                      flow
+                        ? "flow-btn-secondary w-full rounded-xl px-4 py-3 text-sm font-semibold disabled:opacity-50"
+                        : "btn-secondary w-full rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 disabled:opacity-50"
+                    }
                   >
-                    下一步
+                    使用样例图
                   </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {wizardStep === 2 && (
-            <div className="space-y-5">
-              <h3 className={stepTitleClass}>类型</h3>
-              {previewUrl && (
-                <div className={previewBoxClass}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={previewUrl}
-                    alt=""
-                    className="h-14 w-14 rounded-md object-cover"
-                  />
-                  <div className={`min-w-0 flex-1 text-xs ${mutedTextClass}`}>
-                    {usedDemoImage ? "样例图已选" : "现场照片已选"}
-                    <button
-                      type="button"
-                      onClick={() => setWizardStep(1)}
-                      className={`ml-2 font-semibold underline ${flow ? "text-sky-300" : "text-blue-600"}`}
-                    >
-                      更换
-                    </button>
-                  </div>
-                </div>
-              )}
-              <ModeSelector
-                value={recordMode}
-                onChange={setRecordMode}
-                disabled={isLoading}
-                flow={flow}
-              />
-              <TargetSelector
-                value={targetDepartment}
-                onChange={setTargetDepartment}
-                disabled={isLoading}
-                flow={flow}
-              />
-              <div className="flex flex-wrap gap-3 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setWizardStep(1)}
-                  className={
-                    flow
-                      ? "flow-btn-secondary rounded-xl px-5 py-2.5 text-sm font-semibold"
-                      : "btn-secondary rounded-xl px-5 py-2.5 text-sm font-semibold text-slate-700"
-                  }
-                >
-                  上一步
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWizardStep(3)}
-                  className="btn-primary rounded-xl px-6 py-2.5 text-sm font-semibold"
-                >
-                  下一步
-                </button>
+                )}
               </div>
-            </div>
-          )}
 
-          {wizardStep === 3 && (
-            <div id="tool-analyzing" className="relative space-y-5">
-              {isLoading && (
-                <SubmitLoadingOverlay label={RECORD_MODES[recordMode].label} />
-              )}
-              <h3 className={stepTitleClass}>确认</h3>
               <LocationInput
                 value={location}
                 onChange={setLocation}
@@ -644,31 +663,115 @@ export default function AnalysisWorkflow({
                 required={flags.locationRequired}
                 flow={flow}
               />
-              <div
-                className={
-                  flow
-                    ? "rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80"
-                    : "rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
-                }
-              >
-                <p>
-                  <span className="font-semibold">模式：</span>
-                  {RECORD_MODES[recordMode].label}
-                </p>
-                <p className="mt-1">
-                  <span className="font-semibold">归类：</span>
-                  {targetDepartment}
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-3">
+
+              <div className="flex justify-end pt-1">
                 <button
                   type="button"
                   onClick={() => setWizardStep(2)}
+                  disabled={!previewUrl || !locationReady}
+                  title={
+                    !previewUrl
+                      ? "请先选择照片"
+                      : !locationReady
+                        ? (locationValidationHint(location) ?? undefined)
+                        : undefined
+                  }
+                  className="btn-primary rounded-xl px-6 py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  继续
+                </button>
+              </div>
+            </div>
+          )}
+
+          {wizardStep === 2 && (
+            <div id="tool-analyzing" className="relative space-y-5">
+              {isLoading && (
+                <SubmitLoadingOverlay label={RECORD_MODES[recordMode].label} />
+              )}
+              <h3 className={stepTitleClass}>确认并生成</h3>
+
+              {previewUrl && (
+                <div className={previewBoxClass}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={previewUrl}
+                    alt=""
+                    className="h-16 w-16 shrink-0 rounded-md border border-slate-200 bg-slate-900 object-contain"
+                  />
+                  <div className={`min-w-0 flex-1 text-xs ${mutedTextClass}`}>
+                    {usedDemoImage ? "样例图" : "现场照片"} ·{" "}
+                    {displayLocationLabel(location)}
+                    <button
+                      type="button"
+                      onClick={() => setWizardStep(1)}
+                      className={`ml-2 font-semibold underline ${flow ? "text-sky-300" : "text-blue-600"}`}
+                    >
+                      修改
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {showAdvancedOptions ? (
+                <div className="space-y-5">
+                  <ModeSelector
+                    value={recordMode}
+                    onChange={setRecordMode}
+                    disabled={isLoading}
+                    flow={flow}
+                  />
+                  <TargetSelector
+                    value={targetDepartment}
+                    onChange={setTargetDepartment}
+                    disabled={isLoading}
+                    flow={flow}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvancedOptions(false)}
+                    className={`text-xs font-semibold underline ${
+                      flow ? "text-white/50" : "text-slate-500"
+                    }`}
+                  >
+                    收起选项
+                  </button>
+                </div>
+              ) : (
+                <div
+                  className={
+                    flow
+                      ? "rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80"
+                      : "rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+                  }
+                >
+                  <p>
+                    默认{" "}
+                    <span className="font-semibold">{RECORD_MODES[recordMode].label}</span>
+                    {" · "}
+                    <span className="font-semibold">{targetDepartment}</span>
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvancedOptions(true)}
+                    className={`mt-2 text-xs font-semibold underline ${
+                      flow ? "text-sky-300" : "text-blue-700"
+                    }`}
+                  >
+                    更多选项
+                  </button>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => setWizardStep(1)}
                   disabled={isLoading}
                   className={
                     flow
-                      ? "flow-btn-secondary rounded-lg px-5 py-2.5 text-sm font-semibold disabled:opacity-50"
-                      : "rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 disabled:opacity-50"
+                      ? "flow-btn-secondary rounded-xl px-5 py-2.5 text-sm font-semibold disabled:opacity-50"
+                      : "btn-secondary rounded-xl px-5 py-2.5 text-sm font-semibold text-slate-700 disabled:opacity-50"
                   }
                 >
                   上一步
@@ -693,7 +796,7 @@ export default function AnalysisWorkflow({
                       分析中…
                     </>
                   ) : (
-                    `生成报告`
+                    "生成报告"
                   )}
                 </button>
               </div>
@@ -725,26 +828,63 @@ export default function AnalysisWorkflow({
         </div>
       )}
 
-      {cloudSyncNote && status === "success" && (
-        <div
-          className={
-            flow
-              ? "rounded-lg border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100"
-              : "rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
-          }
-        >
-          {cloudSyncNote}
-        </div>
-      )}
-
       {result && status === "success" && (
-        <div id="tool-results" className="scroll-mt-20 space-y-5">
-          <div className={flow ? "flow-panel p-5 sm:p-8" : "tool-card p-5 sm:p-8"}>
-            <ReportResultPanel
+        <div
+          id="tool-results"
+          className="scroll-mt-24 space-y-4 md:min-h-[calc(100dvh-9rem)]"
+        >
+          {previewUrl && (
+            <div className={previewBoxClass}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previewUrl}
+                alt=""
+                className="h-16 w-16 shrink-0 rounded-md border border-slate-200 bg-slate-900 object-contain"
+              />
+              <div className={`min-w-0 flex-1 text-xs ${mutedTextClass}`}>
+                <p className={`font-semibold ${flow ? "text-white" : "text-slate-800"}`}>
+                  报告已生成
+                </p>
+                <p className="mt-0.5">
+                  {usedDemoImage ? "样例图" : "现场照片"} ·{" "}
+                  {displayLocationLabel(location)}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <ReportResultPanel
               result={result}
               recordMode={recordMode}
               analysisSource={analysisSource}
               reportTitle={reportTitle}
+              topBarSlot={
+                <div className="sticky top-0 z-10 -mx-1 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/95 pb-3 pt-0 backdrop-blur-sm">
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    className={
+                      flow
+                        ? "flow-btn-secondary rounded-lg px-4 py-2 text-sm font-semibold"
+                        : "btn-secondary rounded-lg px-4 py-2 text-sm font-semibold text-slate-800"
+                    }
+                  >
+                    ← 继续记录
+                  </button>
+                  {savedRecordId && (
+                    <Link
+                      href={`/saved/${savedRecordId}`}
+                      className={
+                        flow
+                          ? "rounded-lg px-3 py-2 text-sm font-medium text-blue-200 hover:bg-white/10 hover:text-white"
+                          : "rounded-lg px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 hover:text-blue-900"
+                      }
+                    >
+                      查看档案
+                    </Link>
+                  )}
+                </div>
+              }
               loopSlot={
                 <ReportResultLoop
                   reviewStatus={result.reviewStatus}
@@ -756,65 +896,79 @@ export default function AnalysisWorkflow({
                   onCopy={() => void handleCopy()}
                   onExport={handleExport}
                   onMarkReported={markRecordReported}
-                  cloudReportId={cloudReportId}
                   analysisNote={analysisNote}
                   dispatchScriptEnabled={flags.dispatchScript}
                   dispatchCopySuccess={dispatchCopySuccess}
                   onCopyDispatch={() => void handleCopyDispatch()}
-                  savedRecordId={savedRecordId}
                 />
               }
+              publishSlot={
+                savedRecordId ? (
+                  <PublishSummaryCard
+                    fuzzyLocationPreview={previewFuzzyLocation(result.location)}
+                    publishing={publishing}
+                    publishedId={cloudReportId}
+                    publishError={publishError}
+                    onPublish={handlePublishSummary}
+                  />
+                ) : null
+              }
               footerSlot={
-                <div className="flex flex-wrap gap-2">
-                  {savedRecordId && (
-                    <Link
-                      href={`/saved/${savedRecordId}`}
-                      className="btn-primary rounded-xl px-4 py-2.5 text-sm font-semibold"
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={handleReset}
+                      className={
+                        flow
+                          ? "flow-btn-secondary rounded-lg px-4 py-2 text-sm font-semibold"
+                          : "btn-secondary rounded-lg px-4 py-2 text-sm font-semibold text-slate-800"
+                      }
                     >
-                      查看保存档案
-                    </Link>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleReset}
-                    className={
-                      flow
-                        ? "flow-btn-secondary rounded-xl px-4 py-2.5 text-sm font-semibold"
-                        : "btn-secondary rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700"
-                    }
-                  >
-                    继续记录
-                  </button>
+                      继续记录
+                    </button>
+                    {savedRecordId && (
+                      <Link
+                        href={`/saved/${savedRecordId}`}
+                        className={
+                          flow
+                            ? "flow-btn-secondary rounded-lg px-4 py-2 text-sm font-semibold"
+                            : "btn-secondary rounded-lg px-4 py-2 text-sm font-semibold text-slate-800"
+                        }
+                      >
+                        查看档案
+                      </Link>
+                    )}
+                  </div>
                   <details
-                    className={
-                      flow
-                        ? "w-full rounded-lg border border-white/10 bg-white/[0.03]"
-                        : "w-full rounded-lg border border-slate-200 bg-white"
-                    }
+                  className={
+                    flow
+                      ? "rounded-lg border border-white/10 bg-white/[0.03]"
+                      : "rounded-xl border border-slate-200 bg-white"
+                  }
+                >
+                  <summary
+                    className={`cursor-pointer px-4 py-3 text-sm font-medium ${
+                      flow ? "text-white/60" : "text-slate-500"
+                    }`}
                   >
-                    <summary
-                      className={`cursor-pointer px-4 py-3 text-sm font-medium ${
-                        flow ? "text-white/60" : "text-slate-600"
-                      }`}
-                    >
-                      Gemma 结构化 JSON（开发者）
-                    </summary>
-                    <div
-                      className={`border-t p-3 pt-0 ${flow ? "border-white/10" : "border-slate-200"}`}
-                    >
-                      <GemmaJsonOutput
-                        result={result}
-                        mockMode={mockMode}
-                        source={analysisSource}
-                        modelName={modelName}
-                        fallbackReason={fallbackReason}
-                      />
+                    开发者 · Gemma JSON
+                  </summary>
+                  <div
+                    className={`border-t p-3 pt-0 ${flow ? "border-white/10" : "border-slate-200"}`}
+                  >
+                    <GemmaJsonOutput
+                      result={result}
+                      mockMode={mockMode}
+                      source={analysisSource}
+                      modelName={modelName}
+                      fallbackReason={fallbackReason}
+                    />
                     </div>
                   </details>
                 </div>
               }
             />
-          </div>
         </div>
       )}
     </div>

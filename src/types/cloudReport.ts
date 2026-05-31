@@ -36,3 +36,14 @@ export type CloudReportSummary = Pick<
   | "image_url"
   | "review_status"
 >;
+
+export type PhotoAccessRequestStatus = "pending" | "contacted";
+
+export interface PhotoAccessRequest {
+  id: string;
+  created_at: string;
+  report_id: string;
+  message: string;
+  contact: string | null;
+  status: PhotoAccessRequestStatus;
+}

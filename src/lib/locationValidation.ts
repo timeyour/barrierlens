@@ -38,6 +38,55 @@ export function isLocationUsable(raw: string | undefined | null): boolean {
   return true;
 }
 
+const SHANGHAI_DISTRICTS =
+  /浦东新区|黄浦区|徐汇区|长宁区|静安区|普陀区|虹口区|杨浦区|闵行区|宝山区|嘉定区|金山区|松江区|青浦区|奉贤区|崇明区/;
+
+/** 结果页/卡片展示：长地址压成「区 + 路」 */
+export function formatLocationBrief(raw: string | undefined | null): string {
+  const text = sanitizeLocationForStorage(raw);
+  if (!text) return "地点未标注";
+
+  let district = "";
+  if (text.includes("浦东新区")) {
+    district = "浦东新区";
+  } else {
+    district =
+      text.match(SHANGHAI_DISTRICTS)?.[0] ??
+      text.match(/([\u4e00-\u9fa5]{2,4}区)/)?.[1] ??
+      "";
+  }
+
+  let local = district ? text.replace(district, "") : text;
+  local = local
+    .replace(/东新区/g, "")
+    .replace(/[\u4e00-\u9fa5]{1,6}镇/g, "")
+    .replace(/中国[（(][^）)]+[）)]/g, "")
+    .replace(/自由贸易试验区[^，,；;]*/g, "")
+    .replace(/临港新片区/g, "")
+    .replace(/[，,；;\s]+/g, "")
+    .trim();
+
+  const road =
+    local.match(/([\u4e00-\u9fa5]{2,6}路)/)?.[1] ??
+    local.match(/([\u4e00-\u9fa5]{2,6}[街大道])/)?.[1] ??
+    "";
+
+  if (district && road) return `${district}${road}`;
+  if (road) return road;
+  if (district) return district;
+  return text.length > 18 ? `${text.slice(0, 18)}…` : text;
+}
+
+/** 公开列表用：去掉门牌、机构后缀，只保留区镇 + 路名级别 */
+export function fuzzLocationForPublic(raw: string | undefined | null): string {
+  const brief = formatLocationBrief(raw);
+  if (brief === "地点未标注") return "该路段附近";
+  if (brief.endsWith("路") || brief.endsWith("街") || brief.endsWith("道")) {
+    return `${brief}附近`.slice(0, 24);
+  }
+  return `${brief}附近`.slice(0, 24);
+}
+
 export function locationValidationHint(raw: string | undefined | null): string | null {
   const trimmed = raw?.trim() ?? "";
   if (!trimmed) {

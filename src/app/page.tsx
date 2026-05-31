@@ -6,6 +6,7 @@ import FixMyStreetHowStrip from "@/components/FixMyStreetHowStrip";
 import FixMyStreetRecentReports from "@/components/FixMyStreetRecentReports";
 import HowItWorks from "@/components/HowItWorks";
 import MixedHomeWorkbench from "@/components/MixedHomeWorkbench";
+import WorkflowFocusGate from "@/components/WorkflowFocusGate";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import OverlayShowcase from "@/components/OverlayShowcase";
 import HashScrollHandler from "@/components/HashScrollHandler";
@@ -48,19 +49,21 @@ export default async function Home({
       <HashScrollHandler />
       <ScrollProgressBar />
       <SiteNav initialLayout={navLayout} />
-      <ParallaxVideoHero />
+      <ParallaxVideoHero variant={isMixed ? "workbench" : "full"} />
 
       {isFixMyStreet && <FixMyStreetHomeStrip />}
       {isFixMyStreet && <FixMyStreetRecentReports />}
       {isFixMyStreet && <FixMyStreetHowStrip />}
 
-      <main className={`relative mx-auto flex max-w-6xl flex-col px-4 pb-4 pt-0 md:px-6 md:py-10 lg:py-16 ${mobileNavPad ? "pb-24 md:pb-16" : ""}`}>
+      <main className={`relative z-20 isolate mx-auto flex max-w-6xl flex-col px-4 pb-4 pt-0 md:px-6 md:py-10 lg:py-16 ${mobileNavPad ? "pb-24 md:pb-16" : ""}`}>
         {isMixed ? (
           <>
             <MixedHomeWorkbench layout={workbenchLayout} />
-            <div className="mobile-no-snap scroll-mt-16 pt-10 md:min-h-0 md:pt-0">
-              <RecordTimeline />
-            </div>
+            <WorkflowFocusGate>
+              <div className="mobile-no-snap scroll-mt-16 pt-10 md:min-h-0 md:pt-0">
+                <RecordTimeline />
+              </div>
+            </WorkflowFocusGate>
           </>
         ) : (
           <>

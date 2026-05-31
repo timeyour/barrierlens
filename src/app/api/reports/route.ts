@@ -5,7 +5,14 @@ import type { AnalysisResult, AnalysisSource } from "@/types/analysis";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const limitRaw = Number(searchParams.get("limit"));
+  const limit =
+    Number.isFinite(limitRaw) && limitRaw > 0
+      ? Math.min(Math.floor(limitRaw), 30)
+      : 30;
+
   if (!isSupabaseConfigured()) {
     return NextResponse.json(
       { reports: [], configured: false },
@@ -13,7 +20,7 @@ export async function GET() {
     );
   }
 
-  const reports = await listCloudReports(30);
+  const reports = await listCloudReports(limit);
   return NextResponse.json({ reports, configured: true });
 }
 
@@ -42,8 +49,7 @@ export async function POST(request: Request) {
   let payload: {
     localId: string;
     location: string;
-    lat?: number | null;
-    lng?: number | null;
+    reviewToken?: string;
     diagnosis: AnalysisResult;
     analysisSource?: AnalysisSource | null;
   };
@@ -54,27 +60,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "诊断数据格式错误" }, { status: 400 });
   }
 
-  if (!payload.localId || !payload.diagnosis) {
+  if (!payload.localId || !payload.diagnosis || !payload.reviewToken?.trim()) {
     return NextResponse.json({ error: "诊断数据不完整" }, { status: 400 });
   }
 
-  const report = await insertCloudReport({
+  const inserted = await insertCloudReport({
     localId: payload.localId,
     location: payload.location || "地点未标注",
-    lat: payload.lat,
-    lng: payload.lng,
+    reviewToken: payload.reviewToken.trim(),
     diagnosis: payload.diagnosis,
     analysisSource: payload.analysisSource,
     imageFile: image,
   });
 
-  if (!report) {
+  if (!inserted) {
     return NextResponse.json({ error: "云端保存失败" }, { status: 500 });
   }
 
   return NextResponse.json({
-    id: report.id,
-    url: `/reports/${report.id}`,
-    imageUrl: report.image_url,
+    id: inserted.report.id,
+    url: `/reports/${inserted.report.id}`,
+    reviewToken: inserted.reviewToken,
   });
 }

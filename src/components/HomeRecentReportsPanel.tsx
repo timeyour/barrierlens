@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import PublicReportCard from "@/components/PublicReportCard";
 import {
@@ -7,10 +9,9 @@ import {
 } from "@/types/analysis";
 import type { CloudReportSummary } from "@/types/cloudReport";
 import { displayLocationLabel } from "@/lib/locationValidation";
-import { isSupabaseConfigured } from "@/lib/supabase/admin";
-import { listCloudReports } from "@/lib/supabase/reports";
 import type { NavLayout } from "@/config/navLayout";
 import { navLayoutQuery } from "@/config/navLayout";
+import { useEffect, useState } from "react";
 
 function formatRelativeTime(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -30,7 +31,13 @@ function reportsHref(layout: NavLayout): string {
   return "/reports";
 }
 
-function CompactReportRow({ report, flow = false }: { report: CloudReportSummary; flow?: boolean }) {
+function CompactReportRow({
+  report,
+  flow = false,
+}: {
+  report: CloudReportSummary;
+  flow?: boolean;
+}) {
   const recordMode = report.record_mode as RecordMode;
   const scene =
     SCENE_TYPE_LABELS[report.scene_type as keyof typeof SCENE_TYPE_LABELS] ??
@@ -66,16 +73,37 @@ interface HomeRecentReportsPanelProps {
   flow?: boolean;
 }
 
-export default async function HomeRecentReportsPanel({
+export default function HomeRecentReportsPanel({
   variant = "section",
   limit = 5,
   layout = "mixed",
   flow = false,
 }: HomeRecentReportsPanelProps) {
-  const configured = isSupabaseConfigured();
-  const reports = configured ? await listCloudReports(limit) : [];
+  const [configured, setConfigured] = useState<boolean | null>(null);
+  const [reports, setReports] = useState<CloudReportSummary[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch(`/api/reports?limit=${limit}`)
+      .then((res) => res.json())
+      .then((data: { configured?: boolean; reports?: CloudReportSummary[] }) => {
+        if (cancelled) return;
+        setConfigured(data.configured !== false);
+        setReports(Array.isArray(data.reports) ? data.reports.slice(0, limit) : []);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setConfigured(false);
+        setReports([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [limit]);
+
   const isSidebar = variant === "sidebar";
   const isInline = variant === "inline";
+  const loading = configured === null;
 
   const inner = (
     <>
@@ -96,8 +124,17 @@ export default async function HomeRecentReportsPanel({
                     : "text-lg font-bold text-slate-900"
             }
           >
-            {flow ? "公开" : "公开"}
+            近期公开案例
           </h2>
+          {(isSidebar || isInline) && (
+            <p
+              className={`mt-1 text-[11px] leading-snug ${
+                flow ? "text-white/45" : "text-slate-500"
+              }`}
+            >
+              摘要公开 · 位置模糊 · 不含现场照片
+            </p>
+          )}
         </div>
         <Link
           href={reportsHref(layout)}
@@ -109,7 +146,13 @@ export default async function HomeRecentReportsPanel({
         </Link>
       </div>
 
-      {!configured && (
+      {loading && (
+        <div className="rounded-lg border border-slate-200 bg-white/80 px-3 py-4 text-xs text-slate-500">
+          加载公开案例…
+        </div>
+      )}
+
+      {!loading && !configured && (
         <div
           className={
             flow
@@ -121,7 +164,7 @@ export default async function HomeRecentReportsPanel({
         </div>
       )}
 
-      {configured && reports.length === 0 && (
+      {!loading && configured && reports.length === 0 && (
         <div
           className={
             flow
@@ -129,11 +172,11 @@ export default async function HomeRecentReportsPanel({
               : "rounded-lg border border-dashed border-slate-300 bg-white/80 px-3 py-6 text-center text-xs text-slate-600"
           }
         >
-          暂无公开记录
+          暂无公开案例 · 生成报告后可选择公开摘要
         </div>
       )}
 
-      {reports.length > 0 && (isSidebar || isInline) && (
+      {!loading && reports.length > 0 && (isSidebar || isInline) && (
         <ul className={isInline ? "flex gap-2 overflow-x-auto pb-1" : "space-y-2"}>
           {reports.map((report) => (
             <li key={report.id} className={isInline ? "min-w-[220px] shrink-0" : undefined}>
@@ -143,7 +186,7 @@ export default async function HomeRecentReportsPanel({
         </ul>
       )}
 
-      {reports.length > 0 && !isSidebar && !isInline && (
+      {!loading && reports.length > 0 && !isSidebar && !isInline && (
         <ul className="space-y-3">
           {reports.map((report) => (
             <li key={report.id}>

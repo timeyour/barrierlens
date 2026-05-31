@@ -110,6 +110,8 @@ export function updateRecordReview(
     reviewNote?: string;
     reviewedAt?: string;
     reviewImageDataUrl?: string | null;
+    cloudReportId?: string;
+    reviewToken?: string;
   },
 ): StoredRecord | null {
   const records = readAll();
@@ -120,7 +122,9 @@ export function updateRecordReview(
   const touched =
     patch.reviewStatus !== undefined ||
     patch.reviewNote !== undefined ||
-    patch.reviewImageDataUrl !== undefined;
+    patch.reviewImageDataUrl !== undefined ||
+    patch.cloudReportId !== undefined ||
+    patch.reviewToken !== undefined;
 
   const next: StoredRecord = {
     ...current,
@@ -136,6 +140,10 @@ export function updateRecordReview(
               : patch.reviewImageDataUrl,
         }
       : {}),
+    ...(patch.cloudReportId !== undefined
+      ? { cloudReportId: patch.cloudReportId }
+      : {}),
+    ...(patch.reviewToken !== undefined ? { reviewToken: patch.reviewToken } : {}),
     reviewedAt: patch.reviewedAt ?? (touched ? new Date().toISOString() : current.reviewedAt),
   };
   records[idx] = next;

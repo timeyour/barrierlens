@@ -1,7 +1,14 @@
-import type { CloudReport, CloudReportSummary } from "@/types/cloudReport";
+import type { CloudReport, CloudReportSummary, PhotoAccessRequest } from "@/types/cloudReport";
+import {
+  sanitizeDiagnosisForPublic,
+  toPublicCloudReport,
+  toPublicCloudReportSummary,
+} from "@/lib/publicReport";
+import { fuzzLocationForPublic } from "@/lib/locationValidation";
 import { getSupabaseAdmin } from "./admin";
 
 const REPORTS_TABLE = "reports";
+const REQUESTS_TABLE = "photo_access_requests";
 const IMAGE_BUCKET = "report-images";
 
 export async function listCloudReports(
@@ -23,7 +30,7 @@ export async function listCloudReports(
     return [];
   }
 
-  return (data ?? []) as CloudReportSummary[];
+  return ((data ?? []) as CloudReportSummary[]).map(toPublicCloudReportSummary);
 }
 
 export async function getCloudReport(id: string): Promise<CloudReport | null> {
@@ -41,18 +48,18 @@ export async function getCloudReport(id: string): Promise<CloudReport | null> {
     return null;
   }
 
-  return (data as CloudReport | null) ?? null;
+  if (!data) return null;
+  return toPublicCloudReport(data as CloudReport);
 }
 
 export async function insertCloudReport(input: {
   localId: string;
   location: string;
-  lat?: number | null;
-  lng?: number | null;
+  reviewToken: string;
   diagnosis: CloudReport["diagnosis"];
   analysisSource?: string | null;
   imageFile: File;
-}): Promise<CloudReport | null> {
+}): Promise<{ report: CloudReport; reviewToken: string } | null> {
   const supabase = getSupabaseAdmin();
   if (!supabase) return null;
 
@@ -61,8 +68,7 @@ export async function insertCloudReport(input: {
   const imagePath = `${reportId}.${extension === "png" ? "png" : "jpg"}`;
 
   const imageBuffer = Buffer.from(await input.imageFile.arrayBuffer());
-  const contentType =
-    extension === "png" ? "image/png" : "image/jpeg";
+  const contentType = extension === "png" ? "image/png" : "image/jpeg";
 
   const { error: uploadError } = await supabase.storage
     .from(IMAGE_BUCKET)
@@ -76,18 +82,19 @@ export async function insertCloudReport(input: {
     return null;
   }
 
-  const { data: publicUrlData } = supabase.storage
-    .from(IMAGE_BUCKET)
-    .getPublicUrl(imagePath);
-
+  const fuzzyLocation = fuzzLocationForPublic(input.location);
+  const publicDiagnosis = sanitizeDiagnosisForPublic(
+    input.diagnosis,
+    input.location,
+  );
   const diagnosis = input.diagnosis;
 
   const row = {
     id: reportId,
     local_id: input.localId,
-    location: input.location,
-    lat: input.lat ?? null,
-    lng: input.lng ?? null,
+    location: fuzzyLocation,
+    lat: null,
+    lng: null,
     scene_type: diagnosis.sceneType,
     issue_type: diagnosis.issueType,
     risk_level: diagnosis.riskLevel,
@@ -97,10 +104,11 @@ export async function insertCloudReport(input: {
     report_text: diagnosis.reportText,
     path_status: diagnosis.pathStatus,
     review_status: diagnosis.reviewStatus ?? "pending",
-    image_url: publicUrlData.publicUrl,
+    image_url: null,
     image_path: imagePath,
-    diagnosis,
+    diagnosis: publicDiagnosis,
     analysis_source: input.analysisSource ?? null,
+    review_token: input.reviewToken,
   };
 
   const { data, error } = await supabase
@@ -115,5 +123,96 @@ export async function insertCloudReport(input: {
     return null;
   }
 
-  return data as CloudReport;
+  return {
+    report: toPublicCloudReport(data as CloudReport),
+    reviewToken: input.reviewToken,
+  };
+}
+
+export async function insertPhotoAccessRequest(input: {
+  reportId: string;
+  message: string;
+  contact?: string;
+}): Promise<PhotoAccessRequest | null> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from(REQUESTS_TABLE)
+    .insert({
+      report_id: input.reportId,
+      message: input.message.trim(),
+      contact: input.contact?.trim() || null,
+      status: "pending",
+    })
+    .select("*")
+    .single();
+
+  if (error) {
+    console.error("[supabase] insert photo request failed:", error.message);
+    return null;
+  }
+
+  return data as PhotoAccessRequest;
+}
+
+export async function listPhotoAccessRequests(input: {
+  reportId: string;
+  localId: string;
+  reviewToken: string;
+}): Promise<PhotoAccessRequest[]> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return [];
+
+  const { data: report, error: reportError } = await supabase
+    .from(REPORTS_TABLE)
+    .select("local_id, review_token")
+    .eq("id", input.reportId)
+    .maybeSingle();
+
+  if (reportError || !report) return [];
+  if (report.local_id !== input.localId) return [];
+  if (report.review_token !== input.reviewToken) return [];
+
+  const { data, error } = await supabase
+    .from(REQUESTS_TABLE)
+    .select("*")
+    .eq("report_id", input.reportId)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (error) {
+    console.error("[supabase] list photo requests failed:", error.message);
+    return [];
+  }
+
+  return (data ?? []) as PhotoAccessRequest[];
+}
+
+export async function updatePhotoAccessRequestStatus(input: {
+  reportId: string;
+  requestId: string;
+  localId: string;
+  reviewToken: string;
+  status: PhotoAccessRequest["status"];
+}): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return false;
+
+  const { data: report } = await supabase
+    .from(REPORTS_TABLE)
+    .select("local_id, review_token")
+    .eq("id", input.reportId)
+    .maybeSingle();
+
+  if (!report || report.local_id !== input.localId) return false;
+  if (report.review_token !== input.reviewToken) return false;
+
+  const { error } = await supabase
+    .from(REQUESTS_TABLE)
+    .update({ status: input.status })
+    .eq("id", input.requestId)
+    .eq("report_id", input.reportId);
+
+  return !error;
 }

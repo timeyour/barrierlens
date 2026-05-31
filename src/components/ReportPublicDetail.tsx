@@ -4,6 +4,7 @@ import {
   type RecordMode,
 } from "@/types/analysis";
 import type { CloudReport } from "@/types/cloudReport";
+import PhotoAccessRequestForm from "@/components/PhotoAccessRequestForm";
 import PublicReportLocalBanner from "@/components/PublicReportLocalBanner";
 import PublicReportReadOnlyBanner from "@/components/PublicReportReadOnlyBanner";
 import ReportResultPanel from "@/components/ReportResultPanel";
@@ -28,11 +29,10 @@ export default function ReportPublicDetail({ report }: ReportPublicDetailProps) 
   const publicReadOnly = isHackathonFlagEnabled("publicReadOnly");
   const diagnosis = {
     ...report.diagnosis,
-    imageDataUrl: report.image_url ?? undefined,
     location: report.location,
     recordMode: report.record_mode as RecordMode,
-    lat: report.lat,
-    lng: report.lng,
+    lat: null,
+    lng: null,
   };
   const recordMode = (report.record_mode as RecordMode) ?? "public";
   const reportTitle =
@@ -43,12 +43,16 @@ export default function ReportPublicDetail({ report }: ReportPublicDetailProps) 
       <PublicReportReadOnlyBanner enabled={publicReadOnly} />
       <PublicReportLocalBanner localId={report.local_id} />
 
+      <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-relaxed text-slate-600">
+        公开摘要 · 位置已模糊 · 不含现场照片。完整地址与照片仅保存在记录者本机档案。
+      </div>
+
       <div className="tool-card p-5 sm:p-8">
         <ReportResultPanel
           result={diagnosis}
           recordMode={recordMode}
           analysisSource={report.analysis_source}
-          subtitle={`${formatCloudTime(report.created_at)} · ${RECORD_MODES[recordMode].label}`}
+          subtitle={`${formatCloudTime(report.created_at)} · ${RECORD_MODES[recordMode].label} · ${report.location}`}
           reportTitle={reportTitle}
           footerSlot={
             <div className="flex flex-wrap gap-3 pt-1">
@@ -68,6 +72,8 @@ export default function ReportPublicDetail({ report }: ReportPublicDetailProps) 
           }
         />
       </div>
+
+      <PhotoAccessRequestForm reportId={report.id} />
     </div>
   );
 }

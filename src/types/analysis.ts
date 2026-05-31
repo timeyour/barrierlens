@@ -90,6 +90,10 @@ export interface StoredRecord extends AnalysisResult {
   /** 上报时浏览器定位（供档案页 OSM 地图） */
   lat?: number | null;
   lng?: number | null;
+  /** 用户确认公开后写入的云端记录 ID */
+  cloudReportId?: string;
+  /** 档案页拉取「照片复核申请」时校验用（仅存本机） */
+  reviewToken?: string;
 }
 
 export const TARGET_DEPARTMENTS: TargetDepartment[] = [
