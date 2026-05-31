@@ -15,7 +15,7 @@ export default function MixedHomeWorkbench({
   return (
     <section
       aria-label="记录工作台"
-      className="mobile-no-snap relative z-30 isolate bg-[var(--background)] pt-2 md:pt-4"
+      className="mobile-no-snap relative z-30 isolate scroll-mt-4"
     >
       <div className="mx-auto max-w-6xl px-0">
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_272px] lg:items-start lg:gap-5">

@@ -480,6 +480,11 @@ body {
     scroll-snap-align: none;
     scroll-snap-stop: normal;
   }
+
+  /* 混合首页：取消整页 snap，避免 Hero 与表单粘在同一屏 */
+  html:has(.mixed-home-layout) {
+    scroll-snap-type: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
