@@ -95,6 +95,9 @@ export function locationValidationHint(raw: string | undefined | null): string |
   if (isCoordinatePlaceholder(trimmed)) {
     return "请填写具体路名，GPS 坐标不会写入报告。";
   }
+  if (/^[\u4e00-\u9fa5]{2,5}区$/.test(trimmed)) {
+    return `仅有「${trimmed}」不够具体，请补充路名，例如「${trimmed}XX路地铁口」。`;
+  }
   if (trimmed.length < 6) {
     return "路名过短，请补充到具体路段，例如「XX 路南侧便道」。";
   }

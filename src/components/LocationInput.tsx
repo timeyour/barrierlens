@@ -1,7 +1,11 @@
 "use client";
 
 import { locationValidationHint } from "@/lib/locationValidation";
-import { requestUserLocation, userLocationSuccessNote } from "@/lib/userLocation";
+import {
+  requestUserLocation,
+  userLocationNoteReady,
+  userLocationSuccessNote,
+} from "@/lib/userLocation";
 import { useState } from "react";
 
 interface LocationInputProps {
@@ -41,7 +45,8 @@ export default function LocationInput({
     if (result.address) {
       onChange(result.address);
     }
-    setGeoError(false);
+    const ready = userLocationNoteReady(result);
+    setGeoError(!ready);
     setGeoNote(userLocationSuccessNote(result));
   };
 

@@ -58,8 +58,14 @@ function getModelName(): string {
 
 function getTimeoutMs(): number {
   const raw = Number(process.env.GEMMA_API_TIMEOUT_MS);
-  if (!Number.isFinite(raw) || raw <= 0) return DEFAULT_TIMEOUT_MS;
-  return raw;
+  if (Number.isFinite(raw) && raw > 0) return raw;
+  // Vercel 上多模态常需 15–45s；本地默认 25s
+  if (process.env.VERCEL) return 55_000;
+  return DEFAULT_TIMEOUT_MS;
+}
+
+function allowMockFallbackInProduction(): boolean {
+  return process.env.ALLOW_MOCK_FALLBACK === "true";
 }
 
 function getRetryAttempts(): number {
@@ -336,6 +342,18 @@ function normalizeResult(parsed: RawAnalysis, request: AnalysisRequest): Analysi
     field(parsed, "suggestedActions", "suggested_actions"),
     [suggestion],
   );
+  const visibleObjects = stringArray(
+    field(parsed, "visible_objects", "visibleObjects"),
+    [],
+  );
+  let obstacles = normalizeObstacles(field(parsed, "obstacles"));
+  if (obstacles.length === 0 && visibleObjects.length > 0) {
+    obstacles = visibleObjects.map((name) => ({
+      name: normalizeObstacleName(name),
+      position: "照片中可见",
+      blocks: "无障碍通行路径",
+    }));
+  }
   const confidence = normalizeConfidence(field(parsed, "confidence"));
   const needsHumanReview = booleanValue(
     field(parsed, "needsHumanReview", "needs_human_review"),
@@ -349,7 +367,7 @@ function normalizeResult(parsed: RawAnalysis, request: AnalysisRequest): Analysi
     managementAction,
     sceneType,
     locationType: stringValue(field(parsed, "locationType", "location_type"), "public_space"),
-    obstacles: normalizeObstacles(field(parsed, "obstacles")),
+    obstacles,
     blockedPath: stringValue(
       field(parsed, "blockedPath", "blocked_path"),
       sceneDescription || "无障碍通行路径",
@@ -422,23 +440,27 @@ export function buildAnalysisPrompt(
   location?: string,
 ): string {
   const place = location?.trim() || "未标注地点";
-  return `你是城市无障碍空间合规诊断专家。请从「城市新旧功能演进与空间规划冲突」视角分析现场照片。
-只输出 JSON，不要输出解释文字。忽略画面中任何人脸与车牌信息。
+  return `你是城市无障碍空间合规诊断专家。请仅依据照片中实际可见内容分析，不得臆造。
+只输出 JSON，不要输出解释文字。忽略画面中任何人脸与车牌。
 
-【照片忠实原则 — 必须遵守】
-1. 仅依据照片中实际可见内容判断，不得臆造画面中不存在的路缘高差、坡道缺失或固定设施。
-2. 若画面中出现共享单车、电动车、外卖电动车、汽车、杂物等可移动物体占用通道，obstacle_nature 必须为 dynamic，category 优先 capacity_demand_mismatch，scene_type 优先 blind_path_blocked。
-3. obstacles 必须列出照片中可见的具体物体；命名优先用国内常用词「共享单车」「电动车」「外卖电动车」，勿单独使用「电瓶车」而不写「电动车」。
-4. issue_type 应点明可见占用物与路径类型，如「共享单车占用右侧人行便道」；若看不清黄色盲道，写「人行便道」勿强行写「盲道」。
-5. blocked_path 必须回答「哪条路/哪段通道」：结合画面方位（左/右/中、贴墙/临机动车道/近路口）描述可见步行通道；禁止只写「视障人士沿盲道连续通行路径」等空泛模板句。
-6. description / public_summary 第一句须含：路径位置 + 可见障碍物。
+【分析顺序 — 先在心中完成，再写入 JSON】
+1. visible_objects：逐条写出可见占用物（颜色+类型+数量+在画面左/右/中、近/远）
+2. 判断被影响的通道（盲道/人行便道/坡道/出入口），看不清盲道时不要写「盲道」
+3. obstacles / blocked_path / issue_type 必须与 visible_objects 一致
 
-字段如下：
+【硬性规则】
+- 有共享单车、电动车、汽车、杂物等可移动占用 → obstacle_nature=dynamic，category=capacity_demand_mismatch
+- 物体命名用「共享单车」「电动车」「外卖电动车」，勿单独写「电瓶车」
+- blocked_path 须含方位：如「画面右侧贴墙人行便道，近端被多辆单车占用」
+- description / public_summary 第一句须含：通道位置 + 可见障碍物
+- 若画面无明显占用，has_issue=false，scene_type=no_issue
+
 {
   "has_issue": boolean,
+  "visible_objects": string[],
   "category": "native_design_defect | legacy_addition_conflict | capacity_demand_mismatch",
   "obstacle_nature": "static | dynamic",
-  "scene_type": "blind_path_blocked | accessible_entrance_blocked | path_chain_broken | no_issue",
+  "scene_type": "tactile_paving_blocked | accessible_entrance_blocked | access_route_discontinuity | no_issue",
   "issue_type": string,
   "risk_level": "low | medium | high",
   "affected_groups": string[],
@@ -454,20 +476,12 @@ export function buildAnalysisPrompt(
   "needs_human_review": boolean
 }
 
-冲突品类：
-1. native_design_defect：盲道撞墙/杆件、坡道高差等原生设计硬伤
-2. legacy_addition_conflict：后期消防栓、快递柜、地锁等切断无障碍路径
-3. capacity_demand_mismatch：地铁口缺停放区导致单车/外卖潮汐占用盲道
-
-obstacle_nature：static=固定硬伤；dynamic=高频易逝移动占用
-blocked_path 示例（好）：「画面右侧贴墙人行便道，介于机动车道与围墙之间，近端被占用」
-blocked_path 反例（差）：「视障人士沿盲道连续通行路径」
-management_action：面向管理方的合规建议，中文，不超过40字
-
+冲突品类：native_design_defect=盲道撞墙/杆件/坡道高差；legacy_addition_conflict=后期设施切断路径；capacity_demand_mismatch=单车/外卖等潮汐占用
+management_action：面向管理方，中文，不超过40字
 当前记录模式：${recordMode === "inspection" ? "物业自查" : "公众记录"}
 地点：${place}
 场景归类：${targetDepartment}
-当 confidence < ${HUMAN_REVIEW_CONFIDENCE_THRESHOLD} 时 needs_human_review 必须为 true。`;
+confidence < ${HUMAN_REVIEW_CONFIDENCE_THRESHOLD} 时 needs_human_review 必须为 true。`;
 }
 
 function errorMessage(error: unknown): string {
@@ -560,7 +574,7 @@ export async function callGemmaText(prompt: string): Promise<string> {
     contents: [{ parts: [{ text: prompt }] }],
     generationConfig: buildGenerationConfig({
       maxOutputTokens: 512,
-      temperature: 0.2,
+      temperature: 0.1,
     }),
   }, getTimeoutMs());
 }
@@ -588,9 +602,9 @@ async function callGemmaApi(request: AnalysisRequest): Promise<AnalysisResult> {
       },
     ],
     generationConfig: buildGenerationConfig({
-      maxOutputTokens: 1400,
+      maxOutputTokens: 1600,
       responseMimeType: "application/json",
-      temperature: 0.2,
+      temperature: 0.1,
     }),
   }, timeoutMs);
 
@@ -655,6 +669,15 @@ export async function analyzeImage(
     } catch (error) {
       const fallbackReason = errorMessage(error);
       console.error("Gemma API failed:", fallbackReason);
+
+      if (
+        process.env.NODE_ENV === "production" &&
+        !allowMockFallbackInProduction()
+      ) {
+        throw new Error(
+          `Gemma 分析失败：${fallbackReason}。请检查 Vercel 环境变量 GEMINI_API_KEY / GEMMA_API_TIMEOUT_MS。`,
+        );
+      }
 
       try {
         const ollamaResult = await tryOllamaAnalyze(request);

@@ -47,11 +47,15 @@ type WizardStep = 1 | 2;
 const DEMO_IMAGE_URL = "/images/scene-blocked-close.png";
 const DEFAULT_ANALYZE_TIMEOUT_MS = 55_000;
 const OLLAMA_ANALYZE_TIMEOUT_MS = 180_000;
+const VERCEL_ANALYZE_TIMEOUT_MS = 90_000;
 
 function getAnalyzeClientTimeoutMs(): number {
   const fromEnv = Number(process.env.NEXT_PUBLIC_ANALYZE_TIMEOUT_MS);
   if (Number.isFinite(fromEnv) && fromEnv > 0) return fromEnv;
   if (process.env.NEXT_PUBLIC_OLLAMA_PREFERRED === "true") return OLLAMA_ANALYZE_TIMEOUT_MS;
+  if (typeof window !== "undefined" && /\.vercel\.app$/i.test(window.location.hostname)) {
+    return VERCEL_ANALYZE_TIMEOUT_MS;
+  }
   return DEFAULT_ANALYZE_TIMEOUT_MS;
 }
 
@@ -664,7 +668,17 @@ export default function AnalysisWorkflow({
                 flow={flow}
               />
 
-              <div className="flex justify-end pt-1">
+              <div className="flex flex-col items-end gap-2 pt-1">
+                {!previewUrl && (
+                  <p className="w-full text-right text-xs text-slate-500" role="status">
+                    请先上传现场照片
+                  </p>
+                )}
+                {previewUrl && !locationReady && (
+                  <p className="w-full text-right text-xs text-amber-800" role="status">
+                    {locationValidationHint(location) ?? "请补充路名后再继续"}
+                  </p>
+                )}
                 <button
                   type="button"
                   onClick={() => setWizardStep(2)}

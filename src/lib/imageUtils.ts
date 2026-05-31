@@ -48,10 +48,10 @@ export async function fileToStoredImageDataUrl(file: File): Promise<string> {
   return compressDataUrl(raw, { maxWidth: 480, quality: 0.55 });
 }
 
-/** 上传 API 前压缩：800px / 0.6，控制体积与推理耗时 */
+/** 上传 API 前压缩：保留更多细节供视觉识别 */
 export async function compressImageForUpload(file: File): Promise<File> {
   const raw = await readFileAsDataUrl(file);
-  const compressed = await compressDataUrl(raw, { maxWidth: 800, quality: 0.6 });
+  const compressed = await compressDataUrl(raw, { maxWidth: 1280, quality: 0.78 });
   const baseName = file.name.replace(/\.[^.]+$/i, "") || "upload";
   return dataUrlToFile(compressed, `${baseName}.jpg`);
 }
