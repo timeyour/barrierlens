@@ -2,13 +2,22 @@
 
 > 拍照识别公共空间无障碍通行风险，生成可归档、可复查、可导出的现场证据。
 
-**Gemma 4 开发者大赛 2026 · 上海站 · 团队「小马过河」· 赛道 D · AI for Social Good**
+## 团队归属
 
-- 在线 Demo: https://barrierlens.vercel.app/
-- 代码仓库: https://github.com/timeyour/barrierlens
-- 技术报告: [docs/TECHNICAL_REPORT.md](docs/TECHNICAL_REPORT.md)
+| 项目 | 说明 |
+|------|------|
+| **团队** | 小马过河 |
+| **产品** | 无碍 BarrierLens |
+| **赛事** | [Gemma 4 开发者大赛 2026](https://ai.google.dev/) · 上海站 · **赛道 D · AI for Social Good** |
+| **仓库** | https://github.com/timeyour/barrierlens |
+| **在线 Demo** | https://barrierlens.vercel.app/ |
+| **Hackathon 版本** | [`v0.1-hackathon-demo`](https://github.com/timeyour/barrierlens/releases/tag/v0.1-hackathon-demo) |
+
+**提交四件套：** 代码仓库 · 在线 Demo · Demo 视频 · [技术报告](docs/TECHNICAL_REPORT.md)
+
 - Demo 视频脚本: [docs/DEMO_VIDEO_SCRIPT.md](docs/DEMO_VIDEO_SCRIPT.md)
 
+---
 ## 1. 问题
 
 盲道被共享单车占用、无障碍入口被电瓶车挡住、临时围挡造成通行链断点，这些问题往往能被路人看见，却很难形成可持续跟进的证据。
@@ -71,7 +80,9 @@ Next.js 16 + TypeScript + Tailwind CSS 4 + framer-motion + GSAP
 ├── src/lib/gemma.ts                 # Gemma 4 兼容接口 + Mock fallback
 ├── src/lib/mockAnalysis.ts          # 三场景 Mock 数据
 ├── src/lib/recordStore.ts           # localStorage 时间线
-├── src/lib/exportMarkdown.ts        # 公众/自查 Markdown 导出
+├── src/lib/exportReportContent.ts # 报告内容（PDF / Markdown 共用）
+├── src/lib/exportPdf.ts           # PDF 导出
+├── src/lib/exportMarkdown.ts      # Markdown 导出（备用）
 ├── src/components/AnalysisWorkflow.tsx
 ├── src/components/BarrierMap.tsx
 ├── src/components/RecordTimeline.tsx
@@ -138,8 +149,9 @@ npm run test:multiround
 
 ## 7. 隐私与边界
 
-- 第一版无账号、无云端数据库。
-- 照片只用于当次分析；时间线保存在本机浏览器。
+- 默认无账号；时间线保存在本机浏览器（约 5MB / 25 条上限）。
+- 可选 Supabase 公开池（配置后同步 `/reports`，只读展示）。
+- 照片只用于当次分析；导出 PDF 供人工核对后递出。
 - AI 输出用于记录、倡导、自查和复核，不替代执法或专业验收。
 - 低置信度或接口失败时必须人工复核。
 - Mock 模式不是实时识图，提交材料和演示中必须标注。
@@ -155,4 +167,4 @@ npm run test:multiround
 
 ## License
 
-MIT · 小马过河 @ Gemma 4 Hackathon 2026 上海站
+MIT · **小马过河** · Gemma 4 Hackathon 2026 上海站 · 赛道 D
