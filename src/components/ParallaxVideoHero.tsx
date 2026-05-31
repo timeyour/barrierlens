@@ -33,25 +33,35 @@ export default function ParallaxVideoHero() {
     const showVideo = () => setVideoReady(true);
     const hideVideo = () => setVideoReady(false);
 
+    const markReady = () => {
+      if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+        showVideo();
+      }
+    };
+
+    video.addEventListener("loadeddata", markReady);
+    video.addEventListener("canplay", markReady);
     video.addEventListener("playing", showVideo);
     video.addEventListener("error", hideVideo);
 
     const unbind = bindHeroVideoPlayback(video, showVideo);
     return () => {
+      video.removeEventListener("loadeddata", markReady);
+      video.removeEventListener("canplay", markReady);
       video.removeEventListener("playing", showVideo);
       video.removeEventListener("error", hideVideo);
       unbind();
     };
   }, []);
 
+  const posterClassName =
+    "absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-500 " +
+    (videoReady ? "opacity-0" : "opacity-100");
+
   const videoClassName =
-    "hero-bg-video absolute inset-0 h-full w-full object-cover transition-opacity duration-700 " +
+    "hero-bg-video absolute inset-0 h-full w-full object-cover transition-opacity duration-500 " +
     (videoReady ? "opacity-100" : "opacity-0") +
     " object-center";
-
-  const posterClassName =
-    "absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-700 " +
-    (videoReady ? "opacity-0" : "opacity-100");
 
   return (
     <header
