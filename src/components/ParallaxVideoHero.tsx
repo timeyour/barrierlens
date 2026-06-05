@@ -15,6 +15,8 @@ type HeroVariant = "full" | "workbench";
 interface ParallaxVideoHeroProps {
   /** workbench：短头图 + 背景视频，不 sticky，不挡 #tool 表单 */
   variant?: HeroVariant;
+  /** mixed 首页：占满首屏 100svh，不拉 160vh 视差轨道 */
+  singleViewport?: boolean;
 }
 
 function HeroVideoLayer({ overlayClassName = "bg-slate-950/55" }: { overlayClassName?: string }) {
@@ -103,15 +105,18 @@ function WorkbenchHero() {
   );
 }
 
-export default function ParallaxVideoHero({ variant = "full" }: ParallaxVideoHeroProps) {
+export default function ParallaxVideoHero({
+  variant = "full",
+  singleViewport = false,
+}: ParallaxVideoHeroProps) {
   if (variant === "workbench") {
     return <WorkbenchHero />;
   }
 
-  return <FullParallaxHero />;
+  return <FullParallaxHero singleViewport={singleViewport} />;
 }
 
-function FullParallaxHero() {
+function FullParallaxHero({ singleViewport = false }: { singleViewport?: boolean }) {
   const containerRef = useRef<HTMLElement>(null);
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
@@ -122,6 +127,19 @@ function FullParallaxHero() {
 
   const bgScale = useTransform(scrollYProgress, [0, 1], isDesktop ? [1, 1.06] : [1, 1]);
   const scrollHintOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
+
+  if (singleViewport) {
+    return (
+      <header className="mobile-no-snap relative z-0 h-[100svh] min-h-[100svh] max-h-[100svh] overflow-hidden">
+        <HeroVideoLayer />
+        <div className="pointer-events-none relative z-10 flex h-full items-center justify-center px-4 py-20 md:px-6">
+          <div className="pointer-events-auto">
+            <HeroKineticType />
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header

@@ -50,7 +50,7 @@ export default async function Home({
       <HashScrollHandler />
       <ScrollProgressBar />
       <SiteNav initialLayout={navLayout} />
-      <ParallaxVideoHero variant="full" />
+      <ParallaxVideoHero variant="full" singleViewport={isMixed} />
       {isMixed && <HomeFlowShowcase snapScreen={false} />}
 
       {isFixMyStreet && <FixMyStreetHomeStrip />}
