@@ -200,15 +200,23 @@ export default function HomeRecentReportsPanel({
       {!loading && reports.length > 0 && (isSidebar || isInline || isStrip) && (
         <ul
           className={
-            isInline || isStrip
-              ? "-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1 scrollbar-hide"
-              : "space-y-2.5"
+            isStrip
+              ? "-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1 scrollbar-hide lg:mx-0 lg:grid lg:grid-cols-2 lg:overflow-visible lg:px-0 xl:grid-cols-3"
+              : isInline
+                ? "-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1 scrollbar-hide"
+                : "space-y-2.5"
           }
         >
           {reports.map((report) => (
             <li
               key={report.id}
-              className={isInline || isStrip ? "w-[min(82vw,280px)] shrink-0 sm:w-[260px]" : undefined}
+              className={
+                isStrip
+                  ? "w-[min(82vw,280px)] shrink-0 sm:w-[260px] lg:w-auto"
+                  : isInline
+                    ? "w-[min(82vw,280px)] shrink-0 sm:w-[260px]"
+                    : undefined
+              }
             >
               <CompactReportRow report={report} flow={flow} withThumb={isSidebar || isStrip} />
             </li>
