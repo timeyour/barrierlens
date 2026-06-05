@@ -26,7 +26,7 @@ function TabLink({
   active: boolean;
 }) {
   const className = [
-    "relative flex min-h-[3rem] flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2 text-xs font-semibold tracking-wide transition-colors",
+    "relative flex min-h-[3.25rem] flex-1 flex-col items-center justify-center gap-0.5 px-0.5 py-2.5 text-sm font-semibold tracking-wide transition-colors",
     "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-blue-500",
     active
       ? "text-blue-700"

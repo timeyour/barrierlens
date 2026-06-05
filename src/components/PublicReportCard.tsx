@@ -52,25 +52,25 @@ export default function PublicReportCard({ report }: { report: CloudReportSummar
         <div className="p-4">
           <div className="flex flex-wrap items-center gap-2">
             <span
-              className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${riskBadgeClass(report.risk_level)}`}
+              className={`rounded-md px-2 py-0.5 text-[11px] font-semibold sm:text-[10px] ${riskBadgeClass(report.risk_level)}`}
             >
               {report.risk_level}风险
             </span>
-            <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">
+            <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 sm:text-[10px]">
               {SCENE_TYPE_LABELS[report.scene_type as keyof typeof SCENE_TYPE_LABELS] ??
                 report.scene_type}
             </span>
-            <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">
+            <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 sm:text-[10px]">
               {RECORD_MODES[recordMode]?.label ?? recordMode}
             </span>
           </div>
-          <h2 className="mt-2 text-sm font-semibold text-slate-900 group-hover:text-blue-700">
+          <h2 className="mt-2 text-base font-semibold text-slate-900 group-hover:text-blue-700 sm:text-sm">
             {report.issue_type}
           </h2>
-          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-600">
+          <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-slate-600 sm:text-xs">
             {report.problem_summary ?? report.location}
           </p>
-          <p className="mt-2 text-[11px] text-slate-500">
+          <p className="mt-2 text-xs text-slate-500 sm:text-[11px]">
             {displayLocationLabel(report.location)} · {formatCloudTime(report.created_at)}
           </p>
         </div>
