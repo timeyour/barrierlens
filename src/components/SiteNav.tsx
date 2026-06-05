@@ -101,51 +101,54 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
       <div className={`flex items-center justify-between gap-3 ${HOME_CONTENT_RAIL}`}>
         <Link
           href={homeHref}
-          className={`text-sm font-semibold transition-colors ${brand.title}`}
+          className={`shrink-0 text-sm font-semibold transition-colors ${brand.title}`}
         >
-          无碍 <span className={brand.accent}>BarrierLens</span>
+          无碍 <span className={`${brand.accent} font-semibold`}>BarrierLens</span>
         </Link>
 
-        <nav className="hidden items-center gap-5 tracking-wide md:flex md:gap-6" aria-label="站点导航">
-          {links.map((link) => {
-            const isRoute = "route" in link && link.route;
-            const href = withNavQuery(link.href, layout, isRoute);
-            const active =
-              isRoute && pathname.startsWith(link.href.replace(/\?.*$/, ""));
+        <div className="flex min-w-0 items-center gap-2 md:gap-4">
+          <nav
+            className="hidden items-center gap-5 tracking-wide md:flex md:gap-5"
+            aria-label="站点导航"
+          >
+            {links.map((link) => {
+              const isRoute = "route" in link && link.route;
+              const href = withNavQuery(link.href, layout, isRoute);
+              const active =
+                isRoute && pathname.startsWith(link.href.replace(/\?.*$/, ""));
 
-            if (isRoute) {
+              if (isRoute) {
+                return (
+                  <Link
+                    key={link.href}
+                    href={href}
+                    className={linkClass(active)}
+                    aria-current={active ? "page" : undefined}
+                    aria-label={linkAriaLabel(link)}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              }
+
               return (
-                <Link
+                <AnchorLink
                   key={link.href}
-                  href={href}
-                  className={linkClass(active)}
-                  aria-current={active ? "page" : undefined}
+                  href={link.href}
+                  className={linkClass()}
                   aria-label={linkAriaLabel(link)}
                 >
                   {link.label}
-                </Link>
+                </AnchorLink>
               );
-            }
+            })}
+            {isFix && (
+              <Link href="/?nav=classic" className={linkClass()} title="撤回预览布局">
+                经典版
+              </Link>
+            )}
+          </nav>
 
-            return (
-              <AnchorLink
-                key={link.href}
-                href={link.href}
-                className={linkClass()}
-                aria-label={linkAriaLabel(link)}
-              >
-                {link.label}
-              </AnchorLink>
-            );
-          })}
-          {isFix && (
-            <Link href="/?nav=classic" className={linkClass()} title="撤回预览布局">
-              经典版
-            </Link>
-          )}
-        </nav>
-
-        <div className="flex items-center gap-2">
           <AuthSyncButton tone={surface.tone} />
           <button
             type="button"

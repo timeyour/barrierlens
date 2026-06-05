@@ -80,7 +80,7 @@ export function navBrandClasses(tone: NavSurfaceTone): {
   accent: string;
 } {
   if (tone === "onDark") {
-    return { title: "text-white", accent: "text-blue-300" };
+    return { title: "text-white", accent: "text-sky-300" };
   }
   return { title: "text-slate-900", accent: "text-blue-600" };
 }
