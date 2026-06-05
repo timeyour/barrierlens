@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import PublicReportCard from "@/components/PublicReportCard";
+import { HOME_SURFACE_CARD } from "@/config/homeLayout";
 import {
   RECORD_MODES,
   SCENE_TYPE_LABELS,
@@ -34,11 +36,12 @@ function reportsHref(layout: NavLayout): string {
 function CompactReportRow({
   report,
   flow = false,
+  withThumb = false,
 }: {
   report: CloudReportSummary;
   flow?: boolean;
+  withThumb?: boolean;
 }) {
-  const recordMode = report.record_mode as RecordMode;
   const scene =
     SCENE_TYPE_LABELS[report.scene_type as keyof typeof SCENE_TYPE_LABELS] ??
     report.scene_type;
@@ -46,28 +49,47 @@ function CompactReportRow({
   return (
     <Link
       href={`/reports/${report.id}`}
-      className={`block rounded-lg border px-3 py-2.5 transition ${
+      className={`flex gap-3 rounded-xl border px-3 py-2.5 transition ${
         flow
           ? "border-white/10 bg-white/[0.03] hover:border-sky-400/30 hover:bg-white/[0.06]"
-          : "border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/40"
+          : "border-slate-200/90 bg-white hover:border-blue-200 hover:bg-blue-50/40 hover:shadow-sm"
       }`}
     >
-      <p className={`line-clamp-1 text-xs font-semibold ${flow ? "text-white" : "text-slate-900"}`}>
-        {report.issue_type}
-      </p>
-      <p className={`mt-0.5 line-clamp-1 text-[11px] ${flow ? "text-white/50" : "text-slate-600"}`}>
-        {displayLocationLabel(report.location)}
-      </p>
-      <p className={`mt-1 text-[10px] ${flow ? "text-white/35" : "text-slate-500"}`}>
-        {scene} · {RECORD_MODES[recordMode]?.label ?? recordMode} ·{" "}
-        {formatRelativeTime(report.created_at)}上报
-      </p>
+      {withThumb && (
+        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+          {report.image_url ? (
+            <Image
+              src={report.image_url}
+              alt=""
+              fill
+              className="object-cover object-center"
+              sizes="56px"
+              unoptimized
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-[9px] text-slate-400">
+              无图
+            </div>
+          )}
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <p className={`line-clamp-1 text-xs font-semibold ${flow ? "text-white" : "text-slate-900"}`}>
+          {report.issue_type}
+        </p>
+        <p className={`mt-0.5 line-clamp-1 text-[11px] ${flow ? "text-white/50" : "text-slate-600"}`}>
+          {displayLocationLabel(report.location)}
+        </p>
+        <p className={`mt-1 text-[10px] ${flow ? "text-white/35" : "text-slate-500"}`}>
+          {scene} · {formatRelativeTime(report.created_at)}
+        </p>
+      </div>
     </Link>
   );
 }
 
 interface HomeRecentReportsPanelProps {
-  variant?: "section" | "sidebar" | "inline";
+  variant?: "section" | "sidebar" | "inline" | "strip";
   limit?: number;
   layout?: NavLayout;
   flow?: boolean;
@@ -103,6 +125,7 @@ export default function HomeRecentReportsPanel({
 
   const isSidebar = variant === "sidebar";
   const isInline = variant === "inline";
+  const isStrip = variant === "strip";
   const loading = configured === null;
 
   const inner = (
@@ -119,14 +142,14 @@ export default function HomeRecentReportsPanel({
                     : "text-lg font-bold text-white"
                 : isSidebar
                   ? "text-sm font-bold text-slate-900"
-                  : isInline
-                    ? "text-xs font-bold text-slate-900"
+                  : isInline || isStrip
+                    ? "text-sm font-bold text-slate-900"
                     : "text-lg font-bold text-slate-900"
             }
           >
             近期公开案例
           </h2>
-          {(isSidebar || isInline) && (
+          {(isSidebar || isInline || isStrip) && (
             <p
               className={`mt-1 text-[11px] leading-snug ${
                 flow ? "text-white/45" : "text-slate-500"
@@ -176,11 +199,20 @@ export default function HomeRecentReportsPanel({
         </div>
       )}
 
-      {!loading && reports.length > 0 && (isSidebar || isInline) && (
-        <ul className={isInline ? "flex gap-2 overflow-x-auto pb-1" : "space-y-2"}>
+      {!loading && reports.length > 0 && (isSidebar || isInline || isStrip) && (
+        <ul
+          className={
+            isInline || isStrip
+              ? "-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]"
+              : "space-y-2.5"
+          }
+        >
           {reports.map((report) => (
-            <li key={report.id} className={isInline ? "min-w-[220px] shrink-0" : undefined}>
-              <CompactReportRow report={report} flow={flow} />
+            <li
+              key={report.id}
+              className={isInline || isStrip ? "w-[min(82vw,280px)] shrink-0 sm:w-[260px]" : undefined}
+            >
+              <CompactReportRow report={report} flow={flow} withThumb={isSidebar || isStrip} />
             </li>
           ))}
         </ul>
@@ -198,15 +230,11 @@ export default function HomeRecentReportsPanel({
     </>
   );
 
-  if (isInline) {
+  if (isInline || isStrip) {
     return (
       <div
         id="recent"
-        className={
-          flow
-            ? "scroll-mt-24 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3"
-            : "scroll-mt-24 rounded-xl border border-slate-200/80 bg-slate-50/60 px-3 py-3"
-        }
+        className={`scroll-mt-24 ${HOME_SURFACE_CARD} px-4 py-4 sm:px-5 sm:py-5`}
       >
         {inner}
       </div>
@@ -215,14 +243,7 @@ export default function HomeRecentReportsPanel({
 
   if (isSidebar) {
     return (
-      <aside
-        id="recent"
-        className={
-          flow
-            ? "scroll-mt-24 rounded-2xl border border-white/10 bg-white/[0.03] p-4"
-            : "scroll-mt-24 rounded-2xl border border-slate-200 bg-slate-50/80 p-4"
-        }
-      >
+      <aside id="recent" className={`scroll-mt-24 ${HOME_SURFACE_CARD} p-4 sm:p-5`}>
         {inner}
       </aside>
     );
