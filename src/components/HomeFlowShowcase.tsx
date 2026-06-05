@@ -60,10 +60,7 @@ export default function HomeFlowShowcase({ snapScreen = true }: HomeFlowShowcase
           </div>
 
           <div className="relative px-5 py-8 sm:px-8 sm:py-10 md:px-10 md:py-12">
-            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-200/90">
-              BarrierLens
-            </p>
-            <h2 className="mt-3 max-w-2xl text-[clamp(1.5rem,4.5vw,2.35rem)] font-bold leading-tight tracking-tight text-white">
+            <h2 className="max-w-2xl text-[clamp(1.5rem,4.5vw,2.35rem)] font-bold leading-tight tracking-tight text-white">
               开始拍照记录
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/78 md:text-[15px]">

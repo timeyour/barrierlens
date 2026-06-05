@@ -59,6 +59,8 @@ function linkAriaLabel(link: NavLinkDef): string | undefined {
 
 interface SiteNavProps {
   initialLayout?: NavLayout;
+  /** 首页由服务端标记，避免滚动到第二/三屏时顶栏品牌仍被 SSR/缓存渲染 */
+  hideBrand?: boolean;
 }
 
 function withNavQuery(href: string, layout: NavLayout, isRoute: boolean): string {
@@ -67,7 +69,7 @@ function withNavQuery(href: string, layout: NavLayout, isRoute: boolean): string
   return href.includes("?") ? `${href}&nav=${layout}` : `${href}${q}`;
 }
 
-export default function SiteNav({ initialLayout }: SiteNavProps) {
+export default function SiteNav({ initialLayout, hideBrand }: SiteNavProps) {
   const layout = useNavLayout(initialLayout);
   const [navZone, setNavZone] = useState<ReturnType<typeof readNavSurfaceZone>>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -101,7 +103,7 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
   const mobileTabs = resolveMobileTabs(layout);
   const showMobileMenu = mobileTabs === null;
   /** 首页 Hero 已有大标题，顶栏不再重复品牌（含滚动至第二、三屏） */
-  const hideHomeBrand = pathname === "/";
+  const hideHomeBrand = hideBrand === true || pathname === "/";
   const homeHref =
     isFix ? "/?nav=fixmystreet" : isMixed ? "/" : "/?nav=classic";
   const closeMenu = () => setMenuOpen(false);
