@@ -14,11 +14,14 @@ function zoneToVariant(
   return "paper";
 }
 
+/** 顶栏下沿采样线（与 fixed header 高度对齐） */
+const NAV_ZONE_LINE = 56;
+
 /** 读取顶栏下方当前分区，配合 [data-nav-surface] 实现随页面变色 */
 export function readNavSurfaceZone(): NavSurfaceZone | null {
   if (typeof document === "undefined") return null;
 
-  const navLine = 28;
+  const navLine = NAV_ZONE_LINE;
   const markers = document.querySelectorAll<HTMLElement>("[data-nav-surface]");
   if (markers.length === 0) return null;
 
@@ -32,6 +35,11 @@ export function readNavSurfaceZone(): NavSurfaceZone | null {
 
   const hero = document.querySelector('[data-nav-surface="hero"]');
   if (hero && hero.getBoundingClientRect().bottom < navLine) {
+    for (const el of markers) {
+      if (el.dataset.navSurface !== "dark") continue;
+      const rect = el.getBoundingClientRect();
+      if (rect.top <= navLine && rect.bottom >= navLine) return "dark";
+    }
     return "light";
   }
 

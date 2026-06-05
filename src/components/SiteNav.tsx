@@ -5,44 +5,56 @@ import AuthSyncButton from "@/components/AuthSyncButton";
 import { useAuthDialog } from "@/components/AuthDialogProvider";
 import Link from "next/link";
 import {
+  navAuthDividerClasses,
   navBrandClasses,
-  navLinkClasses,
+  navLinkTierClasses,
   navMobileMenuClasses,
   resolveNavSurface,
 } from "@/config/navSurface";
 import { readNavSurfaceZone } from "@/lib/navSurfaceZone";
 import { navLayoutQuery, useNavLayout, type NavLayout } from "@/hooks/useNavLayout";
-import { HOME_CONTENT_RAIL } from "@/config/homeLayout";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-const CLASSIC_LINKS = [
-  { href: "/#story", label: "闭环" },
-  { href: "/#scenes", label: "场景" },
-  { href: "/#tool", label: "记录" },
-  { href: "/#records", label: "时间线" },
-  { href: "/reports", label: "公开", route: true, ariaLabel: "公开上报" },
-  { href: "/tech", label: "技术", route: true, ariaLabel: "技术路线说明" },
-] as const;
+/** 三区顶栏：左品牌 · 中 Hero 缓冲 · 右导航（宽度不超过视口，避免登录被裁切） */
+const NAV_SHELL =
+  "relative z-10 mx-auto grid w-full max-w-full grid-cols-[minmax(0,auto)_minmax(0,1fr)_minmax(0,auto)] items-center gap-x-2 px-4 sm:gap-x-3 sm:px-5 md:px-6 lg:gap-x-4 lg:px-8 xl:px-10 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] box-border";
+
+type NavLinkDef = {
+  href: string;
+  label: string;
+  route?: boolean;
+  ariaLabel?: string;
+  tier?: "primary" | "secondary";
+};
+
+const CLASSIC_LINKS: NavLinkDef[] = [
+  { href: "/#story", label: "闭环", tier: "secondary" },
+  { href: "/#scenes", label: "场景", tier: "secondary" },
+  { href: "/#tool", label: "记录", tier: "primary" },
+  { href: "/#records", label: "时间线", tier: "secondary" },
+  { href: "/reports", label: "公开", route: true, ariaLabel: "公开上报", tier: "secondary" },
+  { href: "/tech", label: "技术", route: true, ariaLabel: "技术路线说明", tier: "secondary" },
+];
 
 /** 混合版：Hero + 流程 + #tool 工作台 */
-const MIXED_LINKS = [
-  { href: "/#story", label: "流程" },
-  { href: "/#tool", label: "记录" },
-  { href: "/reports", label: "公开", route: true },
-  { href: "/tech", label: "技术", route: true, ariaLabel: "技术路线说明" },
-  { href: "/#records", label: "我的" },
-] as const;
+const MIXED_LINKS: NavLinkDef[] = [
+  { href: "/#story", label: "流程", tier: "primary" },
+  { href: "/#tool", label: "记录", tier: "primary" },
+  { href: "/reports", label: "公开", route: true, tier: "secondary" },
+  { href: "/tech", label: "技术", route: true, ariaLabel: "技术路线说明", tier: "secondary" },
+  { href: "/#records", label: "我的", tier: "secondary" },
+];
 
-const FIXMYSTREET_LINKS = [
-  { href: "/reports", label: "公开", route: true, ariaLabel: "最近上报" },
-  { href: "/tech", label: "技术", route: true, ariaLabel: "技术路线说明" },
-  { href: "/#records", label: "我的", route: false },
-  { href: "/#how", label: "运作", route: false, ariaLabel: "怎么运作" },
-] as const;
+const FIXMYSTREET_LINKS: NavLinkDef[] = [
+  { href: "/reports", label: "公开", route: true, ariaLabel: "最近上报", tier: "primary" },
+  { href: "/tech", label: "技术", route: true, ariaLabel: "技术路线说明", tier: "secondary" },
+  { href: "/#records", label: "我的", route: false, tier: "secondary" },
+  { href: "/#how", label: "运作", route: false, ariaLabel: "怎么运作", tier: "secondary" },
+];
 
-function linkAriaLabel(link: { href: string; label: string; ariaLabel?: string }): string | undefined {
-  return "ariaLabel" in link ? link.ariaLabel : undefined;
+function linkAriaLabel(link: NavLinkDef): string | undefined {
+  return link.ariaLabel;
 }
 
 interface SiteNavProps {
@@ -90,39 +102,67 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
   const homeHref =
     isFix ? "/?nav=fixmystreet" : isMixed ? "/" : "/?nav=classic";
   const closeMenu = () => setMenuOpen(false);
+  const authDivider = navAuthDividerClasses(surface.tone);
 
-  const linkClass = (active = false) =>
-    `text-xs font-medium tracking-wide transition-colors ${navLinkClasses(surface.tone, active)}`;
+  const linkClass = (tier: "primary" | "secondary" = "secondary", active = false) =>
+    [
+      "rounded-md px-0.5 py-1 text-[13px] font-medium tracking-wide transition-colors md:text-sm xl:text-[15px]",
+      tier === "primary" ? "font-semibold" : "",
+      "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400/70",
+      navLinkTierClasses(surface.tone, tier, active),
+    ]
+      .filter(Boolean)
+      .join(" ");
 
   return (
     <header
-      className={`fixed left-0 right-0 top-0 z-50 py-3 ${surface.header}`}
+      className={`fixed left-0 right-0 top-0 z-50 box-border max-w-[100vw] py-3.5 md:py-4 ${surface.header}`}
     >
-      <div className={`flex items-center justify-between gap-3 ${HOME_CONTENT_RAIL}`}>
+      {surface.tone === "onDark" ? (
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-slate-950/85 via-slate-950/45 to-transparent"
+          aria-hidden
+        />
+      ) : null}
+      <div className={NAV_SHELL}>
         <Link
           href={homeHref}
-          className={`shrink-0 text-sm font-semibold transition-colors ${brand.title}`}
+          className={`group flex shrink-0 flex-col gap-0.5 transition-colors sm:flex-row sm:items-baseline sm:gap-2 ${brand.title}`}
         >
-          无碍 <span className={`${brand.accent} font-semibold`}>BarrierLens</span>
+          <span className="text-[17px] font-bold leading-none tracking-tight md:text-lg">
+            无碍
+          </span>
+          <span
+            className={`font-mono text-[11px] font-semibold uppercase tracking-[0.14em] sm:text-xs ${brand.accent}`}
+          >
+            BarrierLens
+          </span>
         </Link>
 
-        <div className="flex min-w-0 items-center gap-2 md:gap-4">
+        <div
+          className="hidden min-w-[2rem] md:block md:min-w-[4rem] lg:min-w-[8rem] xl:min-w-[11rem]"
+          aria-hidden
+        />
+
+        <div className="flex min-w-0 shrink items-center justify-end gap-1.5 md:gap-2 lg:gap-3">
           <nav
-            className="hidden items-center gap-5 tracking-wide md:flex md:gap-5"
+            className="hidden min-w-0 items-center md:flex md:gap-3.5 lg:gap-5 xl:gap-6"
             aria-label="站点导航"
           >
             {links.map((link) => {
-              const isRoute = "route" in link && link.route;
+              const isRoute = Boolean(link.route);
               const href = withNavQuery(link.href, layout, isRoute);
               const active =
                 isRoute && pathname.startsWith(link.href.replace(/\?.*$/, ""));
+              const tier = link.tier ?? "secondary";
+              const className = linkClass(tier, active);
 
               if (isRoute) {
                 return (
                   <Link
                     key={link.href}
                     href={href}
-                    className={linkClass(active)}
+                    className={className}
                     aria-current={active ? "page" : undefined}
                     aria-label={linkAriaLabel(link)}
                   >
@@ -135,7 +175,7 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
                 <AnchorLink
                   key={link.href}
                   href={link.href}
-                  className={linkClass()}
+                  className={className}
                   aria-label={linkAriaLabel(link)}
                 >
                   {link.label}
@@ -143,16 +183,21 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
               );
             })}
             {isFix && (
-              <Link href="/?nav=classic" className={linkClass()} title="撤回预览布局">
+              <Link href="/?nav=classic" className={linkClass("secondary")} title="撤回预览布局">
                 经典版
               </Link>
             )}
           </nav>
 
+          <div
+            className={`hidden h-5 w-px shrink-0 md:block ${authDivider}`}
+            aria-hidden
+          />
+
           <AuthSyncButton tone={surface.tone} />
           <button
             type="button"
-            className={`rounded-lg px-2 py-1 text-xs font-medium md:hidden ${
+            className={`rounded-lg px-2 py-1.5 text-sm font-medium md:hidden ${
               surface.tone === "onLight" ? "text-slate-600" : "text-white/90"
             }`}
             aria-expanded={menuOpen}
@@ -174,7 +219,7 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
           <ul className="space-y-1">
             {links.map((link) => (
               <li key={link.href}>
-                {"route" in link && link.route ? (
+                {link.route ? (
                   <Link
                     href={withNavQuery(link.href, layout, true)}
                     className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"

@@ -14,11 +14,15 @@ export type NavSurfaceStyle = {
 const GLASS_BASE =
   "backdrop-blur-md transition-[background,box-shadow,border-color] duration-300";
 
+/** Hero / 深色分区顶栏：不用 blur，避免下方浅色区块被糊成白条 */
+const DARK_NAV_SHELL =
+  "transition-[background] duration-300 border-0 bg-transparent shadow-none";
+
 const SURFACES: Record<NavSurfaceVariant, NavSurfaceStyle> = {
   hero: {
     variant: "hero",
     tone: "onDark",
-    header: `${GLASS_BASE} border-0 bg-transparent shadow-none`,
+    header: DARK_NAV_SHELL,
   },
   mixed: {
     variant: "mixed",
@@ -73,6 +77,38 @@ export function navLinkClasses(tone: NavSurfaceTone, active = false): string {
   return active
     ? "text-blue-700"
     : "text-slate-600 hover:text-slate-900";
+}
+
+/** 顶栏链接层级：主导航更亮，次导航略退后 */
+export function navLinkTierClasses(
+  tone: NavSurfaceTone,
+  tier: "primary" | "secondary" = "secondary",
+  active = false,
+): string {
+  if (active) {
+    return tone === "onDark" ? "text-sky-200" : "text-blue-700";
+  }
+  if (tone === "onDark") {
+    return tier === "primary"
+      ? "text-white/92 hover:text-white"
+      : "text-white/68 hover:text-white/88";
+  }
+  return tier === "primary"
+    ? "text-slate-800 hover:text-slate-950"
+    : "text-slate-600 hover:text-slate-900";
+}
+
+export function navAuthDividerClasses(tone: NavSurfaceTone): string {
+  return tone === "onDark" ? "bg-white/22" : "bg-slate-300/80";
+}
+
+export function navLoginButtonClasses(tone: NavSurfaceTone): string {
+  const focus =
+    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400/70";
+  if (tone === "onDark") {
+    return `${focus} shrink-0 rounded-full border border-white/28 bg-white/8 px-2.5 py-1 text-[13px] font-medium text-white/92 transition hover:border-white/45 hover:bg-white/12 hover:text-white md:px-3 md:py-1.5 md:text-sm`;
+  }
+  return `${focus} shrink-0 rounded-full border border-slate-300/85 bg-white/70 px-2.5 py-1 text-[13px] font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white md:px-3.5 md:py-1.5 md:text-sm`;
 }
 
 export function navBrandClasses(tone: NavSurfaceTone): {
