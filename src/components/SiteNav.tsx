@@ -2,7 +2,6 @@
 
 import AnchorLink from "@/components/AnchorLink";
 import AuthSyncButton from "@/components/AuthSyncButton";
-import { useAuthDialog } from "@/components/AuthDialogProvider";
 import Link from "next/link";
 import {
   navAuthDividerClasses,
@@ -69,7 +68,6 @@ function withNavQuery(href: string, layout: NavLayout, isRoute: boolean): string
 
 export default function SiteNav({ initialLayout }: SiteNavProps) {
   const layout = useNavLayout(initialLayout);
-  const { openAuthDialog } = useAuthDialog();
   const [navZone, setNavZone] = useState<ReturnType<typeof readNavSurfaceZone>>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -194,9 +192,7 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
             aria-hidden
           />
 
-          <div className="hidden md:block">
-            <AuthSyncButton tone={surface.tone} />
-          </div>
+          <AuthSyncButton tone={surface.tone} />
           <button
             type="button"
             className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl px-3 text-sm font-semibold md:hidden ${
@@ -249,62 +245,6 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
                 )}
               </li>
             ))}
-            {!isFix && !isMixed && (
-              <li>
-                <Link
-                  href="/?nav=mixed"
-                  className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-50"
-                  onClick={closeMenu}
-                >
-                  混合首页
-                </Link>
-              </li>
-            )}
-            {(isFix || isMixed) && (
-              <li>
-                <Link
-                  href="/?nav=classic"
-                  className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-50"
-                  onClick={closeMenu}
-                >
-                  返回经典版
-                </Link>
-              </li>
-            )}
-            {isFix && (
-              <li>
-                <Link
-                  href="/"
-                  className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-50"
-                  onClick={closeMenu}
-                >
-                  混合首页
-                </Link>
-              </li>
-            )}
-            {isMixed && (
-              <li>
-                <Link
-                  href="/?nav=fixmystreet"
-                  className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-50"
-                  onClick={closeMenu}
-                >
-                  FixMyStreet 预览
-                </Link>
-              </li>
-            )}
-            <li>
-              <button
-                type="button"
-                className="flex min-h-11 w-full items-center rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-blue-700 hover:bg-blue-50"
-                onClick={() => {
-                  closeMenu();
-                  openAuthDialog();
-                }}
-              >
-                登录
-              </button>
-            </li>
           </ul>
         </nav>
       )}
