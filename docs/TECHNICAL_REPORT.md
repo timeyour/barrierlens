@@ -32,33 +32,48 @@ input: text prompt + inlineData image
 output: JSON text，经 normalizeResult 归一化为前端 schema
 ```
 
-未配置 `GEMINI_API_KEY` / `GEMMA_API_KEY` 时使用 Mock；接口失败或超时后自动降级，并返回 `analysisSource=mock_fallback` 与 `fallbackReason`。
+**未微调**：仅使用 Gemma 4 预训练能力 + 项目 Prompt 与结构化 JSON 约束，无额外训练或 LoRA。
+
+未配置 `GEMINI_API_KEY` / `GEMMA_API_KEY` 时使用 Mock（`analysisSource=mock`）。生产环境 `ALLOW_MOCK_FALLBACK=false` 时，Gemma 失败会直接报错，不 silent 降级；本地开发环境在 Key 失败时可能返回 `analysisSource=mock_fallback`。
+
+证明链文档：
+
+- [MODEL_PROVENANCE.md](./MODEL_PROVENANCE.md) — 模型来源、字段、analysisSource 含义
+- [LOCAL_REPRODUCE.md](./LOCAL_REPRODUCE.md) — 本地复现步骤
+- [GEMMA4_DEPLOYMENT.md](./GEMMA4_DEPLOYMENT.md) — Vercel 部署与验收
 
 ## 4. 架构
 
 ```text
 Next.js 16 App Router
 ├── 前台页面
-│   ├── 证据故事线
+│   ├── 证据故事线 / 工作台 (#tool)
 │   ├── 三类场景卡片
 │   ├── 上传分析工作流
 │   ├── Barrier Map 风险地图
-│   └── 本地时间线与整改复查
+│   ├── 本地时间线与整改复查
+│   └── 公开案例池 /reports（可选，无需登录）
 ├── API Route
-│   └── /api/analyze
+│   ├── /api/analyze          # 图片 → Gemma 4 / Ollama / Mock
+│   ├── /api/reports          # 用户主动公开摘要
+│   ├── /api/location/config  # 定位配置（增强）
+│   └── /api/health/location  # 定位健康探针
 ├── 模型层
-│   ├── Gemini REST / Gemma 4 接口
-│   └── Mock fallback
-└── 本地数据
-    └── localStorage 记录、复查状态、前后照片
+│   ├── src/lib/gemma.ts      # Gemini REST / Gemma 4
+│   ├── src/lib/ollama.ts     # 本地 Ollama（开发复现）
+│   └── src/lib/mockAnalysis.ts
+├── 本机数据（默认）
+│   └── localStorage 记录、复查状态、前后照片
+└── 云端（可选，用户主动公开）
+    └── Supabase reports + Storage（位置模糊；云端失败不影响本机主流程）
 ```
 
-隐私设计：
+隐私与存储设计：
 
-- 不要求登录。
-- 不设云端数据库。
-- 原始照片只随当次分析请求发送。
-- 本地时间线保存在用户浏览器 localStorage。
+- **不要求登录**；登录仅为多设备同步增强（`NEXT_PUBLIC_AUTH_REQUIRED=false`）。
+- **默认本机 localStorage** 保存时间线；原始照片随当次分析请求发送给模型，不默认上传云端。
+- **用户勾选同意**后，摘要与必要字段（含现场照片）可写入 Supabase 公开池；**公开位置自动模糊**（lat/lng 置 null）。
+- **定位失败不阻断主流程**：可手动输入路名后继续分析、保存与公开。
 
 ## 5. 评估计划
 
@@ -94,10 +109,10 @@ BarrierLens 不做自动投诉、不做执法、不替代专业验收。AI 输�
 
 数据披露口径：
 
-- 核心模型：Gemma 4。
-- 训练数据：Gemma 4 预训练能力 + 项目 Prompt，无额外微调。
-- 用户数据：第一版无账号、无云端持久化。
-- Mock 数据：仅用于无 Key 演示，不作为真实识别指标。
+- 核心模型：Gemma 4（`gemma-4-26b-a4b-it`），见 [MODEL_PROVENANCE.md](./MODEL_PROVENANCE.md)。
+- 训练数据：Gemma 4 预训练能力 + 项目 Prompt，**无额外微调**。
+- 用户数据：**默认本机 localStorage**；可选 Supabase 公开池（用户主动、位置模糊）；登录同步为增强功能。
+- Mock 数据：仅用于无 Key 演示或开发降级，**不代表** Gemma 4 真实识图能力。
 
 ## 7. 局限与展望
 
@@ -109,10 +124,11 @@ BarrierLens 不做自动投诉、不做执法、不替代专业验收。AI 输�
 
 下一步：
 
-- 扩展更多无障碍设施类型。
-- 引入真实点位标签和可共享报告链接。
-- 探索端侧 Gemma / 移动端巡检。
+- 扩展更多无障碍设施类型（仍聚焦通行链，不扩展为泛城市治理平台）。
 - 与公益组织、物业或社区做小规模实地验证。
+- 探索端侧 Gemma / 移动端巡检。
+
+**未来扩展方向（非当前 Demo 范围）**：市容卫生、非机动车道等城市管理类议题可作为后续版本探索，当前主 Demo 仍聚焦盲道、坡道、出入口障碍。
 
 ## 8. 团队与分工
 

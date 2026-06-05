@@ -80,6 +80,12 @@ Gemma 4 负责无障碍场景理解与结构化证据生成，不只是识图。
 | `fallbackReason` | 降级原因，仅在失败降级时返回 |
 | `analysisTimeMs` | 服务端分析耗时 |
 
+Gemma 4 证明链文档：
+
+- [docs/MODEL_PROVENANCE.md](docs/MODEL_PROVENANCE.md) — 模型来源、未微调声明、输出字段
+- [docs/LOCAL_REPRODUCE.md](docs/LOCAL_REPRODUCE.md) — 本地复现步骤
+- [docs/GEMMA4_DEPLOYMENT.md](docs/GEMMA4_DEPLOYMENT.md) — Vercel 部署与验收
+
 ## 4. 技术架构
 
 ```text
@@ -179,6 +185,8 @@ npm run test:multiround
 | 在线 Demo | 已具备 | Vercel 部署 |
 | Demo 视频 <= 5 分钟 | 待录制 | 见 `docs/DEMO_VIDEO_SCRIPT.md` |
 | 技术报告 | 初稿已补 | 见 `docs/TECHNICAL_REPORT.md` |
+| Gemma 证明链 | 已补 | 见 `docs/MODEL_PROVENANCE.md` 等三文档 |
+| 官方提交包 | 已建目录 | 见 `submissions/2026/D/BarrierLens/` |
 
 ## License
 

@@ -73,17 +73,19 @@ export default function ScenePhotoFrame({
       <img
         src={mapPhoto}
         alt={alt}
-        className="absolute inset-0 h-full w-full object-contain"
+        className={`absolute inset-0 h-full w-full object-contain ${
+          hasOverlay ? "object-left object-top" : "object-center"
+        }`}
         draggable={false}
       />
 
       {hasOverlay && (
         <>
           <div
-            className="pointer-events-none absolute inset-y-0 left-0 z-10 w-[min(46%,11.5rem)] bg-gradient-to-r from-slate-950/95 via-slate-950/82 to-slate-950/0 sm:w-[min(42%,13rem)]"
+            className="pointer-events-none absolute inset-y-0 left-0 z-10 w-[min(40%,10.5rem)] bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-transparent sm:w-[min(36%,12rem)]"
             aria-hidden
           />
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-20 flex w-[min(46%,11.5rem)] flex-col p-2 sm:w-[min(42%,13rem)] sm:p-2.5">
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-20 flex w-[min(40%,10.5rem)] flex-col p-2 sm:w-[min(36%,12rem)] sm:p-2.5">
             {overlay}
           </div>
         </>
@@ -92,12 +94,6 @@ export default function ScenePhotoFrame({
       {!usingUserPhoto && (
         <span className="absolute right-2 top-2 z-30 rounded bg-slate-900/70 px-1.5 py-0.5 text-[9px] text-white">
           示意底图
-        </span>
-      )}
-
-      {hasOverlay && (
-        <span className="pointer-events-none absolute bottom-2 right-2 z-30 rounded bg-black/45 px-1.5 py-0.5 text-[9px] text-white/90">
-          左侧为示意摘要
         </span>
       )}
     </div>

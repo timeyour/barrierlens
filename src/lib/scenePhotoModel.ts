@@ -216,7 +216,7 @@ export function buildAnnotatedPhotoSectionHtml(
   <h2>现场照片 · 左侧标注</h2>
   <p class="photo-note">摘要叠在照片左侧，非像素级定位。</p>
   <div class="photo-wrap" style="position:relative;aspect-ratio:4/3;min-height:220px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#0f172a;">
-    <img src="${imageDataUrl}" alt="现场照片" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;" />
+    <img src="${imageDataUrl}" alt="现场照片" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:left top;" />
     ${findings}
   </div>
 </section>`;
