@@ -24,6 +24,7 @@ export default function RootLayout({
       <body className="min-h-screen font-sans antialiased">
         <LocalDevBanner />
         <AuthDialogProvider>{children}</AuthDialogProvider>
+        <div id="auth-modal-root" />
       </body>
     </html>
   );

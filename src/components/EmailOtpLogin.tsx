@@ -3,8 +3,10 @@
 import { useAuth } from "@/hooks/useAuth";
 import {
   EMAIL_OTP_HINT,
+  EMAIL_OTP_LINK_FALLBACK_HINT,
   EMAIL_OTP_MAX_LEN,
   EMAIL_OTP_MIN_LEN,
+  EMAIL_OTP_SEND_HINT,
   isEmailOtpComplete,
   normalizeEmailOtpInput,
 } from "@/lib/authOtp";
@@ -198,7 +200,7 @@ export default function EmailOtpLogin({
         {submitting ? "发送中…" : cooldownSec > 0 ? `${cooldownSec}s 后可重发` : submitLabel}
       </button>
       <p className="text-xs leading-relaxed text-slate-500">
-        将向邮箱发送数字验证码（{EMAIL_OTP_HINT}），在本页输入后登录。若收到的是邮件链接，点击后也会自动登录。
+        {EMAIL_OTP_SEND_HINT} {EMAIL_OTP_LINK_FALLBACK_HINT}
       </p>
       {message && <p className="text-xs text-emerald-700">{message}</p>}
       {error && <p className="text-xs text-red-700">{error}</p>}
