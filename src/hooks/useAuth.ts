@@ -1,6 +1,11 @@
 "use client";
 
 import { formatAuthError } from "@/lib/authErrors";
+import {
+  EMAIL_OTP_HINT,
+  isEmailOtpComplete,
+  normalizeEmailOtpInput,
+} from "@/lib/authOtp";
 import { getAuthCallbackUrl } from "@/lib/siteUrl";
 import { getSupabaseBrowserClient, isSupabaseAuthConfigured } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -66,9 +71,11 @@ export function useAuth() {
         return { ok: false, message: "未配置 Supabase 登录，请稍后重试。" };
       }
       const normalized = normalizeEmail(email);
-      const code = token.replace(/\D/g, "").trim();
+      const code = normalizeEmailOtpInput(token);
       if (!normalized) return { ok: false, message: "请输入邮箱地址。" };
-      if (code.length < 6) return { ok: false, message: "请输入邮箱中的 6 位验证码。" };
+      if (!isEmailOtpComplete(code)) {
+        return { ok: false, message: `请输入邮件中的验证码（${EMAIL_OTP_HINT}）。` };
+      }
 
       const { error } = await client.auth.verifyOtp({
         email: normalized,

@@ -15,7 +15,7 @@ export function formatAuthError(message: string): string {
   }
 
   if (lower.includes("invalid") && lower.includes("otp")) {
-    return "验证码不正确，请核对邮件中的 6 位数字。";
+    return "验证码不正确，请核对邮件中的数字（6 或 8 位）。";
   }
 
   return message || "操作失败，请稍后重试。";

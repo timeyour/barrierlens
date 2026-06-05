@@ -40,13 +40,13 @@ NEXT_PUBLIC_AMAP_KEY=你的高德 Web 服务 Key
 
 Dashboard → **Authentication** → **Email Templates** → **Magic Link**（或 Confirm signup）：
 
-在正文里使用 **`{{ .Token }}`** 显示 6 位验证码；若模板里仍是 **`{{ .ConfirmationURL }}`**，用户只会收到点击链接，无法在站内输入验证码。
+在正文里使用 **`{{ .Token }}`** 显示验证码（Supabase 常见 **6 位或 8 位**）；若模板里仍是 **`{{ .ConfirmationURL }}`**，用户只会收到点击链接，无法在站内输入验证码。
 
 示例正文：
 
 ```html
 <p>您的登录验证码：<strong>{{ .Token }}</strong></p>
-<p>请在 BarrierLens 登录页输入该 6 位数字，10 分钟内有效。</p>
+<p>请在 BarrierLens 登录页输入邮件中的数字验证码，10 分钟内有效。</p>
 ```
 
 ### 5.2 遇到 `email rate limit exceeded`
