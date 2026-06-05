@@ -38,10 +38,11 @@ export default function AuthSyncButton({ tone }: { tone: NavSurfaceTone }) {
       ) : (
         <button
           type="button"
-          className={`rounded-lg px-2 py-1 text-xs font-medium ${linkClass}`}
+          className={`rounded-lg px-2 py-1 text-xs font-medium tracking-wide ${linkClass}`}
           onClick={openAuthDialog}
+          aria-label="登录同步记录"
         >
-          登录同步记录
+          登录
         </button>
       )}
     </div>

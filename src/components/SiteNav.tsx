@@ -21,8 +21,8 @@ const CLASSIC_LINKS = [
   { href: "/#scenes", label: "场景" },
   { href: "/#tool", label: "记录" },
   { href: "/#records", label: "时间线" },
-  { href: "/reports", label: "公开上报", route: true },
-  { href: "/tech", label: "技术路线", route: true },
+  { href: "/reports", label: "公开", route: true, ariaLabel: "公开上报" },
+  { href: "/tech", label: "技术", route: true, ariaLabel: "技术路线说明" },
 ] as const;
 
 /** 混合版：Hero + 流程 + #tool 工作台 */
@@ -30,16 +30,20 @@ const MIXED_LINKS = [
   { href: "/#story", label: "流程" },
   { href: "/#tool", label: "记录" },
   { href: "/reports", label: "公开", route: true },
-  { href: "/tech", label: "技术路线", route: true },
+  { href: "/tech", label: "技术", route: true, ariaLabel: "技术路线说明" },
   { href: "/#records", label: "我的" },
 ] as const;
 
 const FIXMYSTREET_LINKS = [
-  { href: "/reports", label: "最近上报", route: true },
-  { href: "/tech", label: "技术路线", route: true },
-  { href: "/#records", label: "我的记录", route: false },
-  { href: "/#how", label: "怎么运作", route: false },
+  { href: "/reports", label: "公开", route: true, ariaLabel: "最近上报" },
+  { href: "/tech", label: "技术", route: true, ariaLabel: "技术路线说明" },
+  { href: "/#records", label: "我的", route: false },
+  { href: "/#how", label: "运作", route: false, ariaLabel: "怎么运作" },
 ] as const;
+
+function linkAriaLabel(link: { ariaLabel?: string }): string | undefined {
+  return link.ariaLabel;
+}
 
 interface SiteNavProps {
   initialLayout?: NavLayout;
@@ -88,7 +92,7 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
   const closeMenu = () => setMenuOpen(false);
 
   const linkClass = (active = false) =>
-    `text-xs font-medium transition-colors ${navLinkClasses(surface.tone, active)}`;
+    `text-xs font-medium tracking-wide transition-colors ${navLinkClasses(surface.tone, active)}`;
 
   return (
     <header
@@ -102,7 +106,7 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
           无碍 <span className={brand.accent}>BarrierLens</span>
         </Link>
 
-        <nav className="hidden items-center gap-5 md:flex" aria-label="站点导航">
+        <nav className="hidden items-center gap-5 tracking-wide md:flex md:gap-6" aria-label="站点导航">
           {links.map((link) => {
             const isRoute = "route" in link && link.route;
             const href = withNavQuery(link.href, layout, isRoute);
@@ -116,7 +120,7 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
                   href={href}
                   className={linkClass(active)}
                   aria-current={active ? "page" : undefined}
-                  aria-label={link.label === "技术路线" ? "技术路线说明" : undefined}
+                  aria-label={linkAriaLabel(link)}
                 >
                   {link.label}
                 </Link>
@@ -124,7 +128,12 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
             }
 
             return (
-              <AnchorLink key={link.href} href={link.href} className={linkClass()}>
+              <AnchorLink
+                key={link.href}
+                href={link.href}
+                className={linkClass()}
+                aria-label={linkAriaLabel(link)}
+              >
                 {link.label}
               </AnchorLink>
             );
@@ -166,7 +175,7 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
                   <Link
                     href={withNavQuery(link.href, layout, true)}
                     className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                    aria-label={link.label === "技术路线" ? "技术路线说明" : undefined}
+                    aria-label={linkAriaLabel(link)}
                     aria-current={
                       pathname.startsWith(link.href.replace(/\?.*$/, ""))
                         ? "page"
@@ -180,6 +189,7 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
                   <AnchorLink
                     href={link.href}
                     className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    aria-label={linkAriaLabel(link)}
                     onClick={closeMenu}
                   >
                     {link.label}
@@ -240,7 +250,7 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
                   openAuthDialog();
                 }}
               >
-                同步记录
+                登录
               </button>
             </li>
           </ul>

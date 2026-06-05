@@ -8,6 +8,7 @@ interface AnchorLinkProps {
   className?: string;
   children: ReactNode;
   onClick?: () => void;
+  "aria-label"?: string;
 }
 
 export default function AnchorLink({
@@ -15,10 +16,11 @@ export default function AnchorLink({
   className,
   children,
   onClick,
+  "aria-label": ariaLabel,
 }: AnchorLinkProps) {
   if (!href.startsWith("#")) {
     return (
-      <a href={href} className={className}>
+      <a href={href} className={className} aria-label={ariaLabel}>
         {children}
       </a>
     );
@@ -28,6 +30,7 @@ export default function AnchorLink({
     <a
       href={href}
       className={className}
+      aria-label={ariaLabel}
       onClick={(event) => {
         event.preventDefault();
         scrollToAnchor(href);
