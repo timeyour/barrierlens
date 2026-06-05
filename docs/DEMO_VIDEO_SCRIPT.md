@@ -48,17 +48,19 @@
 
 > 第二条链路是物业自查。对于物业、商场或园区，系统会生成内部巡查整改单。整改后可以上传复拍照片，形成前后对比，状态也能从待处理推进到待复查或已整改。
 
-## 3:30 - 4:30 Gemma 4 与技术
+## 3:30 - 4:30 Gemma 4 证明链
 
 画面：
 
-1. 展示 Gemma 4 结构化 JSON 面板。
-2. 展示 README 或技术报告中的架构图。
-3. 展示终端测试命令或多轮测试结果。
+1. 生成分析后，**暂停在结果页绿色 banner**（应显示 `analysisSource=gemma` 与模型名）。
+2. DevTools → Network → `/api/analyze` → Response（`analysisSource`、`model`、`mockMode: false`）。
+3. 展开「开发者 · Gemma JSON」面板。
+4. 切到 GitHub：`src/lib/gemma.ts` → `src/app/api/analyze/route.ts`。
+5. 展示 `docs/MODEL_PROVENANCE.md`（未微调声明）。
 
 旁白：
 
-> Gemma 4 在这里不是简单识图，而是做无障碍场景理解和结构化证据生成。输出字段包括障碍物、受阻路径、证据要点、责任方建议、整改动作和人工复核标记。没有 API Key 时项目可以 Mock 演示；真实接口失败时会自动降级并明确标注，保证 Demo 不崩。
+> 证明 Gemma 4 有三层：接口返回 `analysisSource=gemma` 和模型 ID；页面 banner 明确标注来源；代码在 `gemma.ts` 调用 Google REST，未微调，只靠 Prompt 和 JSON 约束。若看到 `mock` 或 `mock_fallback`，那是演示降级，不代表真实 Gemma 识图能力。
 
 ## 4:30 - 5:00 展望
 

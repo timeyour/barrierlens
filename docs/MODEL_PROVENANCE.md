@@ -66,6 +66,7 @@ API 额外返回：
 | `analysisSource` | `gemma` \| `ollama` \| `mock` \| `mock_fallback` |
 | `mockMode` | 是否为 Mock 结果 |
 | `modelName` | 实际模型名 |
+| `model` | 与 `modelName` 相同（便于 Network 面板检索） |
 | `fallbackReason` | 降级原因（如有） |
 | `analysisTimeMs` | 分析耗时 |
 

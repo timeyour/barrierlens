@@ -59,6 +59,8 @@ Vercel → Deployments → Production：
 4. DevTools → Network → `/api/analyze` 响应：
    - `analysisSource: "gemma"`
    - `mockMode: false`
+   - `model` / `modelName`: `gemma-4-26b-a4b-it`
+5. 结果页绿色 banner 应显示 **`analysisSource=gemma`** 与模型名
 
 若 Key 缺失或失效：生产应**报错**，而非 silent `mock_fallback`（因 `ALLOW_MOCK_FALLBACK=false`）。
 

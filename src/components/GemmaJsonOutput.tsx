@@ -30,7 +30,7 @@ export default function GemmaJsonOutput({
         ? "Mock 兜底 · 接口失败后自动降级"
         : mockMode
           ? "演示模式 · 结构与真实 API 一致"
-          : "来自 Gemma 4 多模态分析结果";
+          : "来源未标注 · 请查看 analysisSource";
 
   const handleCopy = async () => {
     try {

@@ -84,6 +84,7 @@ Gemma 4 负责无障碍场景理解与结构化证据生成，不只是识图。
 | `analysisSource=mock` | 未配置 Key，使用演示数据 |
 | `analysisSource=mock_fallback` | 已配置 Key，但接口失败后降级；生产默认关闭 |
 | `mockMode` | 是否为 Mock 结果 |
+| `model` / `modelName` | 实际模型 ID（如 `gemma-4-26b-a4b-it`） |
 | `fallbackReason` | 降级原因，仅在失败降级时返回 |
 | `analysisTimeMs` | 服务端分析耗时 |
 

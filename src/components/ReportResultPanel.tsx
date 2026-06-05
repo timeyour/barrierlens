@@ -21,6 +21,7 @@ interface ReportResultPanelProps {
   subtitle?: string;
   reportTitle: string;
   analysisSource?: AnalysisSource | null;
+  modelName?: string | null;
   topBarSlot?: ReactNode;
   loopSlot?: ReactNode;
   publishSlot?: ReactNode;
@@ -34,6 +35,7 @@ export default function ReportResultPanel({
   subtitle,
   reportTitle,
   analysisSource,
+  modelName,
   topBarSlot,
   loopSlot,
   publishSlot,
@@ -66,6 +68,8 @@ export default function ReportResultPanel({
   );
 
   const showVerificationBanner =
+    analysisSource === "gemma" ||
+    analysisSource === "ollama" ||
     analysisSource === "mock" ||
     analysisSource === "mock_fallback" ||
     result.needsHumanReview ||
@@ -86,6 +90,7 @@ export default function ReportResultPanel({
       {showVerificationBanner && (
         <AnalysisVerificationBanner
           analysisSource={analysisSource}
+          modelName={modelName}
           needsHumanReview={result.needsHumanReview}
           obstaclesInferredFromEvidence={result.obstaclesInferredFromEvidence}
         />

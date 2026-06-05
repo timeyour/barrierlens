@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
-const BASE = process.env.TEST_BASE_URL ?? "https://barrierlens.vercel.app";
+const BASE = process.env.TEST_BASE_URL ?? "https://barrierlens-1utx.vercel.app";
 const IMAGE = path.join(ROOT, "public/images/scene-blocked-close.png");
 
 function printNetworkHelp() {
@@ -40,6 +40,7 @@ function reportBody(body, elapsed, via) {
   console.log("analysisSource:", body.analysisSource);
   console.log("mockMode:", body.mockMode);
   console.log("modelName:", body.modelName);
+  console.log("model:", body.model ?? body.modelName);
   console.log("analysisTimeMs:", body.analysisTimeMs);
   if (body.fallbackReason) console.log("fallbackReason:", body.fallbackReason);
   console.log("issueType:", body.issueType);

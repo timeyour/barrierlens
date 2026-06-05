@@ -631,7 +631,7 @@ export default function AnalysisWorkflow({
 
   const analysisNote =
     analysisSource === "gemma"
-      ? `本次为真实 Gemma 分析${analysisTimeMs ? `（${analysisTimeMs}ms）` : ""}。`
+      ? `analysisSource=gemma · 模型 ${modelName ?? "gemma-4-26b-a4b-it"} · 真实 Gemma 4 多模态识图${analysisTimeMs ? `（${analysisTimeMs}ms）` : ""}`
       : analysisSource === "ollama"
         ? `本次为本地 Ollama · ${modelName ?? "gemma4"}${analysisTimeMs ? `（${analysisTimeMs}ms）` : ""}。`
       : analysisSource === "mock_fallback"
@@ -922,6 +922,7 @@ export default function AnalysisWorkflow({
               result={result}
               recordMode={recordMode}
               analysisSource={analysisSource}
+              modelName={modelName}
               reportTitle={reportTitle}
               topBarSlot={
                 <div className="sticky top-0 z-10 -mx-1 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/95 pb-3 pt-0 backdrop-blur-sm">

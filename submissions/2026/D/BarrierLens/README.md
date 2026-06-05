@@ -30,8 +30,10 @@
 
 ## Gemma 4 证明链
 
+**未微调**：仅使用 Gemma 4 预训练能力 + 项目 Prompt 与 JSON 约束，无 LoRA/额外训练。详见 [MODEL_PROVENANCE.md](../../docs/MODEL_PROVENANCE.md)。
+
 | 文档 | 路径 |
-|------|------|
+|---|---|
 | 模型来源与字段 | [docs/MODEL_PROVENANCE.md](../../docs/MODEL_PROVENANCE.md) |
 | 本地复现 | [docs/LOCAL_REPRODUCE.md](../../docs/LOCAL_REPRODUCE.md) |
 | 线上部署 | [docs/GEMMA4_DEPLOYMENT.md](../../docs/GEMMA4_DEPLOYMENT.md) |
@@ -56,7 +58,8 @@ Vercel → 项目 **barrierlens** → Deployments → Production：
 2. Branch **`main`**
 3. Commit 与 GitHub 最新提交一致
 4. 页脚「构建 xxxxxxx」与 commit 前 7 位一致
-5. `/api/analyze` 返回 `analysisSource: "gemma"`（Production 已配 Key）
+5. `/api/analyze` 返回 `analysisSource: "gemma"`、`model` / `modelName`（Production 已配 Key）
+6. 结果页 banner 显示 **`analysisSource=gemma`**（非 Mock 提示）
 
 详见 [docs/GEMMA4_DEPLOYMENT.md](../../docs/GEMMA4_DEPLOYMENT.md)。
 

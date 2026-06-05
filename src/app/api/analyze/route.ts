@@ -57,6 +57,7 @@ export async function POST(request: Request) {
         mockMode: analysis.mockMode,
         analysisSource: analysis.source,
         modelName: analysis.modelName,
+        model: analysis.modelName,
         provider: analysis.provider,
         fallbackReason: analysis.fallbackReason,
         analysisTimeMs,
