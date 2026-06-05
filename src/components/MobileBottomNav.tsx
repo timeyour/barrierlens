@@ -6,9 +6,10 @@ import { usePathname } from "next/navigation";
 import { navLayoutQuery, type NavLayout } from "@/hooks/useNavLayout";
 
 const ITEMS = [
-  { href: "/#tool", label: "记录", anchor: true, match: "report" },
-  { href: "/reports", label: "公开", anchor: false, match: "reports" },
-  { href: "/#records", label: "我的", anchor: true, match: "records" },
+  { href: "/#tool", label: "记录", anchor: true, match: "report" as const },
+  { href: "/reports", label: "公开", anchor: false, match: "reports" as const },
+  { href: "/tech", label: "技术", anchor: false, match: "tech" as const },
+  { href: "/#records", label: "我的", anchor: true, match: "records" as const },
 ] as const;
 
 interface MobileBottomNavProps {
@@ -33,6 +34,7 @@ export default function MobileBottomNav({ layout }: MobileBottomNavProps) {
           const href = item.anchor ? item.href : `${item.href}${suffix}`;
           const active =
             (item.match === "reports" && pathname.startsWith("/reports")) ||
+            (item.match === "tech" && pathname.startsWith("/tech")) ||
             (item.match === "report" && pathname === "/");
 
           const className = `flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-semibold ${
@@ -42,11 +44,19 @@ export default function MobileBottomNav({ layout }: MobileBottomNavProps) {
           return (
             <li key={item.label} className="flex-1">
               {item.anchor ? (
-                <AnchorLink href={href} className={className}>
+                <AnchorLink
+                  href={href}
+                  className={className}
+                  aria-label={item.label}
+                >
                   {item.label}
                 </AnchorLink>
               ) : (
-                <Link href={href} className={className}>
+                <Link
+                  href={href}
+                  className={className}
+                  aria-label={item.label === "技术" ? "技术路线" : item.label}
+                >
                   {item.label}
                 </Link>
               )}

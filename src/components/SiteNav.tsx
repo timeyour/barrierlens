@@ -138,23 +138,22 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
 
         <div className="flex items-center gap-2">
           <AuthSyncButton tone={surface.tone} />
-          {(isFix || isMixed) && (
-            <button
-              type="button"
-              className={`rounded-lg px-2 py-1 text-xs font-medium md:hidden ${
-                surface.tone === "onLight" ? "text-slate-600" : "text-white/90"
-              }`}
-              aria-expanded={menuOpen}
-              aria-controls="mobile-nav-menu"
-              onClick={() => setMenuOpen((open) => !open)}
-            >
-              菜单
-            </button>
-          )}
+          <button
+            type="button"
+            className={`rounded-lg px-2 py-1 text-xs font-medium md:hidden ${
+              surface.tone === "onLight" ? "text-slate-600" : "text-white/90"
+            }`}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-nav-menu"
+            aria-label="打开导航菜单"
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            菜单
+          </button>
         </div>
       </div>
 
-      {(isFix || isMixed) && menuOpen && (
+      {menuOpen && (
         <nav
           id="mobile-nav-menu"
           className={`mx-auto mt-2 max-w-6xl rounded-xl border p-3 shadow-lg backdrop-blur-xl md:hidden ${navMobileMenuClasses(surface.variant)}`}
@@ -188,15 +187,28 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
                 )}
               </li>
             ))}
-            <li>
-              <Link
-                href="/?nav=classic"
-                className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-50"
-                onClick={closeMenu}
-              >
-                返回经典版
-              </Link>
-            </li>
+            {!isFix && !isMixed && (
+              <li>
+                <Link
+                  href="/?nav=mixed"
+                  className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-50"
+                  onClick={closeMenu}
+                >
+                  混合首页
+                </Link>
+              </li>
+            )}
+            {(isFix || isMixed) && (
+              <li>
+                <Link
+                  href="/?nav=classic"
+                  className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-50"
+                  onClick={closeMenu}
+                >
+                  返回经典版
+                </Link>
+              </li>
+            )}
             {isFix && (
               <li>
                 <Link

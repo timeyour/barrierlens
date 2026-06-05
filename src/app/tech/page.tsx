@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     "从现场照片到结构化报告，BarrierLens 通过 Gemma 4 多模态理解、结构化 JSON 输出、本机归档和可选公开案例池，完成无障碍问题的记录、反馈与复查闭环。",
 };
 
-const DEMO_URL = "https://barrierlens.vercel.app/#tool";
+const DEMO_URL = "https://barrierlens-1utx.vercel.app/#tool";
 const REPO_URL = "https://github.com/timeyour/barrierlens";
 
 const DATA_FLOW = [
