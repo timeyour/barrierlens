@@ -10,7 +10,7 @@
 | **产品** | 无碍 BarrierLens |
 | **赛事** | [Gemma 4 开发者大赛 2026](https://ai.google.dev/) · 上海站 · **赛道 D · AI for Social Good** |
 | **仓库** | https://github.com/timeyour/barrierlens |
-| **在线 Demo** | https://barrierlens.vercel.app/#tool （唯一正式入口；默认 mixed 工作台首页；运行口径见 [docs/MIGRATE_VERCEL.md](docs/MIGRATE_VERCEL.md)） |
+| **在线 Demo** | https://barrierlens-1utx.vercel.app/#tool （提交 / 录视频 / 评委只用这一条；`#tool` 直达工作台） |
 | **Hackathon 版本** | [`v0.1-hackathon-demo`](https://github.com/timeyour/barrierlens/releases/tag/v0.1-hackathon-demo) |
 
 **提交四件套：** 代码仓库 · 在线 Demo · Demo 视频 · [技术报告](docs/TECHNICAL_REPORT.md)
@@ -19,11 +19,18 @@
 
 ---
 
-## 0. 运行口径
+## 0. 入口（对外只记两个 URL）
 
-- 正式站点只认 `https://barrierlens.vercel.app/#tool`，这个 hash 会直接落到记录工作台；根路径 `/` 可能先展示 Hero / 流程区。其它 `barrierlens-*.vercel.app` 只当临时部署或旧站排查链接。
-- 线上生产走 Vercel 环境变量：Gemma 4 使用 `GEMINI_API_KEY` / `GEMMA_API_KEY`，定位使用 `NEXT_PUBLIC_AMAP_KEY`（浏览器 JSONP）和可选 `AMAP_WEB_KEY`。
-- 本地开发打开 `http://localhost:3000/#tool`，推荐 `OLLAMA_PREFERRED=true` 直接跑本机 `gemma4:latest`；需要验证线上同款 API 时再配置 Google Key 与本地代理。
+| 用途 | 地址 |
+|------|------|
+| **在线 Demo** | https://barrierlens-1utx.vercel.app/#tool |
+| **代码仓库** | https://github.com/timeyour/barrierlens |
+
+说明（不必记第三条链接）：
+
+- Vercel 项目 **`barrierlens`** 的 Production 域名即上表 Demo；`barrierlens.vercel.app` 是同一部署的短别名，国内部分 DNS 可能 403，**打不开时仍用上表 Demo**。
+- 其它 `barrierlens-*.vercel.app`、preview、legacy 仅供开发排查，**不要**写进提交材料。
+- 本地开发：`http://localhost:3000/#tool`；线上变量与部署见 [docs/MIGRATE_VERCEL.md](docs/MIGRATE_VERCEL.md)。
 
 ## 1. 问题
 
@@ -133,7 +140,7 @@ cp .env.example .env.local
 | `OLLAMA_MODEL` | 本地默认 `gemma4:latest` |
 | `NEXT_PUBLIC_AMAP_KEY` | 高德 Key，用于浏览器端逆地理定位 |
 | `AMAP_WEB_KEY` | 可选服务端高德 Key；Vercel 海外访问高德时可能失败 |
-| `NEXT_PUBLIC_SITE_URL` | 生产固定为 `https://barrierlens.vercel.app` |
+| `NEXT_PUBLIC_SITE_URL` | 生产与 Demo 一致：`https://barrierlens-1utx.vercel.app` |
 | `NEXT_PUBLIC_V2_ENABLED` | 默认 `true`；设为 `false` 回退 MVP |
 | `NEXT_PUBLIC_V2_BARRIER_MAP_ENABLED` | 默认 `true` |
 | `NEXT_PUBLIC_V2_REVIEW_FLOW_ENABLED` | 默认 `true` |

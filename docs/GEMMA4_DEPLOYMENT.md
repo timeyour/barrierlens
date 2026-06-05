@@ -1,12 +1,13 @@
 # Gemma 4 线上部署（Vercel）
 
-> 正式 Demo：https://barrierlens.vercel.app/#tool
+> 在线 Demo（与 README 一致）：https://barrierlens-1utx.vercel.app/#tool
 
 ## 1. 部署方式
 
 - 仓库：https://github.com/timeyour/barrierlens
-- 平台：Vercel，Production Branch **`main`**
-- 正式域名：**仅** `https://barrierlens.vercel.app`
+- 平台：Vercel，项目 **`barrierlens`**，Production Branch **`main`**
+- **对外 Demo 域名**：`https://barrierlens-1utx.vercel.app`（提交材料只写这一条）
+- `barrierlens.vercel.app` 为短别名，与上同源；运维用，不写进大赛材料
 
 部署后页脚会显示 `VERCEL_GIT_COMMIT_SHA` 前 7 位（`src/app/page.tsx`），用于核对 Production 是否与 GitHub 一致。
 
@@ -22,7 +23,7 @@
 | `GEMMA_API_PROXY` | （留空） | Vercel 不需要代理 |
 | `OLLAMA_PREFERRED` | `false` | 生产不走本机 Ollama |
 | `OLLAMA_ENABLED` | `false` | 生产禁用 Ollama |
-| `NEXT_PUBLIC_SITE_URL` | `https://barrierlens.vercel.app` | 与 Supabase Auth Site URL 一致 |
+| `NEXT_PUBLIC_SITE_URL` | `https://barrierlens-1utx.vercel.app` | 与对外 Demo、Supabase Site URL 一致 |
 
 可选（定位 / 公开池 / 登录，**不阻断主流程**）：
 
@@ -52,7 +53,7 @@ Vercel → Deployments → Production：
 
 ### 4.2 Gemma 4 真实推理
 
-1. 打开 https://barrierlens.vercel.app/#tool
+1. 打开 https://barrierlens-1utx.vercel.app/#tool
 2. 使用样例图或上传照片，填写路名，点击生成
 3. 结果 banner 应为 Gemma 4 分析（非「演示数据」）
 4. DevTools → Network → `/api/analyze` 响应：

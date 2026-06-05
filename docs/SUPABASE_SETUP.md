@@ -67,13 +67,13 @@ Supabase **内置邮件**额度很低（约 **每小时 3～4 封/项目**，测
 
 | 项 | 建议值 |
 |----|--------|
-| **Site URL** | `https://barrierlens.vercel.app` |
-| **Redirect URLs** | `https://barrierlens.vercel.app/**` |
+| **Site URL** | `https://barrierlens-1utx.vercel.app`（与 README 在线 Demo 一致） |
+| **Redirect URLs** | `https://barrierlens-1utx.vercel.app/**`（可选再加 `https://barrierlens.vercel.app/**` 作短别名） |
 
 Vercel：
 
 ```env
-NEXT_PUBLIC_SITE_URL=https://barrierlens.vercel.app
+NEXT_PUBLIC_SITE_URL=https://barrierlens-1utx.vercel.app
 ```
 
 ## 6. 验证

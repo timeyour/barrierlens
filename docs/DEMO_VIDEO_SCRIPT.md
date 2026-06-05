@@ -70,6 +70,7 @@
 
 ## 录制检查清单
 
+- 全程只打开 **https://barrierlens-1utx.vercel.app/#tool**（与 README 在线 Demo 一致）。
 - 桌面端录制一遍公众记录。
 - 桌面端录制一遍物业自查与复查。
 - 移动端截图或短片展示响应式可用。

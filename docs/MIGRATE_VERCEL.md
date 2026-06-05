@@ -1,13 +1,22 @@
-# 主站收口与运行手册 `barrierlens.vercel.app`
+# Vercel 运行手册（项目 barrierlens）
 
-## 最终口径
+## 对外入口（与 README 一致，只记两个）
 
-- 对外提交、演示和截图只使用：`https://barrierlens.vercel.app/#tool`，让页面直接落到记录工作台；根路径 `/` 可能先展示 Hero / 流程区。
-- GitHub 仓库只认：`https://github.com/timeyour/barrierlens`
-- Vercel 项目只认：`barrierlens`
-- 本地开发只打开：`http://localhost:3000/#tool`
-- 其它 `barrierlens-*.vercel.app`、旧 deployment URL 和 `barrierlens-legacy` 只用于排查历史部署，不再作为正式入口。
-- 不从脏工作区直接 `vercel deploy --prod` 到最终域名；先把要上线的改动拆清楚、提交，再部署或 alias。
+| 用途 | 地址 |
+|------|------|
+| **在线 Demo** | https://barrierlens-1utx.vercel.app/#tool |
+| **代码仓库** | https://github.com/timeyour/barrierlens |
+
+- Vercel 项目名：**`barrierlens`**；Production 默认域名 **`barrierlens-1utx.vercel.app`**（即上表 Demo）。
+- **`barrierlens.vercel.app`**：同一 Production 的短别名；国内部分 DNS 可能 403，**提交材料不要写它**，只写上表 Demo。
+- 本地开发：`http://localhost:3000/#tool`。
+- **`barrierlens-legacy`** 等其它项目/URL 仅运维排查，勿作 Demo 入口。
+
+## 最终口径（运维）
+
+- 对外提交、演示和截图只使用上表 **Demo URL**（`#tool` 直达工作台）。
+- GitHub 只认：`https://github.com/timeyour/barrierlens`
+- 不从脏工作区直接 `vercel deploy --prod` 到 Production；先 commit/push，再部署或 alias。
 
 ## 已自动完成（项目重命名）
 
@@ -139,9 +148,9 @@ Authentication → URL Configuration：
 
 ## 5. 验证
 
-- 首页：https://barrierlens.vercel.app/#tool
-- 定位配置（轻量）：https://barrierlens.vercel.app/api/location/config（旧路径 `/api/config/location` 会重写到此）
-- 定位健康检查（含探针）：https://barrierlens.vercel.app/api/health/location  
+- 首页（Demo）：https://barrierlens-1utx.vercel.app/#tool
+- 定位配置（轻量）：https://barrierlens-1utx.vercel.app/api/location/config（旧路径 `/api/config/location` 会重写到此）
+- 定位健康检查（含探针）：https://barrierlens-1utx.vercel.app/api/health/location  
   - `clientGeocodeReady: true` 即可；`serverReverseGeocodeReady` 为 false 可忽略（Vercel 海外访问高德限制）
 - 页内点击「使用当前位置」应出现真实路名
 - Gemma 4：上传样例图后响应里应是 `analysisSource=gemma`、`mockMode=false`
@@ -150,5 +159,5 @@ Authentication → URL Configuration：
 
 ## 6. 收尾（可选）
 
-- README / 大赛材料只保留 **https://barrierlens.vercel.app/#tool**
+- README / 大赛材料只保留 **https://barrierlens-1utx.vercel.app/#tool** 与 GitHub 仓库链接
 - 项目 `barrierlens-26ii`、`barrierlens-xgqi` 等重复项可在 Vercel 删除，避免以后再混

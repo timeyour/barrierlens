@@ -6,14 +6,14 @@
 
 ---
 
-## 正式入口（唯一对外）
+## 正式入口（对外只记两个 URL）
 
-| 项 | 链接 |
-|----|------|
-| 在线 Demo | https://barrierlens.vercel.app/#tool |
-| 代码仓库 | https://github.com/timeyour/barrierlens |
+| 用途 | 地址 |
+|------|------|
+| **在线 Demo** | https://barrierlens-1utx.vercel.app/#tool |
+| **代码仓库** | https://github.com/timeyour/barrierlens |
 
-其它 `barrierlens-*.vercel.app`、preview、legacy URL 仅用于开发排查，不作为提交入口。
+`barrierlens.vercel.app` 为同一部署的短别名（国内部分 DNS 可能 403）；提交材料与录视频**只写上表 Demo**，不要另写其它 `barrierlens-*.vercel.app`。
 
 ---
 
@@ -22,7 +22,7 @@
 | 材料 | 状态 | 位置 |
 |------|------|------|
 | 代码仓库 | ✅ | https://github.com/timeyour/barrierlens |
-| 在线 Demo | ✅ | https://barrierlens.vercel.app/#tool |
+| 在线 Demo | ✅ | https://barrierlens-1utx.vercel.app/#tool |
 | Demo 视频（≤5 分钟） | ⏳ 待录制 | 脚本：[docs/DEMO_VIDEO_SCRIPT.md](../../docs/DEMO_VIDEO_SCRIPT.md) |
 | 技术报告 | ✅ | [docs/TECHNICAL_REPORT.md](../../docs/TECHNICAL_REPORT.md) |
 
