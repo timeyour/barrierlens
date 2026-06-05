@@ -1,11 +1,11 @@
 import ReportToolIntro from "@/components/ReportToolIntro";
 import AnalysisWorkflow from "@/components/AnalysisWorkflow";
 import EvidenceStory from "@/components/EvidenceStory";
+import HomeFlowShowcase from "@/components/HomeFlowShowcase";
 import FixMyStreetHomeStrip from "@/components/FixMyStreetHomeStrip";
 import FixMyStreetHowStrip from "@/components/FixMyStreetHowStrip";
 import FixMyStreetRecentReports from "@/components/FixMyStreetRecentReports";
 import HowItWorks from "@/components/HowItWorks";
-import MixedHomeIntro from "@/components/MixedHomeIntro";
 import MixedHomeWorkbench from "@/components/MixedHomeWorkbench";
 import WorkflowFocusGate from "@/components/WorkflowFocusGate";
 import MobileBottomNav from "@/components/MobileBottomNav";
@@ -50,7 +50,14 @@ export default async function Home({
       <HashScrollHandler />
       <ScrollProgressBar />
       <SiteNav initialLayout={navLayout} />
-      {!isMixed && <ParallaxVideoHero variant="full" />}
+      {isMixed ? (
+        <>
+          <ParallaxVideoHero variant="workbench" />
+          <HomeFlowShowcase snapScreen={false} />
+        </>
+      ) : (
+        <ParallaxVideoHero variant="full" />
+      )}
 
       {isFixMyStreet && <FixMyStreetHomeStrip />}
       {isFixMyStreet && <FixMyStreetRecentReports />}
@@ -58,12 +65,11 @@ export default async function Home({
 
       <main
         className={`relative z-20 isolate mx-auto flex max-w-6xl flex-col px-4 pb-4 md:px-6 md:py-10 lg:py-16 ${mobileNavPad ? "pb-24 md:pb-16" : ""} ${
-          isMixed ? "scroll-mt-0 pt-[4.75rem] md:pt-24" : "pt-0"
+          isMixed ? "scroll-mt-0 pt-2 md:pt-6" : "pt-0"
         }`}
       >
         {isMixed ? (
           <>
-            <MixedHomeIntro />
             <MixedHomeWorkbench layout={workbenchLayout} />
             <WorkflowFocusGate>
               <div className="mobile-no-snap scroll-mt-20 border-t border-slate-200/90 bg-slate-50/40 pt-10 md:scroll-mt-24 md:pt-14">

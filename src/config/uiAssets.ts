@@ -9,6 +9,34 @@ export const HERO_VIDEO = `/videos/hero-demo.mp4?v=9`;
 /** 与 hero-demo.mp4 同帧截取，避免视频加载前闪旧对比图 */
 export const HERO_POSTER = `/images/hero-demo-poster.jpg?v=1`;
 
+/** 首页第二屏三栏流程图（用户提供的实拍 / mockup） */
+export const HOME_FLOW_ASSETS = {
+  heroBg: {
+    src: "/images/home-flow-hero-bg.png",
+    alt: "",
+    width: 1200,
+    height: 800,
+  },
+  capture: {
+    src: "/images/home-flow-capture.png",
+    alt: "现场拍照记录盲道占用",
+    width: 1200,
+    height: 800,
+  },
+  report: {
+    src: "/images/home-flow-report.png",
+    alt: "AI 生成结构化报告示意",
+    width: 1200,
+    height: 800,
+  },
+  review: {
+    src: "/images/home-flow-review.png",
+    alt: "整改前后对比与复查闭环",
+    width: 1200,
+    height: 800,
+  },
+} as const;
+
 export const UI_ASSETS = {
   hero: {
     src: `/images/hero-poster.svg${V}`,

@@ -13,50 +13,14 @@ import { useLayoutEffect, useRef, useState } from "react";
 type HeroVariant = "full" | "workbench";
 
 interface ParallaxVideoHeroProps {
-  /** workbench：短静态头图，不 sticky，不挡表单点击 */
+  /** workbench：短头图 + 背景视频，不 sticky，不挡 #tool 表单 */
   variant?: HeroVariant;
 }
 
-function WorkbenchHero() {
-  return (
-    <header className="mobile-no-snap relative z-0 overflow-hidden border-b border-white/10 bg-slate-950">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-40"
-        style={{ backgroundImage: `url(${HERO_POSTER})` }}
-      />
-      <div className="pointer-events-none absolute inset-0 bg-slate-950/70" />
-      <div className="pointer-events-none relative px-4 py-12 sm:py-14 md:py-16">
-        <div className="pointer-events-auto mx-auto max-w-3xl">
-          <HeroKineticType />
-        </div>
-      </div>
-    </header>
-  );
-}
-
-export default function ParallaxVideoHero({ variant = "full" }: ParallaxVideoHeroProps) {
-  if (variant === "workbench") {
-    return <WorkbenchHero />;
-  }
-
-  return <FullParallaxHero />;
-}
-
-function FullParallaxHero() {
-  const containerRef = useRef<HTMLElement>(null);
+function HeroVideoLayer({ overlayClassName = "bg-slate-950/55" }: { overlayClassName?: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const posterRef = useRef<HTMLDivElement>(null);
-  const isDesktop = useMediaQuery("(min-width: 768px)");
   const [videoReady, setVideoReady] = useState(false);
-
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"],
-  });
-
-  const bgScale = useTransform(scrollYProgress, [0, 1], isDesktop ? [1, 1.06] : [1, 1]);
-  const scrollHintOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
 
   useLayoutEffect(() => {
     posterRef.current?.classList.toggle("hero-poster-wechat", isWeChatBrowser());
@@ -97,39 +61,77 @@ function FullParallaxHero() {
     " object-center";
 
   return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden bg-slate-950">
+      <div
+        ref={posterRef}
+        aria-hidden
+        className={posterClassName}
+        style={{ backgroundImage: `url(${HERO_POSTER})` }}
+      />
+      <video
+        ref={videoRef}
+        className={videoClassName}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        disableRemotePlayback
+        aria-hidden
+        tabIndex={-1}
+      >
+        <source src={HERO_VIDEO} type="video/mp4" />
+      </video>
+      <div className={`pointer-events-none absolute inset-0 ${overlayClassName}`} />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/25 to-slate-950/40" />
+    </div>
+  );
+}
+
+function WorkbenchHero() {
+  return (
+    <header className="mobile-no-snap relative z-0 overflow-hidden border-b border-white/10 bg-slate-950">
+      <div className="relative min-h-[42svh] sm:min-h-[46svh] md:min-h-[50vh]">
+        <HeroVideoLayer overlayClassName="bg-slate-950/65" />
+        <div className="pointer-events-none relative z-10 flex min-h-[42svh] items-center justify-center px-4 py-14 sm:min-h-[46svh] sm:py-16 md:min-h-[50vh] md:py-20">
+          <div className="pointer-events-auto mx-auto max-w-3xl">
+            <HeroKineticType />
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+export default function ParallaxVideoHero({ variant = "full" }: ParallaxVideoHeroProps) {
+  if (variant === "workbench") {
+    return <WorkbenchHero />;
+  }
+
+  return <FullParallaxHero />;
+}
+
+function FullParallaxHero() {
+  const containerRef = useRef<HTMLElement>(null);
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"],
+  });
+
+  const bgScale = useTransform(scrollYProgress, [0, 1], isDesktop ? [1, 1.06] : [1, 1]);
+  const scrollHintOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
+
+  return (
     <header
       ref={containerRef}
       className="mobile-snap-screen mobile-snap-screen-fixed relative z-0 md:h-[160vh] lg:h-[180vh]"
     >
       <div className="relative h-[100svh] max-h-[100svh] overflow-hidden pointer-events-none md:sticky md:top-0 md:h-screen md:max-h-none md:min-h-0">
-        <div className="absolute inset-0 overflow-hidden bg-slate-950">
-          <div
-            ref={posterRef}
-            aria-hidden
-            className={posterClassName}
-            style={{ backgroundImage: `url(${HERO_POSTER})` }}
-          />
-
-          <motion.div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ scale: bgScale }}>
-            <video
-              ref={videoRef}
-              className={videoClassName}
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="auto"
-              disableRemotePlayback
-              aria-hidden
-              tabIndex={-1}
-            >
-              <source src={HERO_VIDEO} type="video/mp4" />
-            </video>
-          </motion.div>
-
-          <div className="pointer-events-none absolute inset-0 bg-slate-950/55" />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/25 to-slate-950/40" />
-        </div>
+        <motion.div className="absolute inset-0 overflow-hidden" style={{ scale: bgScale }}>
+          <HeroVideoLayer />
+        </motion.div>
 
         <div className="pointer-events-none relative z-10 flex h-full items-center justify-center px-4 py-20 md:px-6">
           <div className="pointer-events-auto">

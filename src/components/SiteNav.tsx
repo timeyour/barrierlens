@@ -21,8 +21,9 @@ const CLASSIC_LINKS = [
   { href: "/reports", label: "公开上报", route: true },
 ] as const;
 
-/** 混合版：与底部三栏对齐，不重复 Hero 下方已有区块 */
+/** 混合版：Hero + 流程 + #tool 工作台 */
 const MIXED_LINKS = [
+  { href: "/#story", label: "流程" },
   { href: "/#tool", label: "记录" },
   { href: "/reports", label: "公开", route: true },
   { href: "/#records", label: "我的" },
