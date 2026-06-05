@@ -1,65 +1,96 @@
 "use client";
 
 import AnchorLink from "@/components/AnchorLink";
+import {
+  resolveMobileTabHref,
+  resolveMobileTabs,
+  type MobileTabItem,
+} from "@/config/mobileNav";
+import { useMobileHomeTab } from "@/hooks/useMobileHomeTab";
+import { useNavLayout, type NavLayout } from "@/hooks/useNavLayout";
+import { isMobileTabActive } from "@/lib/mobileTabActive";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { navLayoutQuery, type NavLayout } from "@/hooks/useNavLayout";
-
-const ITEMS = [
-  { href: "/#tool", label: "记录", anchor: true, match: "report" as const },
-  { href: "/reports", label: "公开", anchor: false, match: "reports" as const },
-  { href: "/tech", label: "技术", anchor: false, match: "tech" as const },
-  { href: "/#records", label: "我的", anchor: true, match: "records" as const },
-] as const;
 
 interface MobileBottomNavProps {
-  layout: NavLayout;
+  layout?: NavLayout;
 }
 
-export default function MobileBottomNav({ layout }: MobileBottomNavProps) {
+function TabLink({
+  item,
+  href,
+  active,
+}: {
+  item: MobileTabItem;
+  href: string;
+  active: boolean;
+}) {
+  const className = [
+    "relative flex min-h-[3rem] flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2 text-xs font-semibold tracking-wide transition-colors",
+    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-blue-500",
+    active
+      ? "text-blue-700"
+      : item.primary
+        ? "text-slate-700"
+        : "text-slate-600",
+    item.primary && !active ? "font-bold" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const content = (
+    <>
+      {active ? (
+        <span
+          className="absolute inset-x-2 top-0 h-0.5 rounded-full bg-blue-600"
+          aria-hidden
+        />
+      ) : null}
+      <span>{item.label}</span>
+    </>
+  );
+
+  if (item.anchor) {
+    return (
+      <AnchorLink href={href} className={className} aria-label={item.ariaLabel ?? item.label}>
+        {content}
+      </AnchorLink>
+    );
+  }
+
+  return (
+    <Link href={href} className={className} aria-label={item.ariaLabel ?? item.label}>
+      {content}
+    </Link>
+  );
+}
+
+export default function MobileBottomNav({ layout: layoutProp }: MobileBottomNavProps) {
   const pathname = usePathname();
+  const homeTab = useMobileHomeTab();
+  const layout = useNavLayout(layoutProp);
+  const tabs = resolveMobileTabs(layout);
 
-  if (layout === "classic") return null;
+  if (!tabs) return null;
 
-  const suffix =
-    layout === "fixmystreet" ? navLayoutQuery("fixmystreet") : "";
+  function tabIsActive(item: MobileTabItem): boolean {
+    if (pathname === "/") return homeTab === item.match;
+    return isMobileTabActive(item.match, pathname, "");
+  }
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
-      aria-label="快捷导航"
+      className="mobile-tab-bar fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200/90 bg-white/96 backdrop-blur-md md:hidden"
+      aria-label="手机快捷导航"
     >
       <ul className="mx-auto flex max-w-lg">
-        {ITEMS.map((item) => {
-          const href = item.anchor ? item.href : `${item.href}${suffix}`;
-          const active =
-            (item.match === "reports" && pathname.startsWith("/reports")) ||
-            (item.match === "tech" && pathname.startsWith("/tech")) ||
-            (item.match === "report" && pathname === "/");
-
-          const className = `flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-semibold ${
-            active ? "text-blue-700" : "text-slate-600"
-          }`;
+        {tabs.map((item) => {
+          const href = resolveMobileTabHref(item, layout);
+          const active = tabIsActive(item);
 
           return (
-            <li key={item.label} className="flex-1">
-              {item.anchor ? (
-                <AnchorLink
-                  href={href}
-                  className={className}
-                  aria-label={item.label}
-                >
-                  {item.label}
-                </AnchorLink>
-              ) : (
-                <Link
-                  href={href}
-                  className={className}
-                  aria-label={item.label === "技术" ? "技术路线" : item.label}
-                >
-                  {item.label}
-                </Link>
-              )}
+            <li key={`${item.match}-${item.label}`} className="flex min-w-0 flex-1">
+              <TabLink item={item} href={href} active={active} />
             </li>
           );
         })}

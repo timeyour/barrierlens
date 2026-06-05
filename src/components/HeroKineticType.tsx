@@ -39,7 +39,7 @@ export default function HeroKineticType() {
       <div className="relative mt-7 md:mt-8">
         <AnchorLink
           href="#tool"
-          className="group inline-flex items-center gap-2 border-b border-white/40 pb-1 text-sm font-medium tracking-wide text-white transition hover:border-white"
+          className="group inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/35 bg-white/10 px-5 text-sm font-semibold tracking-wide text-white transition hover:border-white/55 hover:bg-white/15 md:rounded-none md:border-0 md:border-b md:border-white/40 md:bg-transparent md:px-0 md:pb-1 md:font-medium"
         >
           <span className="hero-kinetic-cta-arrow inline-block">↓</span>
           拍照记录

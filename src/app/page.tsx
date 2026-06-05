@@ -45,7 +45,9 @@ export default async function Home({
   const mobileNavPad = isMixed || isFixMyStreet;
 
   return (
-    <div className={`relative min-h-screen ${isMixed ? "mixed-home-layout pb-24 md:pb-0" : ""}`}>
+    <div
+      className={`relative min-h-screen ${mobileNavPad ? "mobile-page-shell md:pb-0" : ""} ${isMixed ? "mixed-home-layout" : ""}`}
+    >
       <PageBackground />
       <HashScrollHandler />
       <SiteNav initialLayout={navLayout} />
@@ -66,7 +68,7 @@ export default async function Home({
           </section>
 
           <section
-            className="relative z-20 border-t border-slate-200/80 bg-slate-50/50 pb-24 md:pb-0"
+            className="relative z-20 border-t border-slate-200/80 bg-slate-50/50 md:pb-0"
             data-nav-surface="light"
           >
             <WorkflowFocusGate>
@@ -78,7 +80,7 @@ export default async function Home({
         </>
       ) : (
       <main
-        className={`relative z-20 isolate mx-auto flex max-w-6xl flex-col px-4 pb-4 md:px-6 md:py-10 lg:py-16 ${mobileNavPad ? "pb-24 md:pb-16" : ""} pt-0`}
+        className={`relative z-20 isolate mx-auto flex max-w-6xl flex-col px-4 pb-4 md:px-6 md:py-10 lg:py-16 ${mobileNavPad ? "md:pb-16" : ""} pt-0`}
         data-nav-surface="light"
       >
             {(isClassic || isFixMyStreet) && (

@@ -116,7 +116,7 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
 
   return (
     <header
-      className={`fixed left-0 right-0 top-0 z-50 box-border max-w-[100vw] py-3.5 md:py-4 ${surface.header}`}
+      className={`mobile-header-safe fixed left-0 right-0 top-0 z-50 box-border max-w-[100vw] py-3 md:py-4 ${surface.header}`}
     >
       {surface.tone === "onDark" ? (
         <div
@@ -133,7 +133,7 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
             无碍
           </span>
           <span
-            className={`font-mono text-[11px] font-semibold uppercase tracking-[0.14em] sm:text-xs ${brand.accent}`}
+            className={`hidden font-mono text-[11px] font-semibold uppercase tracking-[0.14em] sm:inline sm:text-xs ${brand.accent}`}
           >
             BarrierLens
           </span>
@@ -194,11 +194,15 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
             aria-hidden
           />
 
-          <AuthSyncButton tone={surface.tone} />
+          <div className="hidden md:block">
+            <AuthSyncButton tone={surface.tone} />
+          </div>
           <button
             type="button"
-            className={`rounded-lg px-2 py-1.5 text-sm font-medium md:hidden ${
-              surface.tone === "onLight" ? "text-slate-600" : "text-white/90"
+            className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl px-3 text-sm font-semibold md:hidden ${
+              surface.tone === "onLight"
+                ? "border border-slate-200 bg-white/80 text-slate-700"
+                : "border border-white/25 bg-white/10 text-white"
             }`}
             aria-expanded={menuOpen}
             aria-controls="mobile-nav-menu"
@@ -222,7 +226,7 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
                 {link.route ? (
                   <Link
                     href={withNavQuery(link.href, layout, true)}
-                    className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    className="flex min-h-11 items-center rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
                     aria-label={linkAriaLabel(link)}
                     aria-current={
                       pathname.startsWith(link.href.replace(/\?.*$/, ""))
@@ -236,7 +240,7 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
                 ) : (
                   <AnchorLink
                     href={link.href}
-                    className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    className="flex min-h-11 items-center rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
                     aria-label={linkAriaLabel(link)}
                     onClick={closeMenu}
                   >
@@ -292,7 +296,7 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
             <li>
               <button
                 type="button"
-                className="block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-500 hover:bg-slate-50"
+                className="flex min-h-11 w-full items-center rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-blue-700 hover:bg-blue-50"
                 onClick={() => {
                   closeMenu();
                   openAuthDialog();

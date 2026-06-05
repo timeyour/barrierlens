@@ -14,6 +14,8 @@
     "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   --font-mono-stack: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
     "Liberation Mono", monospace;
+  --mobile-header-offset: 3.75rem;
+  --mobile-tab-bar-offset: 3.75rem;
 }
 
 @theme inline {
@@ -440,7 +442,19 @@ body {
 @media (max-width: 767px) {
   html {
     scroll-snap-type: y proximity;
-    scroll-padding-top: 5rem;
+    scroll-padding-top: calc(var(--mobile-header-offset) + env(safe-area-inset-top, 0px));
+  }
+
+  .mobile-page-shell {
+    padding-bottom: calc(var(--mobile-tab-bar-offset) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .mobile-tab-bar {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .mobile-header-safe {
+    padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
   }
 
   /* 仅 Hero / Story 两屏分页；工具页与时间线自由滚动 */

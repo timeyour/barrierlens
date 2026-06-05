@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
+import MobileBottomNav from "@/components/MobileBottomNav";
 import PageBackground from "@/components/PageBackground";
 import SiteNav from "@/components/SiteNav";
 import {
@@ -103,10 +104,10 @@ function SectionCard({
 
 export default function TechPage() {
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen mobile-page-shell md:pb-0">
       <PageBackground />
       <SiteNav />
-      <main className="relative mx-auto max-w-4xl px-4 pb-16 pt-24 md:px-6">
+      <main className="relative mx-auto max-w-4xl px-4 pb-8 pt-24 md:px-6 md:pb-16">
         <header className="mb-8 md:mb-10">
           <p className="section-eyebrow">技术路线</p>
           <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
@@ -196,6 +197,7 @@ export default function TechPage() {
           </Link>
         </div>
       </main>
+      <MobileBottomNav />
     </div>
   );
 }

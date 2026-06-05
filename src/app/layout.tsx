@@ -10,6 +10,12 @@ export const metadata: Metadata = {
     "基于 Gemma 4 多模态理解，将现场照片转化为结构化无障碍通行风险证据，支持归档、复查与导出。",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

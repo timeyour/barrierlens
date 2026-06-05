@@ -1,4 +1,5 @@
 import Link from "next/link";
+import MobileBottomNav from "@/components/MobileBottomNav";
 import PageBackground from "@/components/PageBackground";
 import PublicReportCard from "@/components/PublicReportCard";
 import PublicReportReadOnlyBanner from "@/components/PublicReportReadOnlyBanner";
@@ -15,10 +16,10 @@ export default async function ReportsPage() {
   const publicReadOnly = isHackathonFlagEnabled("publicReadOnly");
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen mobile-page-shell md:pb-0">
       <PageBackground />
       <SiteNav />
-      <main className="relative mx-auto max-w-4xl px-4 pb-16 pt-24 md:px-6">
+      <main className="relative mx-auto max-w-4xl px-4 pb-8 pt-24 md:px-6 md:pb-16">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">公开记录</h1>
           <p className="mt-2 text-sm text-slate-600">
@@ -68,6 +69,7 @@ export default async function ReportsPage() {
           </Link>
         </div>
       </main>
+      <MobileBottomNav />
     </div>
   );
 }

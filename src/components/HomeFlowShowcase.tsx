@@ -98,13 +98,13 @@ export default function HomeFlowShowcase({ snapScreen = true }: HomeFlowShowcase
             <div className="mt-10 flex flex-wrap items-center gap-3 border-t border-white/15 pt-6">
               <AnchorLink
                 href="#tool"
-                className="inline-flex rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 transition hover:bg-blue-500"
+                className="inline-flex min-h-11 items-center rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 transition hover:bg-blue-500"
               >
                 开始拍照记录
               </AnchorLink>
               <AnchorLink
                 href="#records"
-                className="inline-flex rounded-full border border-sky-300/55 bg-sky-400/10 px-5 py-2.5 text-sm font-semibold text-sky-100 shadow-sm transition hover:border-sky-200/70 hover:bg-sky-400/20 hover:text-white"
+                className="inline-flex min-h-11 items-center rounded-full border border-sky-300/55 bg-sky-400/10 px-5 py-2.5 text-sm font-semibold text-sky-100 shadow-sm transition hover:border-sky-200/70 hover:bg-sky-400/20 hover:text-white"
               >
                 查看我的时间线
               </AnchorLink>
