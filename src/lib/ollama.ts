@@ -111,6 +111,7 @@ export async function analyzeWithOllama(
       model: modelName,
       stream: false,
       format: "json",
+      think: false,
       messages: [
         {
           role: "user",

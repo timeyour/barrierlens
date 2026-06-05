@@ -187,10 +187,12 @@ function normalizeSceneType(raw: unknown): SceneType {
   const value = typeof raw === "string" ? raw : "";
   if (value === "blind_path_blocked") return "tactile_paving_blocked";
   if (value === "path_chain_broken") return "access_route_discontinuity";
+  if (value === "none" || value === "no_issue" || value === "clear") return "no_issue";
   if (
     raw === "tactile_paving_blocked" ||
     raw === "accessible_entrance_blocked" ||
-    raw === "access_route_discontinuity"
+    raw === "access_route_discontinuity" ||
+    raw === "no_issue"
   ) {
     return raw;
   }
@@ -223,6 +225,9 @@ function normalizeObstacleNature(raw: unknown): ObstacleNature {
 }
 
 function inferCategoryFromScene(sceneType: SceneType, nature: ObstacleNature): SpatialConflictCategory {
+  if (sceneType === "no_issue") {
+    return "capacity_demand_mismatch";
+  }
   if (sceneType === "access_route_discontinuity") {
     return nature === "dynamic" ? "legacy_addition_conflict" : "native_design_defect";
   }
@@ -312,8 +317,16 @@ function buildDefaultInspection(result: Pick<AnalysisResult, "problemSummary" | 
 }
 
 function normalizeResult(parsed: RawAnalysis, request: AnalysisRequest): AnalysisResult {
-  const issueType = stringValue(field(parsed, "issueType", "issue_type"), "无障碍通行风险");
-  const sceneType = normalizeSceneType(field(parsed, "sceneType", "scene_type"));
+  const hasIssue = booleanValue(field(parsed, "hasIssue", "has_issue"), true);
+  const rawIssueType = stringValue(field(parsed, "issueType", "issue_type"), "无障碍通行风险");
+  const issueType =
+    !hasIssue && (/^(none|no_issue)$/i.test(rawIssueType) ||
+      /无明显障碍物|无障碍物|未发现明显问题/.test(rawIssueType))
+      ? "未发现明显问题"
+      : rawIssueType;
+  const sceneType = hasIssue
+    ? normalizeSceneType(field(parsed, "sceneType", "scene_type"))
+    : "no_issue";
   const obstacleNature = normalizeObstacleNature(
     field(parsed, "obstacleNature", "obstacle_nature"),
   );
@@ -354,6 +367,9 @@ function normalizeResult(parsed: RawAnalysis, request: AnalysisRequest): Analysi
       blocks: "无障碍通行路径",
     }));
   }
+  if (!hasIssue) {
+    obstacles = [];
+  }
   const confidence = normalizeConfidence(field(parsed, "confidence"));
   const needsHumanReview = booleanValue(
     field(parsed, "needsHumanReview", "needs_human_review"),
@@ -361,7 +377,7 @@ function normalizeResult(parsed: RawAnalysis, request: AnalysisRequest): Analysi
   );
 
   const baseResult = {
-    hasIssue: booleanValue(field(parsed, "hasIssue", "has_issue"), true),
+    hasIssue,
     category,
     obstacleNature,
     managementAction,
@@ -372,14 +388,18 @@ function normalizeResult(parsed: RawAnalysis, request: AnalysisRequest): Analysi
       field(parsed, "blockedPath", "blocked_path"),
       sceneDescription || "无障碍通行路径",
     ),
-    pathStatus: normalizePathStatus(field(parsed, "pathStatus", "path_status")),
+    pathStatus: hasIssue
+      ? normalizePathStatus(field(parsed, "pathStatus", "path_status"))
+      : "clear",
     problemSummary,
     evidencePoints: stringArray(field(parsed, "evidencePoints", "evidence_points"), [
       "现场照片显示通行路径存在障碍或断点",
       "建议人工复核具体位置与责任边界",
     ]),
     issueType,
-    riskLevel: normalizeRiskLevel(field(parsed, "riskLevel", "risk_level")),
+    riskLevel: hasIssue
+      ? normalizeRiskLevel(field(parsed, "riskLevel", "risk_level"))
+      : "低",
     affectedGroups: stringArray(field(parsed, "affectedGroups", "affected_groups"), [
       "视障人士",
       "老年人",

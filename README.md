@@ -10,7 +10,7 @@
 | **产品** | 无碍 BarrierLens |
 | **赛事** | [Gemma 4 开发者大赛 2026](https://ai.google.dev/) · 上海站 · **赛道 D · AI for Social Good** |
 | **仓库** | https://github.com/timeyour/barrierlens |
-| **在线 Demo** | https://barrierlens.vercel.app/#tool （默认 mixed 工作台首页；迁移说明见 [docs/MIGRATE_VERCEL.md](docs/MIGRATE_VERCEL.md)） |
+| **在线 Demo** | https://barrierlens.vercel.app/#tool （唯一正式入口；默认 mixed 工作台首页；运行口径见 [docs/MIGRATE_VERCEL.md](docs/MIGRATE_VERCEL.md)） |
 | **Hackathon 版本** | [`v0.1-hackathon-demo`](https://github.com/timeyour/barrierlens/releases/tag/v0.1-hackathon-demo) |
 
 **提交四件套：** 代码仓库 · 在线 Demo · Demo 视频 · [技术报告](docs/TECHNICAL_REPORT.md)
@@ -18,6 +18,13 @@
 - Demo 视频脚本: [docs/DEMO_VIDEO_SCRIPT.md](docs/DEMO_VIDEO_SCRIPT.md)
 
 ---
+
+## 0. 运行口径
+
+- 正式站点只认 `https://barrierlens.vercel.app/#tool`，这个 hash 会直接落到记录工作台；根路径 `/` 可能先展示 Hero / 流程区。其它 `barrierlens-*.vercel.app` 只当临时部署或旧站排查链接。
+- 线上生产走 Vercel 环境变量：Gemma 4 使用 `GEMINI_API_KEY` / `GEMMA_API_KEY`，定位使用 `NEXT_PUBLIC_AMAP_KEY`（浏览器 JSONP）和可选 `AMAP_WEB_KEY`。
+- 本地开发打开 `http://localhost:3000/#tool`，推荐 `OLLAMA_PREFERRED=true` 直接跑本机 `gemma4:latest`；需要验证线上同款 API 时再配置 Google Key 与本地代理。
+
 ## 1. 问题
 
 盲道被共享单车占用、无障碍入口被电瓶车挡住、临时围挡造成通行链断点，这些问题往往能被路人看见，却很难形成可持续跟进的证据。
@@ -59,15 +66,16 @@ Gemma 4 负责无障碍场景理解与结构化证据生成，不只是识图。
   -> 公众倡导摘要 / 物业巡查整改单
 ```
 
-真实 API 走 `src/lib/gemma.ts`（Gemini REST `generateContent` → `gemma-4-26b-a4b-it`）。未配置 API Key 时使用 Mock；配置了 Key 但接口超时或失败时，会自动降级为 Mock，并在页面和 API 响应中标注 `analysisSource=mock_fallback`。
+真实 API 走 `src/lib/gemma.ts`（Gemini REST `generateContent` → `gemma-4-26b-a4b-it`）。生产环境默认 `ALLOW_MOCK_FALLBACK=false`，Gemma 4 失败会直接报错，避免把假结果当成真实识图；本地可在 Google API 不可用时自动或优先走 Ollama。
 
 ### API 响应状态
 
 | 字段 | 含义 |
 |------|------|
 | `analysisSource=gemma` | 本次结果来自真实 Gemma 4 兼容接口 |
+| `analysisSource=ollama` | 本次结果来自本机 Ollama `gemma4:latest` |
 | `analysisSource=mock` | 未配置 Key，使用演示数据 |
-| `analysisSource=mock_fallback` | 已配置 Key，但接口失败后自动降级 |
+| `analysisSource=mock_fallback` | 已配置 Key，但接口失败后降级；生产默认关闭 |
 | `mockMode` | 是否为 Mock 结果 |
 | `fallbackReason` | 降级原因，仅在失败降级时返回 |
 | `analysisTimeMs` | 服务端分析耗时 |
@@ -96,7 +104,7 @@ npm install
 npm run dev
 ```
 
-浏览器打开 http://localhost:3000
+浏览器打开 http://localhost:3000/#tool
 
 ### 环境变量
 
@@ -111,9 +119,15 @@ cp .env.example .env.local
 | `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/app/apikey) 创建的 Key；为空时使用 Mock |
 | `GEMMA_API_KEY` | 兼容旧变量名，与 `GEMINI_API_KEY` 二选一 |
 | `GEMMA_MODEL_NAME` | 默认 `gemma-4-26b-a4b-it` |
-| `GEMMA_API_TIMEOUT_MS` | 默认 `25000`（Gemma 4 多模态常需 10–20s；Vercel Hobby 函数上限约 10s，易降级时需 Pro 或调 Key 在 Vercel 同步本变量） |
+| `GEMMA_API_TIMEOUT_MS` | Vercel 建议 `55000`；本地 Google API 可按网络情况调整 |
 | `GEMMA_API_RETRY_ATTEMPTS` | 默认 `2`，仅对网络类错误重试 |
 | `GEMMA_API_PROXY` | 本地开发需代理时填写，如 `http://127.0.0.1:7897`；**Vercel 留空** |
+| `ALLOW_MOCK_FALLBACK` | 生产建议 `false`，避免 Gemma 失败时返回 Mock |
+| `OLLAMA_PREFERRED` | 本地建议 `true`，跳过 Google API，直接走本机 Ollama |
+| `OLLAMA_MODEL` | 本地默认 `gemma4:latest` |
+| `NEXT_PUBLIC_AMAP_KEY` | 高德 Key，用于浏览器端逆地理定位 |
+| `AMAP_WEB_KEY` | 可选服务端高德 Key；Vercel 海外访问高德时可能失败 |
+| `NEXT_PUBLIC_SITE_URL` | 生产固定为 `https://barrierlens.vercel.app` |
 | `NEXT_PUBLIC_V2_ENABLED` | 默认 `true`；设为 `false` 回退 MVP |
 | `NEXT_PUBLIC_V2_BARRIER_MAP_ENABLED` | 默认 `true` |
 | `NEXT_PUBLIC_V2_REVIEW_FLOW_ENABLED` | 默认 `true` |

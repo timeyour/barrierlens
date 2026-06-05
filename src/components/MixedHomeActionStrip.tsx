@@ -1,13 +1,9 @@
 "use client";
 
-import { locationValidationHint, isLocationUsable, sanitizeLocationForStorage } from "@/lib/locationValidation";
-import { requestUserLocation, userLocationSuccessNote } from "@/lib/userLocation";
+import { locationValidationHint, isLocationUsable, sanitizeLocationForStorage, isCoordinatePlaceholder } from "@/lib/locationValidation";
+import { applyUserLocationToInput } from "@/lib/userLocation";
 import { scrollToAnchor } from "@/lib/scrollAnchor";
-import {
-  FOCUS_UPLOAD_KEY,
-  PREFILL_LOCATION_EVENT,
-  PREFILL_LOCATION_KEY,
-} from "@/lib/prefillLocation";
+import { FOCUS_UPLOAD_KEY, persistLocationPrefill } from "@/lib/prefillLocation";
 import { useHackathonFlags } from "@/hooks/useHackathonFlags";
 import { FormEvent, useState } from "react";
 
@@ -28,10 +24,7 @@ export default function MixedHomeActionStrip({
 
   const goTool = (place?: string) => {
     const value = sanitizeLocationForStorage(place ?? location);
-    if (value) {
-      sessionStorage.setItem(PREFILL_LOCATION_KEY, value);
-      window.dispatchEvent(new Event(PREFILL_LOCATION_EVENT));
-    }
+    if (value) persistLocationPrefill(value);
     if (embedded) {
       sessionStorage.setItem(FOCUS_UPLOAD_KEY, "1");
       scrollToAnchor("#tool-upload");
@@ -50,18 +43,10 @@ export default function MixedHomeActionStrip({
     setGeoLoading(true);
     setGeoError(false);
     setGeoNote("定位中…");
-    const result = await requestUserLocation();
+    const { note, isError } = await applyUserLocationToInput(setLocation);
     setGeoLoading(false);
-    if (!result.ok) {
-      setGeoError(true);
-      setGeoNote(result.message);
-      return;
-    }
-    if (result.address) {
-      setLocation(result.address);
-    }
-    setGeoError(false);
-    setGeoNote(userLocationSuccessNote(result));
+    setGeoError(isError);
+    setGeoNote(note);
   };
 
   const locationHint =
@@ -108,8 +93,11 @@ export default function MixedHomeActionStrip({
             id="mixed-home-location"
             type="text"
             value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            placeholder="路名或地标"
+            onChange={(e) => {
+              const next = e.target.value;
+              setLocation(isCoordinatePlaceholder(next) ? "" : next);
+            }}
+            placeholder="例如：上海市浦东新区花木街道芳甸路"
             className={inputClass}
           />
           <button

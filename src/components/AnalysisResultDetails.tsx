@@ -1,7 +1,6 @@
 import {
   displayLocationLabel,
   formatLocationBrief,
-  sanitizeLocationForStorage,
 } from "@/lib/locationValidation";
 import {
   PATH_STATUS_LABELS,

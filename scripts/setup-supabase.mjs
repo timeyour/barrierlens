@@ -23,6 +23,7 @@ const API = "https://api.supabase.com/v1";
 const PROJECT_NAME = "barrierlens";
 const REGION = "ap-southeast-1";
 const BUCKET = "report-images";
+const BUCKET_PUBLIC = false;
 
 const token = process.env.SUPABASE_ACCESS_TOKEN;
 const urlArg = process.argv.includes("--url")
@@ -147,13 +148,10 @@ async function setupSchema(ref) {
   const baseSql = readFileSync(SQL_PATH, "utf8");
   const storageSql = `
 insert into storage.buckets (id, name, public)
-values ('${BUCKET}', '${BUCKET}', true)
-on conflict (id) do update set public = true;
+values ('${BUCKET}', '${BUCKET}', ${BUCKET_PUBLIC})
+on conflict (id) do update set public = ${BUCKET_PUBLIC};
 
 drop policy if exists "Public read report images" on storage.objects;
-create policy "Public read report images"
-  on storage.objects for select
-  using (bucket_id = '${BUCKET}');
 `;
 
   const statements = [...baseSql.split(";"), ...storageSql.split(";")]
@@ -194,7 +192,7 @@ async function verifyBucket(url, serviceRoleKey) {
         Authorization: `Bearer ${serviceRoleKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name: BUCKET, public: true }),
+      body: JSON.stringify({ name: BUCKET, public: BUCKET_PUBLIC }),
     });
     if (!create.ok) {
       const err = await create.text();
@@ -202,11 +200,28 @@ async function verifyBucket(url, serviceRoleKey) {
     }
     console.log(`  Storage bucket "${BUCKET}" 已创建`);
   } else {
-    console.log(`  Storage bucket "${BUCKET}" 已存在`);
+    const bucket = buckets.find((b) => b.name === BUCKET || b.id === BUCKET);
+    if (bucket && Boolean(bucket.public) !== BUCKET_PUBLIC) {
+      const update = await fetch(`${url}/storage/v1/bucket/${BUCKET}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${serviceRoleKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ public: BUCKET_PUBLIC }),
+      });
+      if (!update.ok) {
+        const err = await update.text();
+        throw new Error(`更新 bucket 访问级别失败: ${err}`);
+      }
+      console.log(`  Storage bucket "${BUCKET}" 已更新为私有`);
+    } else {
+      console.log(`  Storage bucket "${BUCKET}" 已存在`);
+    }
   }
 }
 
-function upsertEnvLocal(url, serviceRoleKey) {
+function upsertEnvLocal(url, serviceRoleKey, anonKey = "") {
   const lines = existsSync(ENV_LOCAL)
     ? readFileSync(ENV_LOCAL, "utf8").split("\n")
     : [];
@@ -220,6 +235,13 @@ function upsertEnvLocal(url, serviceRoleKey) {
 
   map.set("NEXT_PUBLIC_SUPABASE_URL", url);
   map.set("SUPABASE_SERVICE_ROLE_KEY", serviceRoleKey);
+  map.set("NEXT_PUBLIC_SUPABASE_ANON_KEY", anonKey || map.get("NEXT_PUBLIC_SUPABASE_ANON_KEY") || "");
+  if (!map.get("NEXT_PUBLIC_AUTH_REQUIRED")) {
+    map.set("NEXT_PUBLIC_AUTH_REQUIRED", "false");
+  }
+  if (!map.get("NEXT_PUBLIC_STORAGE_MODE")) {
+    map.set("NEXT_PUBLIC_STORAGE_MODE", "local_first");
+  }
 
   const geminiOrder = [
     "GEMINI_API_KEY",
@@ -232,7 +254,10 @@ function upsertEnvLocal(url, serviceRoleKey) {
     "NEXT_PUBLIC_V2_BARRIER_MAP_ENABLED",
     "NEXT_PUBLIC_V2_REVIEW_FLOW_ENABLED",
     "NEXT_PUBLIC_SUPABASE_URL",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
     "SUPABASE_SERVICE_ROLE_KEY",
+    "NEXT_PUBLIC_AUTH_REQUIRED",
+    "NEXT_PUBLIC_STORAGE_MODE",
     "NEXT_PUBLIC_AMAP_KEY",
   ];
 
@@ -297,13 +322,13 @@ async function main() {
   await setupSchema(ref);
 
   console.log("\n获取 API Keys…");
-  const { url, serviceRoleKey } = await getApiKeys(ref);
+  const { url, serviceRoleKey, anonKey } = await getApiKeys(ref);
   console.log(`  URL: ${url}`);
 
   console.log("\n验证 Storage…");
   await verifyBucket(url, serviceRoleKey);
 
-  upsertEnvLocal(url, serviceRoleKey);
+  upsertEnvLocal(url, serviceRoleKey, anonKey);
   printDone(url, ref);
 }
 
@@ -317,6 +342,7 @@ function printDone(url, ref) {
 
 Vercel 环境变量（Dashboard → Settings → Environment Variables）:
   NEXT_PUBLIC_SUPABASE_URL=${url}
+  NEXT_PUBLIC_SUPABASE_ANON_KEY=<见 .env.local>
   SUPABASE_SERVICE_ROLE_KEY=<见 .env.local>
 
 项目 Dashboard:

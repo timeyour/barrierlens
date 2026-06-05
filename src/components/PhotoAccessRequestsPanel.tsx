@@ -61,7 +61,10 @@ export default function PhotoAccessRequestsPanel({
   }, [record.cloudReportId, record.id, record.reviewToken]);
 
   useEffect(() => {
-    void load();
+    const timer = window.setTimeout(() => {
+      void load();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [load]);
 
   const markContacted = async (requestId: string) => {

@@ -4,6 +4,13 @@ export default function LocalDevBanner() {
 
   const ollamaPreferred = process.env.OLLAMA_PREFERRED === "true";
   const ollamaModel = process.env.OLLAMA_MODEL?.trim() || "gemma4:latest";
+  const hasGemmaKey = Boolean(
+    process.env.GEMINI_API_KEY?.trim() || process.env.GEMMA_API_KEY?.trim(),
+  );
+  const hasProxy = Boolean(process.env.GEMMA_API_PROXY?.trim());
+  const hasLocationKey = Boolean(
+    process.env.NEXT_PUBLIC_AMAP_KEY?.trim() || process.env.AMAP_WEB_KEY?.trim(),
+  );
 
   return (
     <div
@@ -16,9 +23,15 @@ export default function LocalDevBanner() {
           {" "}
           · 走本机 Ollama（{ollamaModel}），每张约 <strong>2–3 分钟</strong>，请耐心等待
         </>
+      ) : hasGemmaKey ? (
+        <>
+          {" "}
+          · 走 Google Gemma API{hasProxy ? "（已配置代理）" : "（本地通常需 GEMMA_API_PROXY）"}
+        </>
       ) : (
-        <> · 需 VPN + GEMMA_API_PROXY 才能连 Google API</>
+        <> · 未配置 GEMINI_API_KEY，将走本机 Ollama 或 Mock</>
       )}
+      {!hasLocationKey && <> · 未配置高德 Key，定位只能手动填路名</>}
       {" "}
       · 线上{" "}
       <a
@@ -29,7 +42,7 @@ export default function LocalDevBanner() {
       >
         barrierlens.vercel.app
       </a>{" "}
-      走 Google Gemma API（团队共用）
+      走 Google Gemma API（线上环境）
     </div>
   );
 }

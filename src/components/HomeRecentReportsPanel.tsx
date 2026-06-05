@@ -201,7 +201,7 @@ export default function HomeRecentReportsPanel({
         <ul
           className={
             isInline || isStrip
-              ? "-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]"
+              ? "-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1 scrollbar-hide"
               : "space-y-2.5"
           }
         >

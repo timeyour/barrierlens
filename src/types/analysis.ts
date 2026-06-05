@@ -14,7 +14,8 @@ export type ObstacleNature = "static" | "dynamic";
 export type SceneType =
   | "tactile_paving_blocked"
   | "accessible_entrance_blocked"
-  | "access_route_discontinuity";
+  | "access_route_discontinuity"
+  | "no_issue";
 export type PathStatus = "clear" | "partial" | "blocked";
 export type AnalysisSource = "gemma" | "ollama" | "mock" | "mock_fallback";
 export type ReviewStatus =
@@ -132,6 +133,7 @@ export const SCENE_TYPE_LABELS: Record<SceneType, string> = {
   tactile_paving_blocked: "盲道占用",
   accessible_entrance_blocked: "入口/坡道受阻",
   access_route_discontinuity: "通行链断点",
+  no_issue: "未发现明显问题",
 };
 
 export const PATH_STATUS_LABELS: Record<PathStatus, string> = {

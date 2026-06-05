@@ -33,6 +33,7 @@ export default function ReportPublicDetail({ report }: ReportPublicDetailProps) 
     recordMode: report.record_mode as RecordMode,
     lat: null,
     lng: null,
+    imageDataUrl: report.image_url ?? undefined,
   };
   const recordMode = (report.record_mode as RecordMode) ?? "public";
   const reportTitle =
@@ -44,7 +45,9 @@ export default function ReportPublicDetail({ report }: ReportPublicDetailProps) 
       <PublicReportLocalBanner localId={report.local_id} />
 
       <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-relaxed text-slate-600">
-        公开摘要 · 位置已模糊 · 不含现场照片。完整地址与照片仅保存在记录者本机档案。
+        公开案例 · 位置已模糊
+        {report.image_url ? " · 含现场照片" : " · 本条未含照片"}
+        。记录者主动选择公开；未公开内容仍仅存本机。
       </div>
 
       <div className="tool-card p-5 sm:p-8">
@@ -73,7 +76,7 @@ export default function ReportPublicDetail({ report }: ReportPublicDetailProps) 
         />
       </div>
 
-      <PhotoAccessRequestForm reportId={report.id} />
+      {!report.image_url && <PhotoAccessRequestForm reportId={report.id} />}
     </div>
   );
 }

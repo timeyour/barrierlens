@@ -18,22 +18,22 @@ const SURFACES: Record<NavSurfaceVariant, NavSurfaceStyle> = {
   hero: {
     variant: "hero",
     tone: "onDark",
-    header: `${GLASS_BASE} border-b border-white/10 bg-slate-950/10 shadow-none`,
+    header: `${GLASS_BASE} border-0 bg-transparent shadow-none`,
   },
   mixed: {
     variant: "mixed",
     tone: "onLight",
-    header: `${GLASS_BASE} border-b border-slate-200/40 bg-white/40 shadow-none`,
+    header: `${GLASS_BASE} border-0 bg-white/30 shadow-none`,
   },
   paper: {
     variant: "paper",
     tone: "onLight",
-    header: `${GLASS_BASE} border-b border-slate-200/45 bg-[#f8fafc]/45 shadow-none`,
+    header: `${GLASS_BASE} border-0 bg-[#f8fafc]/40 shadow-none`,
   },
   fix: {
     variant: "fix",
     tone: "onLight",
-    header: `${GLASS_BASE} border-b border-slate-200/50 bg-white/50 shadow-none`,
+    header: `${GLASS_BASE} border-0 bg-white/45 shadow-none`,
   },
 };
 

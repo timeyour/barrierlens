@@ -15,7 +15,7 @@ export type CloudSyncResult =
         | "already_published";
     };
 
-/** 用户确认后，才将摘要公开（位置模糊、照片不展示） */
+/** 用户勾选确认后，才公开到案例池（位置模糊，含现场照片） */
 export async function publishReportToCloud(input: {
   stored: StoredRecord;
   imageFile: File | null;

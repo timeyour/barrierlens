@@ -1,13 +1,12 @@
 "use client";
 
 import AnchorLink from "@/components/AnchorLink";
-import { sanitizeLocationForStorage } from "@/lib/locationValidation";
-import { requestUserLocation, userLocationSuccessNote } from "@/lib/userLocation";
+import { isCoordinatePlaceholder, sanitizeLocationForStorage } from "@/lib/locationValidation";
+import { applyUserLocationToInput } from "@/lib/userLocation";
+import { persistLocationPrefill } from "@/lib/prefillLocation";
 import { scrollToAnchor } from "@/lib/scrollAnchor";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-
-const PREFILL_KEY = "barrierlens_prefill_location";
 
 export default function FixMyStreetHomeStrip() {
   const [location, setLocation] = useState("");
@@ -18,9 +17,7 @@ export default function FixMyStreetHomeStrip() {
 
   const goReport = (place?: string) => {
     const value = sanitizeLocationForStorage(place ?? location);
-    if (value) {
-      sessionStorage.setItem(PREFILL_KEY, value);
-    }
+    if (value) persistLocationPrefill(value);
     scrollToAnchor("#tool");
     router.replace("/?nav=fixmystreet#tool", { scroll: false });
   };
@@ -34,18 +31,10 @@ export default function FixMyStreetHomeStrip() {
     setGeoLoading(true);
     setGeoError(false);
     setGeoNote("正在获取位置并解析路名…");
-    const result = await requestUserLocation();
+    const { note, isError } = await applyUserLocationToInput(setLocation);
     setGeoLoading(false);
-    if (!result.ok) {
-      setGeoError(true);
-      setGeoNote(result.message);
-      return;
-    }
-    if (result.address) {
-      setLocation(result.address);
-    }
-    setGeoError(false);
-    setGeoNote(userLocationSuccessNote(result));
+    setGeoError(isError);
+    setGeoNote(note);
   };
 
   return (
@@ -65,7 +54,10 @@ export default function FixMyStreetHomeStrip() {
           <input
             type="text"
             value={location}
-            onChange={(e) => setLocation(e.target.value)}
+            onChange={(e) => {
+              const next = e.target.value;
+              setLocation(isCoordinatePlaceholder(next) ? "" : next);
+            }}
             placeholder="例如：XX 路南侧便道、XX 地铁 3 号口东侧"
             className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
           />

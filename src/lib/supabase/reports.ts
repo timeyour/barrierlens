@@ -5,11 +5,19 @@ import {
   toPublicCloudReportSummary,
 } from "@/lib/publicReport";
 import { fuzzLocationForPublic } from "@/lib/locationValidation";
+import { publicReportPhotoPath, withPublicPhotoUrl } from "@/lib/reportImage";
 import { getSupabaseAdmin } from "./admin";
+
+type ReportDbRow = CloudReport & { image_path?: string | null };
 
 const REPORTS_TABLE = "reports";
 const REQUESTS_TABLE = "photo_access_requests";
 const IMAGE_BUCKET = "report-images";
+const REPORT_PUBLIC_FIELDS =
+  "id, created_at, local_id, location, lat, lng, scene_type, issue_type, risk_level, record_mode, target_department, problem_summary, report_text, path_status, review_status, image_url, image_path, diagnosis, analysis_source";
+
+const REPORT_LIST_FIELDS =
+  "id, created_at, location, lat, lng, scene_type, issue_type, risk_level, record_mode, problem_summary, image_url, image_path, review_status";
 
 export async function listCloudReports(
   limit = 30,
@@ -19,9 +27,7 @@ export async function listCloudReports(
 
   const { data, error } = await supabase
     .from(REPORTS_TABLE)
-    .select(
-      "id, created_at, location, lat, lng, scene_type, issue_type, risk_level, record_mode, problem_summary, image_url, review_status",
-    )
+    .select(REPORT_LIST_FIELDS)
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -30,7 +36,23 @@ export async function listCloudReports(
     return [];
   }
 
-  return ((data ?? []) as CloudReportSummary[]).map(toPublicCloudReportSummary);
+  return ((data ?? []) as ReportDbRow[])
+    .map((row) => withPublicPhotoUrl(row))
+    .map((row) => toPublicCloudReportSummary(row as CloudReportSummary));
+}
+
+export async function getReportImagePath(reportId: string): Promise<string | null> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from(REPORTS_TABLE)
+    .select("image_path")
+    .eq("id", reportId)
+    .maybeSingle();
+
+  if (error || !data?.image_path) return null;
+  return data.image_path as string;
 }
 
 export async function getCloudReport(id: string): Promise<CloudReport | null> {
@@ -39,7 +61,7 @@ export async function getCloudReport(id: string): Promise<CloudReport | null> {
 
   const { data, error } = await supabase
     .from(REPORTS_TABLE)
-    .select("*")
+    .select(REPORT_PUBLIC_FIELDS)
     .eq("id", id)
     .maybeSingle();
 
@@ -49,7 +71,8 @@ export async function getCloudReport(id: string): Promise<CloudReport | null> {
   }
 
   if (!data) return null;
-  return toPublicCloudReport(data as CloudReport);
+  const enriched = withPublicPhotoUrl(data as ReportDbRow);
+  return toPublicCloudReport(enriched as CloudReport);
 }
 
 export async function insertCloudReport(input: {
@@ -104,7 +127,7 @@ export async function insertCloudReport(input: {
     report_text: diagnosis.reportText,
     path_status: diagnosis.pathStatus,
     review_status: diagnosis.reviewStatus ?? "pending",
-    image_url: null,
+    image_url: publicReportPhotoPath(reportId),
     image_path: imagePath,
     diagnosis: publicDiagnosis,
     analysis_source: input.analysisSource ?? null,
@@ -114,7 +137,7 @@ export async function insertCloudReport(input: {
   const { data, error } = await supabase
     .from(REPORTS_TABLE)
     .insert(row)
-    .select("*")
+    .select(REPORT_PUBLIC_FIELDS)
     .single();
 
   if (error) {
@@ -123,8 +146,9 @@ export async function insertCloudReport(input: {
     return null;
   }
 
+  const enriched = withPublicPhotoUrl(data as ReportDbRow);
   return {
-    report: toPublicCloudReport(data as CloudReport),
+    report: toPublicCloudReport(enriched as CloudReport),
     reviewToken: input.reviewToken,
   };
 }

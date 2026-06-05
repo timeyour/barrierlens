@@ -23,8 +23,8 @@ export default async function ReportsPage() {
           <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">公开记录</h1>
           <p className="mt-2 text-sm text-slate-600">
             {publicReadOnly
-              ? "只读摘要 · 位置模糊 · 照片需申请复核"
-              : "问题摘要公开 · 位置模糊 · 不含现场照片"}
+              ? "只读案例 · 位置模糊"
+              : "记录者主动公开 · 位置模糊 · 含现场照片"}
           </p>
         </div>
 

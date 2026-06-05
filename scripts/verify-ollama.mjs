@@ -67,6 +67,7 @@ try {
       model,
       stream: false,
       format: "json",
+      think: false,
       messages: [
         {
           role: "user",
@@ -83,13 +84,14 @@ try {
   const text = await res.text();
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${text.slice(0, 200)}`);
   const json = JSON.parse(text);
-  const content = json.message?.content ?? "";
+  const content = (json.message?.content || "").trim();
   console.log("完成");
   if (content.includes("{")) {
     ok("Ollama 多模态可用，barrierlens 会在 Google 失败时自动走 Ollama");
     console.log(`   片段: ${content.slice(0, 120)}…`);
   } else {
     fail("有响应但未返回 JSON");
+    console.log(`   片段: ${text.slice(0, 240)}…`);
   }
 } catch (error) {
   console.log("失败");

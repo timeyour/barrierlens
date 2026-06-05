@@ -2,8 +2,38 @@ import { NextResponse } from "next/server";
 import { isSupabaseConfigured } from "@/lib/supabase/admin";
 import { insertCloudReport, listCloudReports } from "@/lib/supabase/reports";
 import type { AnalysisResult, AnalysisSource } from "@/types/analysis";
+import { isLocationSpecificForCloud } from "@/lib/locationValidation";
 
 export const runtime = "nodejs";
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function isDiagnosisPayload(value: unknown): value is AnalysisResult {
+  if (!value || typeof value !== "object") return false;
+  const diagnosis = value as Partial<AnalysisResult>;
+  return (
+    typeof diagnosis.sceneType === "string" &&
+    typeof diagnosis.issueType === "string" &&
+    typeof diagnosis.riskLevel === "string" &&
+    typeof diagnosis.recordMode === "string" &&
+    typeof diagnosis.problemSummary === "string" &&
+    typeof diagnosis.reportText === "string" &&
+    typeof diagnosis.pathStatus === "string" &&
+    typeof diagnosis.targetDepartment === "string" &&
+    typeof diagnosis.location === "string" &&
+    isStringArray(diagnosis.evidencePoints) &&
+    isStringArray(diagnosis.affectedGroups)
+  );
+}
+
+function normalizeAnalysisSource(raw: unknown): AnalysisSource | null {
+  if (raw === "gemma" || raw === "ollama" || raw === "mock" || raw === "mock_fallback") {
+    return raw;
+  }
+  return null;
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -63,13 +93,25 @@ export async function POST(request: Request) {
   if (!payload.localId || !payload.diagnosis || !payload.reviewToken?.trim()) {
     return NextResponse.json({ error: "诊断数据不完整" }, { status: 400 });
   }
+  if (!/^[a-zA-Z0-9_-]{16,}$/.test(payload.reviewToken.trim())) {
+    return NextResponse.json({ error: "复核凭证格式错误" }, { status: 400 });
+  }
+  if (!isLocationSpecificForCloud(payload.location)) {
+    return NextResponse.json(
+      { error: "路名不够具体，请补充到区/街道/路名后再公开" },
+      { status: 400 },
+    );
+  }
+  if (!isDiagnosisPayload(payload.diagnosis)) {
+    return NextResponse.json({ error: "诊断数据校验失败" }, { status: 400 });
+  }
 
   const inserted = await insertCloudReport({
     localId: payload.localId,
-    location: payload.location || "地点未标注",
+    location: payload.location.trim(),
     reviewToken: payload.reviewToken.trim(),
     diagnosis: payload.diagnosis,
-    analysisSource: payload.analysisSource,
+    analysisSource: normalizeAnalysisSource(payload.analysisSource),
     imageFile: image,
   });
 

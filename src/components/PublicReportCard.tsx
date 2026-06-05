@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   RECORD_MODES,
@@ -32,15 +33,21 @@ export default function PublicReportCard({ report }: { report: CloudReportSummar
       className="group block overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:border-blue-200 hover:shadow-md"
     >
       <div className="grid gap-0 sm:grid-cols-[140px_1fr]">
-        <div className="relative flex aspect-[4/3] items-center justify-center bg-slate-100 sm:aspect-auto sm:min-h-[120px]">
-          <div className="px-3 text-center">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-              摘要公开
-            </p>
-            <p className="mt-1 text-[11px] leading-snug text-slate-500">
-              现场照片未公开
-            </p>
-          </div>
+        <div className="relative aspect-[4/3] bg-slate-100 sm:aspect-auto sm:min-h-[120px]">
+          {report.image_url ? (
+            <Image
+              src={report.image_url}
+              alt={`${report.issue_type} 现场照片`}
+              fill
+              className="object-cover object-center"
+              sizes="140px"
+              unoptimized
+            />
+          ) : (
+            <div className="flex h-full min-h-[120px] items-center justify-center px-3 text-center">
+              <p className="text-[11px] leading-snug text-slate-500">无现场照片</p>
+            </div>
+          )}
         </div>
         <div className="p-4">
           <div className="flex flex-wrap items-center gap-2">

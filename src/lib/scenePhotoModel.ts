@@ -24,6 +24,7 @@ export type ScenePhotoModel = {
 };
 
 function sceneTitle(sceneType: AnalysisResult["sceneType"]): string {
+  if (sceneType === "no_issue") return "通行路径顺畅";
   if (sceneType === "accessible_entrance_blocked") return "入口 / 坡道风险";
   if (sceneType === "access_route_discontinuity") return "通行链断点";
   return "盲道受阻风险";
@@ -38,6 +39,7 @@ function statusColor(pathStatus: AnalysisResult["pathStatus"]): string {
 function fixedObstaclePoints(
   sceneType: AnalysisResult["sceneType"],
 ): Array<{ x: number; y: number }> {
+  if (sceneType === "no_issue") return [];
   if (sceneType === "accessible_entrance_blocked") {
     return [
       { x: 350, y: 150 },
@@ -68,6 +70,18 @@ function photoObstaclePoints(count: number): Array<{ x: number; y: number }> {
 }
 
 export function getSceneConfig(sceneType: AnalysisResult["sceneType"]): SceneConfig {
+  if (sceneType === "no_issue") {
+    return {
+      title: sceneTitle(sceneType),
+      mainPath: "M70 150 L180 150 L260 150 L340 150 L430 150",
+      riskPath: "",
+      pin: { x: 250, y: 150 },
+      zones: [
+        { x: 34, y: 122, w: 380, h: 56, label: "通行路径清晰" },
+      ],
+      obstaclePoints: [],
+    };
+  }
   if (sceneType === "accessible_entrance_blocked") {
     return {
       title: sceneTitle(sceneType),
@@ -115,7 +129,8 @@ export function resolveScenePhotoModel(
   },
   compareView: "before" | "after" = "before",
 ): ScenePhotoModel {
-  const before = result.pathStatus === "clear" ? "partial" : result.pathStatus;
+  const before =
+    result.hasIssue && result.pathStatus === "clear" ? "partial" : result.pathStatus;
   const after =
     result.reviewStatus === "fixed"
       ? "clear"
@@ -136,9 +151,11 @@ export function resolveScenePhotoModel(
     !(compareView === "after" && result.reviewImageDataUrl) && !result.imageDataUrl;
 
   const usingUserPhoto = !usingFallbackPhoto;
-  const markerPoints = usingUserPhoto
-    ? photoObstaclePoints(obstacles.length || 1)
-    : config.obstaclePoints;
+  const markerPoints = !result.hasIssue
+    ? []
+    : usingUserPhoto
+      ? photoObstaclePoints(obstacles.length || 1)
+      : config.obstaclePoints;
   const pinPoint = usingUserPhoto
     ? markerPoints[0] ?? { x: 260, y: 130 }
     : config.pin;

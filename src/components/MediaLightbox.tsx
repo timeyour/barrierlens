@@ -21,14 +21,11 @@ export default function MediaLightbox({
   zoomable = false,
 }: MediaLightboxProps) {
   const [zoomIndex, setZoomIndex] = useState(1);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (open) setZoomIndex(1);
+    if (!open) return;
+    const rafId = window.requestAnimationFrame(() => setZoomIndex(1));
+    return () => window.cancelAnimationFrame(rafId);
   }, [open]);
 
   useEffect(() => {
@@ -47,7 +44,7 @@ export default function MediaLightbox({
     };
   }, [open, onClose]);
 
-  if (!open || !mounted) return null;
+  if (!open || typeof window === "undefined") return null;
 
   const zoom = ZOOM_STEPS[zoomIndex];
   const canZoomOut = zoomIndex > 0;

@@ -169,7 +169,7 @@ export default function SavedRecordArchive({ record }: SavedRecordArchiveProps) 
       </div>
 
       <p className="text-[11px] text-slate-500">
-        完整地址与照片仅在本机。公开摘要需单独确认；他人可申请复核查看照片。
+        完整地址仅在本机。公开到案例池需单独勾选确认，公开后他人可见现场照片（位置仍模糊）。
       </p>
     </article>
   );
