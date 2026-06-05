@@ -22,6 +22,7 @@ const CLASSIC_LINKS = [
   { href: "/#tool", label: "记录" },
   { href: "/#records", label: "时间线" },
   { href: "/reports", label: "公开上报", route: true },
+  { href: "/tech", label: "技术路线", route: true },
 ] as const;
 
 /** 混合版：Hero + 流程 + #tool 工作台 */
@@ -29,11 +30,13 @@ const MIXED_LINKS = [
   { href: "/#story", label: "流程" },
   { href: "/#tool", label: "记录" },
   { href: "/reports", label: "公开", route: true },
+  { href: "/tech", label: "技术路线", route: true },
   { href: "/#records", label: "我的" },
 ] as const;
 
 const FIXMYSTREET_LINKS = [
   { href: "/reports", label: "最近上报", route: true },
+  { href: "/tech", label: "技术路线", route: true },
   { href: "/#records", label: "我的记录", route: false },
   { href: "/#how", label: "怎么运作", route: false },
 ] as const;
@@ -99,7 +102,7 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
           无碍 <span className={brand.accent}>BarrierLens</span>
         </Link>
 
-        <nav className="hidden items-center gap-5 md:flex">
+        <nav className="hidden items-center gap-5 md:flex" aria-label="站点导航">
           {links.map((link) => {
             const isRoute = "route" in link && link.route;
             const href = withNavQuery(link.href, layout, isRoute);
@@ -108,7 +111,13 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
 
             if (isRoute) {
               return (
-                <Link key={link.href} href={href} className={linkClass(active)}>
+                <Link
+                  key={link.href}
+                  href={href}
+                  className={linkClass(active)}
+                  aria-current={active ? "page" : undefined}
+                  aria-label={link.label === "技术路线" ? "技术路线说明" : undefined}
+                >
                   {link.label}
                 </Link>
               );
@@ -149,6 +158,7 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
         <nav
           id="mobile-nav-menu"
           className={`mx-auto mt-2 max-w-6xl rounded-xl border p-3 shadow-lg backdrop-blur-xl md:hidden ${navMobileMenuClasses(surface.variant)}`}
+          aria-label="移动端导航"
         >
           <ul className="space-y-1">
             {links.map((link) => (
@@ -157,6 +167,12 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
                   <Link
                     href={withNavQuery(link.href, layout, true)}
                     className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    aria-label={link.label === "技术路线" ? "技术路线说明" : undefined}
+                    aria-current={
+                      pathname.startsWith(link.href.replace(/\?.*$/, ""))
+                        ? "page"
+                        : undefined
+                    }
                     onClick={closeMenu}
                   >
                     {link.label}
