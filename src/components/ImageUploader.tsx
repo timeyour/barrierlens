@@ -81,6 +81,7 @@ export default function ImageUploader({
         id={inputId}
         type="file"
         accept="image/*"
+        aria-label="上传图片"
         className="sr-only"
         disabled={disabled}
         onChange={(e) => {

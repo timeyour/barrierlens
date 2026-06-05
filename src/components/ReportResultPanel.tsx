@@ -7,6 +7,7 @@ import AnalysisResultDetails, {
 import AnalysisVerificationBanner from "@/components/AnalysisVerificationBanner";
 import ReportCard from "@/components/ReportCard";
 import ReportEvidenceLayout from "@/components/ReportEvidenceLayout";
+import ResultSummarySpeechButton from "@/components/ResultSummarySpeechButton";
 
 export type ReportResultPanelResult = AnalysisResult & {
   imageDataUrl?: string;
@@ -84,6 +85,8 @@ export default function ReportResultPanel({
         recordMode={recordMode}
         subtitle={subtitle}
       />
+
+      <ResultSummarySpeechButton result={result} />
 
       {visualSection}
 

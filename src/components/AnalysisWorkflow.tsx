@@ -688,6 +688,7 @@ export default function AnalysisWorkflow({
                     type="button"
                     disabled={isLoading}
                     onClick={() => void loadDemoImage()}
+                    aria-label="使用样例图"
                     className={
                       flow
                         ? "flow-btn-secondary w-full rounded-xl px-4 py-3 text-sm font-semibold disabled:opacity-50"
@@ -719,6 +720,7 @@ export default function AnalysisWorkflow({
                   type="button"
                   onClick={() => setWizardStep(2)}
                   disabled={!previewUrl || !locationReady}
+                  aria-label="继续"
                   title={
                     !previewUrl
                       ? "请先选择照片"
@@ -847,6 +849,7 @@ export default function AnalysisWorkflow({
                   onClick={() => void handleSubmitClick()}
                   disabled={isLoading || !locationReady}
                   aria-busy={isLoading}
+                  aria-label="生成分析"
                   title={
                     !locationReady
                       ? (locationValidationHint(location) ?? undefined)
@@ -940,6 +943,7 @@ export default function AnalysisWorkflow({
                   {savedRecordId && (
                     <Link
                       href={`/saved/${savedRecordId}`}
+                      aria-label="保存记录，查看本机档案"
                       className={
                         flow
                           ? "rounded-lg px-3 py-2 text-sm font-medium text-blue-200 hover:bg-white/10 hover:text-white"
@@ -996,6 +1000,7 @@ export default function AnalysisWorkflow({
                     {savedRecordId && (
                       <Link
                         href={`/saved/${savedRecordId}`}
+                        aria-label="保存记录，查看本机档案"
                         className={
                           flow
                             ? "flow-btn-secondary rounded-lg px-4 py-2 text-sm font-semibold"

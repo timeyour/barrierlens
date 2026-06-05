@@ -66,6 +66,7 @@ export default function PublishSummaryCard({
         type="button"
         disabled={!consented || publishing}
         onClick={() => void onPublish()}
+        aria-label="公开案例"
         className="btn-primary rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-50"
       >
         {publishing ? "正在公开…" : "确认公开"}
