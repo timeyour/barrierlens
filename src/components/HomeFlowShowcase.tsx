@@ -67,10 +67,10 @@ export default function HomeFlowShowcase({ snapScreen = true }: HomeFlowShowcase
               BarrierLens
             </p>
             <h2 className="mt-3 max-w-2xl text-[clamp(1.5rem,4.5vw,2.35rem)] font-bold leading-tight tracking-tight text-white">
-              用现场照片记录无障碍通行风险
+              开始拍照记录
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/78 md:text-[15px]">
-              从盲道占用、入口坡道受阻到通行链断点，把路人看到的问题整理成可归档、可复查、可递出的现场报告。
+              用现场照片记录无障碍通行风险：从盲道占用、入口坡道受阻到通行链断点，整理成可归档、可复查、可递出的现场报告。
             </p>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
@@ -98,7 +98,7 @@ export default function HomeFlowShowcase({ snapScreen = true }: HomeFlowShowcase
               ))}
             </div>
 
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            <div className="mt-10 flex flex-wrap items-center gap-3 border-t border-white/15 pt-6">
               <AnchorLink
                 href="#tool"
                 className="inline-flex rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 transition hover:bg-blue-500"
@@ -107,7 +107,7 @@ export default function HomeFlowShowcase({ snapScreen = true }: HomeFlowShowcase
               </AnchorLink>
               <AnchorLink
                 href="#records"
-                className="text-sm font-medium text-white/80 underline-offset-4 transition hover:text-white hover:underline"
+                className="inline-flex rounded-full border border-sky-300/55 bg-sky-400/10 px-5 py-2.5 text-sm font-semibold text-sky-100 shadow-sm transition hover:border-sky-200/70 hover:bg-sky-400/20 hover:text-white"
               >
                 查看我的时间线
               </AnchorLink>
