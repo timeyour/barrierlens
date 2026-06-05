@@ -100,6 +100,8 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
   const links = isFix ? FIXMYSTREET_LINKS : isMixed ? MIXED_LINKS : CLASSIC_LINKS;
   const mobileTabs = resolveMobileTabs(layout);
   const showMobileMenu = mobileTabs === null;
+  /** 首页 Hero 已有大标题，顶栏不再重复品牌（含滚动至第二、三屏） */
+  const hideHomeBrand = pathname === "/";
   const homeHref =
     isFix ? "/?nav=fixmystreet" : isMixed ? "/" : "/?nav=classic";
   const closeMenu = () => setMenuOpen(false);
@@ -125,25 +127,35 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
           aria-hidden
         />
       ) : null}
-      <div className={NAV_SHELL}>
-        <Link
-          href={homeHref}
-          className={`group flex shrink-0 flex-col gap-0.5 transition-colors sm:flex-row sm:items-baseline sm:gap-2 ${brand.title}`}
-        >
-          <span className="text-[17px] font-bold leading-none tracking-tight md:text-lg">
-            无碍
-          </span>
-          <span
-            className={`hidden font-mono text-[11px] font-semibold uppercase tracking-[0.14em] sm:inline sm:text-xs ${brand.accent}`}
+      <div
+        className={
+          hideHomeBrand
+            ? "relative z-10 flex w-full max-w-full items-center justify-end gap-1.5 px-4 sm:gap-3 sm:px-5 md:gap-2 md:px-6 lg:gap-3 lg:px-8 xl:px-10 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] box-border"
+            : NAV_SHELL
+        }
+      >
+        {!hideHomeBrand ? (
+          <Link
+            href={homeHref}
+            className={`group flex shrink-0 flex-col gap-0.5 transition-colors sm:flex-row sm:items-baseline sm:gap-2 ${brand.title}`}
           >
-            BarrierLens
-          </span>
-        </Link>
+            <span className="text-[17px] font-bold leading-none tracking-tight md:text-lg">
+              无碍
+            </span>
+            <span
+              className={`hidden font-mono text-[11px] font-semibold uppercase tracking-[0.14em] sm:inline sm:text-xs ${brand.accent}`}
+            >
+              BarrierLens
+            </span>
+          </Link>
+        ) : null}
 
-        <div
-          className="hidden min-w-[2rem] md:block md:min-w-[4rem] lg:min-w-[8rem] xl:min-w-[11rem]"
-          aria-hidden
-        />
+        {!hideHomeBrand ? (
+          <div
+            className="hidden min-w-[2rem] md:block md:min-w-[4rem] lg:min-w-[8rem] xl:min-w-[11rem]"
+            aria-hidden
+          />
+        ) : null}
 
         <div className="flex min-w-0 shrink items-center justify-end gap-1.5 md:gap-2 lg:gap-3">
           <nav
