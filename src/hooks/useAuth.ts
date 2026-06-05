@@ -1,6 +1,7 @@
 "use client";
 
 import { formatAuthError } from "@/lib/authErrors";
+import { getAuthCallbackUrl } from "@/lib/siteUrl";
 import { getSupabaseBrowserClient, isSupabaseAuthConfigured } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -46,7 +47,10 @@ export function useAuth() {
 
       const { error } = await client.auth.signInWithOtp({
         email: normalized,
-        options: { shouldCreateUser: true },
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: getAuthCallbackUrl(),
+        },
       });
       if (error) {
         return { ok: false, message: formatAuthError(error.message) };

@@ -87,7 +87,9 @@ export default function EmailOtpLogin({
     setStep("code");
     setCode("");
     setCooldownSec(RESEND_COOLDOWN_SEC);
-    setMessage("验证码已发送到邮箱，请查收（可能在垃圾箱）。");
+    setMessage(
+      "验证码已发送到邮箱，请查收（可能在垃圾箱）。若邮件里是登录链接，点击链接也可完成登录。",
+    );
   };
 
   const verifyCode = async (event: FormEvent) => {
@@ -162,6 +164,11 @@ export default function EmailOtpLogin({
         </div>
         {message && <p className="text-xs text-emerald-700">{message}</p>}
         {error && <p className="text-xs text-red-700">{error}</p>}
+        <p className="text-[11px] leading-relaxed text-slate-500">
+          邮件里应是 6 位数字。若只有链接，说明 Supabase 邮件模板仍使用确认链接；可点击链接登录，或在
+          Dashboard → Authentication → Email Templates 中改为显示{" "}
+          <code className="rounded bg-slate-100 px-1">{"{{ .Token }}"}</code>。
+        </p>
       </form>
     );
   }
@@ -184,7 +191,9 @@ export default function EmailOtpLogin({
       >
         {submitting ? "发送中…" : cooldownSec > 0 ? `${cooldownSec}s 后可重发` : submitLabel}
       </button>
-      <p className="text-xs text-slate-500">将向邮箱发送 6 位验证码，在本页输入后即可登录。</p>
+      <p className="text-xs leading-relaxed text-slate-500">
+        优先发送 6 位验证码，在本页输入后登录。若收到的是邮件链接，点击后也会自动登录。
+      </p>
       {message && <p className="text-xs text-emerald-700">{message}</p>}
       {error && <p className="text-xs text-red-700">{error}</p>}
     </form>
