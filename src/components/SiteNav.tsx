@@ -1,8 +1,14 @@
 "use client";
 
 import AnchorLink from "@/components/AnchorLink";
-import AuthNavButton from "@/components/AuthNavButton";
+import AuthSyncButton from "@/components/AuthSyncButton";
 import Link from "next/link";
+import {
+  navBrandClasses,
+  navLinkClasses,
+  navMobileMenuClasses,
+  resolveNavSurface,
+} from "@/config/navSurface";
 import { navLayoutQuery, useNavLayout, type NavLayout } from "@/hooks/useNavLayout";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -54,39 +60,27 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
     return () => window.removeEventListener("scroll", onScroll);
   }, [onSubPage]);
 
-  const navScrolled = onSubPage || scrolled || isFix;
+  const overHero = !onSubPage && !scrolled && !isFix;
+  const surface = resolveNavSurface({ pathname, layout, overHero });
+  const brand = navBrandClasses(surface.tone);
   const links = isFix ? FIXMYSTREET_LINKS : isMixed ? MIXED_LINKS : CLASSIC_LINKS;
-  const ctaLabel = isFix ? "报告" : "拍照";
   const homeHref =
     isFix ? "/?nav=fixmystreet" : isMixed ? "/" : "/?nav=classic";
   const closeMenu = () => setMenuOpen(false);
 
   const linkClass = (active = false) =>
-    `text-xs font-medium transition-colors ${
-      active
-        ? navScrolled
-          ? "text-blue-700"
-          : "text-sky-200"
-        : navScrolled
-          ? "text-slate-600 hover:text-slate-900"
-          : "text-white/85 hover:text-white"
-    }`;
+    `text-xs font-medium transition-colors ${navLinkClasses(surface.tone, active)}`;
 
   return (
     <header
-      className={`fixed left-0 right-0 top-0 z-50 px-4 py-3 transition-[background,box-shadow,border-color] duration-300 sm:px-6 ${
-        navScrolled
-          ? "border-b border-slate-200/80 bg-white/92 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.12)] backdrop-blur-xl"
-          : "border-b border-white/10 bg-slate-950/20"
-      }`}
+      className={`fixed left-0 right-0 top-0 z-50 px-4 py-3 sm:px-6 ${surface.header}`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
         <Link
           href={homeHref}
-          className={`text-sm font-semibold transition-colors ${navScrolled ? "text-slate-900" : "text-white"}`}
+          className={`text-sm font-semibold transition-colors ${brand.title}`}
         >
-          无碍{" "}
-          <span className={navScrolled ? "text-blue-600" : "text-blue-300"}>BarrierLens</span>
+          无碍 <span className={brand.accent}>BarrierLens</span>
         </Link>
 
         <nav className="hidden items-center gap-5 md:flex">
@@ -118,12 +112,12 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
         </nav>
 
         <div className="flex items-center gap-2">
-          <AuthNavButton navScrolled={navScrolled} />
+          <AuthSyncButton tone={surface.tone} />
           {(isFix || isMixed) && (
             <button
               type="button"
               className={`rounded-lg px-2 py-1 text-xs font-medium md:hidden ${
-                navScrolled ? "text-slate-600" : "text-white/90"
+                surface.tone === "onLight" ? "text-slate-600" : "text-white/90"
               }`}
               aria-expanded={menuOpen}
               aria-controls="mobile-nav-menu"
@@ -132,21 +126,13 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
               菜单
             </button>
           )}
-          <AnchorLink
-            href="/#tool"
-            className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-300 ${
-              navScrolled ? "btn-primary" : "bg-white/92 text-slate-900 shadow-sm hover:bg-white"
-            }`}
-          >
-            {ctaLabel}
-          </AnchorLink>
         </div>
       </div>
 
       {(isFix || isMixed) && menuOpen && (
         <nav
           id="mobile-nav-menu"
-          className="mx-auto mt-2 max-w-6xl rounded-xl border border-slate-200 bg-white p-3 shadow-lg md:hidden"
+          className={`mx-auto mt-2 max-w-6xl rounded-xl border p-3 shadow-lg backdrop-blur-xl md:hidden ${navMobileMenuClasses(surface.variant)}`}
         >
           <ul className="space-y-1">
             {links.map((link) => (
@@ -207,7 +193,7 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
                 className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-50"
                 onClick={closeMenu}
               >
-                团队登录
+                同步记录
               </Link>
             </li>
           </ul>

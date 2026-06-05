@@ -11,14 +11,24 @@ export type SessionUser = {
 type SessionPayload = SessionUser & { exp: number };
 
 function authSecret(): string {
-  return process.env.AUTH_SECRET?.trim() || "barrierlens-dev-secret-change-me";
+  const secret = process.env.AUTH_SECRET?.trim();
+  if (secret) return secret;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("AUTH_SECRET is required in production");
+  }
+  return "barrierlens-dev-secret-change-me";
 }
 
 export function isAuthConfigured(): boolean {
-  return Boolean(
-    process.env.TEAM_LOGIN_EMAIL?.trim() &&
-      process.env.TEAM_LOGIN_PASSWORD?.trim(),
+  const basic = Boolean(
+    process.env.AUTH_LOGIN_EMAIL?.trim() &&
+      process.env.AUTH_LOGIN_PASSWORD?.trim(),
   );
+  if (!basic) return false;
+  if (process.env.NODE_ENV === "production") {
+    return Boolean(process.env.AUTH_SECRET?.trim());
+  }
+  return true;
 }
 
 function safeEqual(a: string, b: string): boolean {
@@ -28,12 +38,12 @@ function safeEqual(a: string, b: string): boolean {
   return timingSafeEqual(bufA, bufB);
 }
 
-export function verifyTeamCredentials(
+export function verifyCredentials(
   email: string,
   password: string,
 ): SessionUser | null {
-  const expectedEmail = process.env.TEAM_LOGIN_EMAIL?.trim().toLowerCase() ?? "";
-  const expectedPassword = process.env.TEAM_LOGIN_PASSWORD?.trim() ?? "";
+  const expectedEmail = process.env.AUTH_LOGIN_EMAIL?.trim().toLowerCase() ?? "";
+  const expectedPassword = process.env.AUTH_LOGIN_PASSWORD?.trim() ?? "";
   if (!expectedEmail || !expectedPassword) return null;
 
   const normalized = email.trim().toLowerCase();
@@ -41,7 +51,7 @@ export function verifyTeamCredentials(
     return null;
   }
 
-  const name = process.env.TEAM_LOGIN_NAME?.trim() || normalized.split("@")[0] || "团队成员";
+  const name = process.env.AUTH_LOGIN_NAME?.trim() || normalized.split("@")[0] || "用户";
   return { email: normalized, name };
 }
 
@@ -60,8 +70,15 @@ export function createSessionToken(user: SessionUser): string {
 
 export function parseSessionToken(token: string | undefined | null): SessionUser | null {
   if (!token?.includes(".")) return null;
+  let expectedSignature = "";
   const [body, signature] = token.split(".");
-  if (!body || !signature || sign(body) !== signature) return null;
+  if (!body || !signature) return null;
+  try {
+    expectedSignature = sign(body);
+  } catch {
+    return null;
+  }
+  if (expectedSignature !== signature) return null;
 
   try {
     const payload = JSON.parse(

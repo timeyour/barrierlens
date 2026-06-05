@@ -10,7 +10,7 @@
 | **产品** | 无碍 BarrierLens |
 | **赛事** | [Gemma 4 开发者大赛 2026](https://ai.google.dev/) · 上海站 · **赛道 D · AI for Social Good** |
 | **仓库** | https://github.com/timeyour/barrierlens |
-| **在线 Demo** | https://barrierlens-1utx.vercel.app/ （主域名 `barrierlens.vercel.app` 需在 Vercel 手动 Redeploy 后才会同步） |
+| **在线 Demo** | https://barrierlens.vercel.app/#tool （默认 mixed 工作台首页；迁移说明见 [docs/MIGRATE_VERCEL.md](docs/MIGRATE_VERCEL.md)） |
 | **Hackathon 版本** | [`v0.1-hackathon-demo`](https://github.com/timeyour/barrierlens/releases/tag/v0.1-hackathon-demo) |
 
 **提交四件套：** 代码仓库 · 在线 Demo · Demo 视频 · [技术报告](docs/TECHNICAL_REPORT.md)

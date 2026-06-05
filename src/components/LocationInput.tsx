@@ -1,11 +1,12 @@
 "use client";
 
-import { locationValidationHint } from "@/lib/locationValidation";
 import {
-  requestUserLocation,
-  userLocationNoteReady,
-  userLocationSuccessNote,
-} from "@/lib/userLocation";
+  isAutoFallbackLocation,
+  isCoordinatePlaceholder,
+  isLocationUsable,
+  locationValidationHint,
+} from "@/lib/locationValidation";
+import { applyUserLocationToInput } from "@/lib/userLocation";
 import { useState } from "react";
 
 interface LocationInputProps {
@@ -28,26 +29,18 @@ export default function LocationInput({
   const [geoNote, setGeoNote] = useState<string | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoError, setGeoError] = useState(false);
-  const hint = required ? locationValidationHint(value) : null;
-  const invalid = required && Boolean(hint);
+  const hint =
+    required && !geoLoading ? locationValidationHint(value) : null;
+  const invalid = required && !geoLoading && Boolean(hint);
 
   const handleGeo = async () => {
     setGeoLoading(true);
     setGeoError(false);
     setGeoNote("正在获取位置并解析路名…");
-    const result = await requestUserLocation();
+    const { note, isError } = await applyUserLocationToInput(onChange);
     setGeoLoading(false);
-    if (!result.ok) {
-      setGeoError(true);
-      setGeoNote(result.message);
-      return;
-    }
-    if (result.address) {
-      onChange(result.address);
-    }
-    const ready = userLocationNoteReady(result);
-    setGeoError(!ready);
-    setGeoNote(userLocationSuccessNote(result));
+    setGeoError(isError);
+    setGeoNote(note);
   };
 
   return (
@@ -71,8 +64,11 @@ export default function LocationInput({
           type="text"
           value={value}
           disabled={disabled}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="例如：XX 路 XX 段北侧便道、XX 地铁 3 号口东侧"
+          onChange={(e) => {
+            const next = e.target.value;
+            onChange(isCoordinatePlaceholder(next) ? "" : next);
+          }}
+          placeholder="例如：上海市浦东新区花木街道芳甸路"
           aria-invalid={invalid}
           className={
             flow
@@ -110,7 +106,7 @@ export default function LocationInput({
           {hint}
         </p>
       )}
-      {required && !hint && value.trim() && (
+      {required && !hint && isLocationUsable(value) && !isAutoFallbackLocation(value) && (
         <p className={`text-xs ${flow ? "text-emerald-300" : "text-emerald-700"}`} role="status">
           路段已填写，可提交分析。
         </p>

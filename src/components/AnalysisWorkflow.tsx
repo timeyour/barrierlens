@@ -16,6 +16,7 @@ import { downloadPdfReport } from "@/lib/exportPdf";
 import { buildDispatchScript } from "@/lib/dispatchScript";
 import { compressImageForUpload, fileToStoredImageDataUrl } from "@/lib/imageUtils";
 import { RecordStorageError, getRecordByLocalId, saveRecord, updateRecordReview } from "@/lib/recordStore";
+import { syncRecordToCloud } from "@/lib/recordSync";
 import { scrollResultsIntoView, scrollToAnchor } from "@/lib/scrollAnchor";
 import {
   dispatchWorkflowPhase,
@@ -29,8 +30,15 @@ import {
   isLocationUsable,
   locationValidationHint,
   sanitizeLocationForStorage,
+  isCoordinatePlaceholder,
 } from "@/lib/locationValidation";
-import { PREFILL_LOCATION_EVENT, PREFILL_LOCATION_KEY } from "@/lib/prefillLocation";
+import {
+  LOCATION_APPLIED_EVENT,
+  PREFILL_LOCATION_EVENT,
+  PREFILL_LOCATION_KEY,
+  readPrefillLocation,
+} from "@/lib/prefillLocation";
+import { refillLocationFromCachedCoords } from "@/lib/userLocation";
 import { useHackathonFlags } from "@/hooks/useHackathonFlags";
 import type {
   AnalysisResult,
@@ -118,16 +126,14 @@ function SubmitLoadingOverlay({ label }: { label: string }) {
 
 const PREFILL_KEY = PREFILL_LOCATION_KEY;
 
-function readPrefillLocation(): string {
-  if (typeof window === "undefined") return "";
-  return sanitizeLocationForStorage(sessionStorage.getItem(PREFILL_KEY));
-}
-
 function consumePrefillLocation(): string {
   if (typeof window === "undefined") return "";
-  const cleaned = sanitizeLocationForStorage(sessionStorage.getItem(PREFILL_KEY));
-  if (cleaned) {
-    sessionStorage.removeItem(PREFILL_KEY);
+  let cleaned = "";
+  try {
+    cleaned = sanitizeLocationForStorage(sessionStorage.getItem(PREFILL_KEY));
+    if (cleaned) sessionStorage.removeItem(PREFILL_KEY);
+  } catch {
+    cleaned = "";
   }
   return cleaned;
 }
@@ -150,7 +156,7 @@ export default function AnalysisWorkflow({
   const [targetDepartment, setTargetDepartment] =
     useState<TargetDepartment>("物业");
   const [recordMode, setRecordMode] = useState<RecordMode>("public");
-  const [location, setLocation] = useState(readPrefillLocation);
+  const [location, setLocation] = useState("");
   const [status, setStatus] = useState<WorkflowStatus>("idle");
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [mockMode, setMockMode] = useState(false);
@@ -177,22 +183,43 @@ export default function AnalysisWorkflow({
   }, []);
 
   useEffect(() => {
-    const syncPrefill = () => {
-      const prefill = readPrefillLocation();
+    const applyText = (raw: string) => {
+      const prefill = sanitizeLocationForStorage(raw);
       if (!prefill) return;
       setLocation(prefill);
     };
+    const syncPrefill = () => applyText(readPrefillLocation());
+    const onApplied = (event: Event) => {
+      const detail = (event as CustomEvent<string>).detail;
+      if (typeof detail === "string") applyText(detail);
+    };
     syncPrefill();
     window.addEventListener(PREFILL_LOCATION_EVENT, syncPrefill);
-    return () => window.removeEventListener(PREFILL_LOCATION_EVENT, syncPrefill);
+    window.addEventListener(LOCATION_APPLIED_EVENT, onApplied);
+    return () => {
+      window.removeEventListener(PREFILL_LOCATION_EVENT, syncPrefill);
+      window.removeEventListener(LOCATION_APPLIED_EVENT, onApplied);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (readPrefillLocation()) return;
+    let cancelled = false;
+    void refillLocationFromCachedCoords().then((text) => {
+      if (cancelled || !text) return;
+      setLocation(text);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
     if (wizardStep !== 2) return;
     const prefill = consumePrefillLocation();
-    if (prefill) {
-      setLocation(prefill);
-    }
+    if (!prefill) return;
+    const rafId = window.requestAnimationFrame(() => setLocation(prefill));
+    return () => window.cancelAnimationFrame(rafId);
   }, [wizardStep]);
 
   const clearAnalysisOutput = useCallback(() => {
@@ -295,7 +322,18 @@ export default function AnalysisWorkflow({
     coords?: { lat: number; lng: number } | null,
   ): Promise<StoredRecord | null> => {
     try {
-      return await persistRecord(data, imageFile, coords);
+      const stored = await persistRecord(data, imageFile, coords);
+      void syncRecordToCloud(stored).then((synced) => {
+        if (
+          !synced.ok &&
+          synced.reason !== "not_logged_in" &&
+          synced.reason !== "disabled" &&
+          synced.reason !== "not_configured"
+        ) {
+          setStorageWarning("云端同步失败，本机记录已保存。");
+        }
+      });
+      return stored;
     } catch (error) {
       if (error instanceof RecordStorageError) {
         setStorageWarning(error.message);
@@ -356,10 +394,14 @@ export default function AnalysisWorkflow({
       if (publish.reason === "location") {
         setPublishError("路名未通过校验，请填写具体路段后再公开");
       } else if (publish.reason === "not_configured") {
-        setPublishError("云端未配置，无法公开摘要（本机档案仍可用）");
+        setPublishError(
+          "云端未配置，无法公开摘要（本机档案仍可用）。请确认 Vercel 已设置 NEXT_PUBLIC_SUPABASE_URL 与 SUPABASE_SERVICE_ROLE_KEY 并重新部署。",
+        );
       } else if (publish.reason === "already_published") {
         setCloudReportId(stored.cloudReportId ?? null);
         setPublishError("该记录已公开");
+      } else if (publish.reason === "server") {
+        setPublishError("云端保存失败，请稍后重试或检查 Supabase 项目是否正常");
       } else {
         setPublishError("公开失败，请稍后重试");
       }
@@ -662,7 +704,9 @@ export default function AnalysisWorkflow({
 
               <LocationInput
                 value={location}
-                onChange={setLocation}
+                onChange={(value) =>
+                  setLocation(isCoordinatePlaceholder(value) ? "" : value)
+                }
                 disabled={isLoading}
                 required={flags.locationRequired}
                 flow={flow}
@@ -672,11 +716,6 @@ export default function AnalysisWorkflow({
                 {!previewUrl && (
                   <p className="w-full text-right text-xs text-slate-500" role="status">
                     请先上传现场照片
-                  </p>
-                )}
-                {previewUrl && !locationReady && (
-                  <p className="w-full text-right text-xs text-amber-800" role="status">
-                    {locationValidationHint(location) ?? "请补充路名后再继续"}
                   </p>
                 )}
                 <button
@@ -725,6 +764,18 @@ export default function AnalysisWorkflow({
                     </button>
                   </div>
                 </div>
+              )}
+
+              {!locationReady && (
+                <LocationInput
+                  value={location}
+                  onChange={(value) =>
+                    setLocation(isCoordinatePlaceholder(value) ? "" : value)
+                  }
+                  disabled={isLoading}
+                  required={flags.locationRequired}
+                  flow={flow}
+                />
               )}
 
               {showAdvancedOptions ? (

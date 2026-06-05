@@ -30,13 +30,16 @@ function isSameOriginBrowserRequest(request: Request): boolean {
 
 export function isTeamApiAuthorized(request: Request): boolean {
   const teamKey = getTeamApiKey();
-  if (!teamKey) return true;
-
-  const provided = extractProvidedKey(request);
-  if (provided && provided === teamKey) return true;
+  // 官网表单：同源浏览器请求始终允许（不暴露 Key 给前端）
   if (isSameOriginBrowserRequest(request)) return true;
 
-  return false;
+  if (!teamKey) {
+    // 未配置 TEAM_API_KEY 时：仅允许同源；外部脚本/Postman 拒绝
+    return process.env.NODE_ENV !== "production";
+  }
+
+  const provided = extractProvidedKey(request);
+  return Boolean(provided && provided === teamKey);
 }
 
 export function teamApiUnauthorizedResponse(request: Request): Response {
@@ -46,7 +49,7 @@ export function teamApiUnauthorizedResponse(request: Request): Response {
     JSON.stringify({
       error: "未授权",
       code: "unauthorized",
-      hint: "团队脚本请携带 Header：Authorization: Bearer <TEAM_API_KEY> 或 X-Api-Key: <TEAM_API_KEY>",
+      hint: "外部调用需配置 TEAM_API_KEY 并携带 Bearer / X-Api-Key；官网用户请用与站点相同的域名访问。",
     }),
     { status: 401, headers },
   );

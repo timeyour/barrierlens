@@ -1,10 +1,8 @@
-import { isAuthConfigured, readSessionFromRequest } from "@/lib/authSession";
 import { NextResponse } from "next/server";
 
-export async function GET(request: Request) {
-  const user = readSessionFromRequest(request);
+export async function GET() {
   return NextResponse.json({
-    configured: isAuthConfigured(),
-    user,
+    configured: false,
+    user: null,
   });
 }
