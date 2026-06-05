@@ -41,8 +41,8 @@ const FIXMYSTREET_LINKS = [
   { href: "/#how", label: "运作", route: false, ariaLabel: "怎么运作" },
 ] as const;
 
-function linkAriaLabel(link: { ariaLabel?: string }): string | undefined {
-  return link.ariaLabel;
+function linkAriaLabel(link: { href: string; label: string; ariaLabel?: string }): string | undefined {
+  return "ariaLabel" in link ? link.ariaLabel : undefined;
 }
 
 interface SiteNavProps {
