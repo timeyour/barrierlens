@@ -1,18 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import LocalDevBanner from "@/components/LocalDevBanner";
 import { HERO_POSTER, HERO_VIDEO } from "@/config/uiAssets";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "无碍 BarrierLens · 无障碍通行风险记录",
@@ -26,7 +15,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="zh-CN">
       <head>
         <link rel="preload" href={HERO_POSTER} as="image" />
         <link rel="preload" href={HERO_VIDEO.split("#")[0]} as="fetch" crossOrigin="anonymous" />

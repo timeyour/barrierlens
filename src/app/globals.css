@@ -10,13 +10,17 @@
   --border: rgba(148, 163, 184, 0.32);
   --muted: #64748b;
   --surface-shadow: 0 20px 40px -18px rgba(15, 23, 42, 0.12);
+  --font-sans-stack: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-mono-stack: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans-stack);
+  --font-mono: var(--font-mono-stack);
 }
 
 html {
@@ -29,7 +33,7 @@ body {
   overflow-x: clip;
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-sans-stack);
   -webkit-font-smoothing: antialiased;
   padding-bottom: env(safe-area-inset-bottom);
 }
@@ -56,7 +60,7 @@ body {
 }
 
 .section-eyebrow {
-  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-family: var(--font-mono-stack);
   font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.14em;
