@@ -17,21 +17,11 @@ export default function MixedHomeWorkbench({
       aria-label="记录工作台"
       className="mobile-no-snap relative z-30 isolate scroll-mt-4"
     >
-      <div className="mx-auto max-w-6xl px-0">
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_272px] lg:items-start lg:gap-5">
-          <MixedWorkbenchToolCard compact={isCompact} />
-
-          <WorkflowFocusGate>
-            <div className="hidden min-w-0 lg:block lg:sticky lg:top-24">
-              <HomeRecentReportsPanel variant="sidebar" limit={4} />
-            </div>
-          </WorkflowFocusGate>
-        </div>
+      <div className="flex flex-col gap-4">
+        <MixedWorkbenchToolCard compact={isCompact} />
 
         <WorkflowFocusGate>
-          <div className="mt-4 lg:hidden">
-            <HomeRecentReportsPanel variant="inline" limit={3} />
-          </div>
+          <HomeRecentReportsPanel variant="inline" limit={4} />
         </WorkflowFocusGate>
       </div>
     </section>

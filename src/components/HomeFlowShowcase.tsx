@@ -1,6 +1,11 @@
 import AnchorLink from "@/components/AnchorLink";
-import Image from "next/image";
+import {
+  HOME_CONTENT_RAIL,
+  HOME_SECTION_Y,
+  HOME_SURFACE_CARD_DARK,
+} from "@/config/homeLayout";
 import { HOME_FLOW_ASSETS } from "@/config/uiAssets";
+import Image from "next/image";
 
 const STEPS = [
   {
@@ -37,10 +42,10 @@ export default function HomeFlowShowcase({ snapScreen = true }: HomeFlowShowcase
     <section
       id="story"
       aria-label="产品流程介绍"
-      className={`${snapClass} relative z-10 scroll-mt-20 py-6 md:py-10`}
+      className={`${snapClass} relative z-10 scroll-mt-20 border-b border-slate-200/70 bg-[var(--background)]`}
     >
-      <div className="mx-auto max-w-6xl px-4 md:px-6">
-        <div className="relative overflow-hidden rounded-[1.75rem] border border-white/10 shadow-[0_24px_80px_-24px_rgba(15,23,42,0.65)]">
+      <div className={`${HOME_CONTENT_RAIL} ${HOME_SECTION_Y}`}>
+        <div className={`relative overflow-hidden ${HOME_SURFACE_CARD_DARK}`}>
           <div className="pointer-events-none absolute inset-0" aria-hidden>
             <Image
               src={HOME_FLOW_ASSETS.heroBg.src}

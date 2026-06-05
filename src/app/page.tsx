@@ -21,6 +21,7 @@ import V2ScenarioCards from "@/components/V2ScenarioCards";
 import { resolveNavLayoutFromSearchParam, type NavLayout } from "@/config/navLayout";
 import { resolveWorkbenchLayout } from "@/config/workbenchLayout";
 import { resolveUiMode } from "@/config/featureFlags";
+import { HOME_CONTENT_RAIL, HOME_SECTION_Y } from "@/config/homeLayout";
 
 function firstValue(raw?: string | string[]): string | undefined {
   if (Array.isArray(raw)) return raw[0];
@@ -45,32 +46,39 @@ export default async function Home({
   const mobileNavPad = isMixed || isFixMyStreet;
 
   return (
-    <div className={`relative min-h-screen ${isMixed ? "mixed-home-layout" : ""}`}>
+    <div className={`relative min-h-screen ${isMixed ? "mixed-home-layout pb-24 md:pb-0" : ""}`}>
       <PageBackground />
       <HashScrollHandler />
       <ScrollProgressBar />
       <SiteNav initialLayout={navLayout} />
       <ParallaxVideoHero variant="full" singleViewport={isMixed} />
-      {isMixed && <HomeFlowShowcase snapScreen={false} />}
 
       {isFixMyStreet && <FixMyStreetHomeStrip />}
       {isFixMyStreet && <FixMyStreetRecentReports />}
       {isFixMyStreet && <FixMyStreetHowStrip />}
 
-      <main
-        className={`relative z-20 isolate mx-auto flex max-w-6xl flex-col px-4 pb-4 md:px-6 md:py-10 lg:py-16 ${mobileNavPad ? "pb-24 md:pb-16" : ""} pt-0`}
-      >
-        {isMixed ? (
-          <>
-            <MixedHomeWorkbench layout={workbenchLayout} />
+      {isMixed ? (
+        <>
+          <HomeFlowShowcase snapScreen={false} />
+
+          <section className={`relative z-20 ${HOME_SECTION_Y}`}>
+            <div className={HOME_CONTENT_RAIL}>
+              <MixedHomeWorkbench layout={workbenchLayout} />
+            </div>
+          </section>
+
+          <section className="relative z-20 border-t border-slate-200/80 bg-slate-50/50 pb-24 md:pb-0">
             <WorkflowFocusGate>
-              <div className="mobile-no-snap scroll-mt-20 border-t border-slate-200/90 bg-slate-50/40 pt-10 md:scroll-mt-24 md:pt-14">
+              <div className={`${HOME_CONTENT_RAIL} ${HOME_SECTION_Y} mobile-no-snap scroll-mt-20`}>
                 <RecordTimeline />
               </div>
             </WorkflowFocusGate>
-          </>
-        ) : (
-          <>
+          </section>
+        </>
+      ) : (
+      <main
+        className={`relative z-20 isolate mx-auto flex max-w-6xl flex-col px-4 pb-4 md:px-6 md:py-10 lg:py-16 ${mobileNavPad ? "pb-24 md:pb-16" : ""} pt-0`}
+      >
             {(isClassic || isFixMyStreet) && (
               <div className="mobile-snap-screen order-0 flex flex-col gap-3 bg-[var(--background)] px-0 py-5 md:contents md:min-h-0 md:bg-transparent md:py-0">
                 {isClassic && (
@@ -110,15 +118,14 @@ export default async function Home({
                 </div>
               </>
             )}
-          </>
-        )}
       </main>
+      )}
 
       <MobileBottomNav layout={navLayout} />
 
       <ScrollReveal>
         <footer className="border-t border-slate-200/60 bg-white/60 py-8 backdrop-blur-md md:py-12">
-          <div className="mx-auto max-w-6xl px-4 text-center text-xs text-slate-500 sm:px-6">
+          <div className={`${HOME_CONTENT_RAIL} text-center text-xs text-slate-500`}>
             <p className="font-medium text-slate-700">无碍 BarrierLens</p>
             {process.env.VERCEL_GIT_COMMIT_SHA && (
               <p className="mt-1 font-mono text-[10px] text-slate-400">

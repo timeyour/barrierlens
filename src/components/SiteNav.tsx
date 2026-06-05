@@ -10,6 +10,7 @@ import {
   resolveNavSurface,
 } from "@/config/navSurface";
 import { navLayoutQuery, useNavLayout, type NavLayout } from "@/hooks/useNavLayout";
+import { HOME_CONTENT_RAIL } from "@/config/homeLayout";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -74,9 +75,9 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
 
   return (
     <header
-      className={`fixed left-0 right-0 top-0 z-50 px-4 py-3 sm:px-6 ${surface.header}`}
+      className={`fixed left-0 right-0 top-0 z-50 py-3 ${surface.header}`}
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
+      <div className={`flex items-center justify-between gap-3 ${HOME_CONTENT_RAIL}`}>
         <Link
           href={homeHref}
           className={`text-sm font-semibold transition-colors ${brand.title}`}
