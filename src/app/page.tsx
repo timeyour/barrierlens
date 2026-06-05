@@ -50,23 +50,15 @@ export default async function Home({
       <HashScrollHandler />
       <ScrollProgressBar />
       <SiteNav initialLayout={navLayout} />
-      {isMixed ? (
-        <>
-          <ParallaxVideoHero variant="workbench" />
-          <HomeFlowShowcase snapScreen={false} />
-        </>
-      ) : (
-        <ParallaxVideoHero variant="full" />
-      )}
+      <ParallaxVideoHero variant="full" />
+      {isMixed && <HomeFlowShowcase snapScreen={false} />}
 
       {isFixMyStreet && <FixMyStreetHomeStrip />}
       {isFixMyStreet && <FixMyStreetRecentReports />}
       {isFixMyStreet && <FixMyStreetHowStrip />}
 
       <main
-        className={`relative z-20 isolate mx-auto flex max-w-6xl flex-col px-4 pb-4 md:px-6 md:py-10 lg:py-16 ${mobileNavPad ? "pb-24 md:pb-16" : ""} ${
-          isMixed ? "scroll-mt-0 pt-2 md:pt-6" : "pt-0"
-        }`}
+        className={`relative z-20 isolate mx-auto flex max-w-6xl flex-col px-4 pb-4 md:px-6 md:py-10 lg:py-16 ${mobileNavPad ? "pb-24 md:pb-16" : ""} pt-0`}
       >
         {isMixed ? (
           <>
