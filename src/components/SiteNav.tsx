@@ -11,6 +11,7 @@ import {
   resolveNavSurface,
 } from "@/config/navSurface";
 import { readNavSurfaceZone } from "@/lib/navSurfaceZone";
+import { resolveMobileTabs } from "@/config/mobileNav";
 import { navLayoutQuery, useNavLayout, type NavLayout } from "@/hooks/useNavLayout";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -97,6 +98,8 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
       });
   const brand = navBrandClasses(surface.tone);
   const links = isFix ? FIXMYSTREET_LINKS : isMixed ? MIXED_LINKS : CLASSIC_LINKS;
+  const mobileTabs = resolveMobileTabs(layout);
+  const showMobileMenu = mobileTabs === null;
   const homeHref =
     isFix ? "/?nav=fixmystreet" : isMixed ? "/" : "/?nav=classic";
   const closeMenu = () => setMenuOpen(false);
@@ -180,11 +183,6 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
                 </AnchorLink>
               );
             })}
-            {isFix && (
-              <Link href="/?nav=classic" className={linkClass("secondary")} title="撤回预览布局">
-                经典版
-              </Link>
-            )}
           </nav>
 
           <div
@@ -193,24 +191,26 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
           />
 
           <AuthSyncButton tone={surface.tone} />
-          <button
-            type="button"
-            className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl px-3 text-sm font-semibold md:hidden ${
-              surface.tone === "onLight"
-                ? "border border-slate-200 bg-white/80 text-slate-700"
-                : "border border-white/25 bg-white/10 text-white"
-            }`}
-            aria-expanded={menuOpen}
-            aria-controls="mobile-nav-menu"
-            aria-label="打开导航菜单"
-            onClick={() => setMenuOpen((open) => !open)}
-          >
-            菜单
-          </button>
+          {showMobileMenu ? (
+            <button
+              type="button"
+              className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl px-3 text-sm font-semibold md:hidden ${
+                surface.tone === "onLight"
+                  ? "border border-slate-200 bg-white/80 text-slate-700"
+                  : "border border-white/25 bg-white/10 text-white"
+              }`}
+              aria-expanded={menuOpen}
+              aria-controls="mobile-nav-menu"
+              aria-label="打开导航菜单"
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              菜单
+            </button>
+          ) : null}
         </div>
       </div>
 
-      {menuOpen && (
+      {showMobileMenu && menuOpen && (
         <nav
           id="mobile-nav-menu"
           className={`mx-auto mt-2 max-w-6xl rounded-xl border p-3 shadow-lg backdrop-blur-xl md:hidden ${navMobileMenuClasses(surface.variant)}`}
