@@ -9,7 +9,6 @@ import ModeSelector from "@/components/ModeSelector";
 import LocationInput from "@/components/LocationInput";
 import ReportResultPanel from "@/components/ReportResultPanel";
 import ReportResultLoop from "@/components/ReportResultLoop";
-import AiAnalysisPipeline from "@/components/AiAnalysisPipeline";
 import GemmaJsonOutput from "@/components/GemmaJsonOutput";
 import WizardStepIndicator from "@/components/WizardStepIndicator";
 import { downloadPdfReport } from "@/lib/exportPdf";
@@ -93,33 +92,31 @@ function waitForPaint(): Promise<void> {
   });
 }
 
-function SubmitLoadingOverlay({ label }: { label: string }) {
+function SubmitLoadingPanel({ label }: { label: string }) {
   return (
     <div
       role="status"
       aria-live="polite"
       aria-busy="true"
-      className="absolute inset-0 z-20 flex flex-col justify-center rounded-xl border border-blue-100/80 bg-white/96 px-6 py-8 backdrop-blur-md"
+      className="w-full space-y-5 py-2 md:py-4"
     >
-      <div className="mx-auto w-full max-w-sm space-y-4">
-        <div className="space-y-2">
-          <div className="skeleton-shimmer h-3 w-28 rounded-md" />
-          <div className="skeleton-shimmer h-8 w-full rounded-lg" />
-          <div className="skeleton-shimmer h-4 w-[80%] rounded-md" />
-        </div>
-        <div className="space-y-2 pt-2">
-          <div className="skeleton-shimmer h-16 w-full rounded-xl" />
-          <div className="skeleton-shimmer h-10 w-2/3 max-w-[220px] rounded-lg" />
-        </div>
-        <p className="pt-2 text-center text-sm font-semibold text-slate-900">
-          正在生成{label}
-        </p>
-        <p className="text-center text-xs leading-relaxed text-slate-500">
-          {LOCAL_OLLAMA_HINT
-            ? "本机 Ollama 分析中，约需 2–3 分钟，请勿关闭页面"
-            : "Gemma 4 分析中，约需 15–30 秒，请勿关闭页面"}
-        </p>
+      <div className="space-y-2.5">
+        <div className="skeleton-shimmer h-3 w-40 rounded-md sm:w-48" />
+        <div className="skeleton-shimmer h-11 w-full rounded-lg" />
+        <div className="skeleton-shimmer h-4 w-full rounded-md" />
       </div>
+      <div className="space-y-2.5 pt-1">
+        <div className="skeleton-shimmer h-24 w-full rounded-xl sm:h-28" />
+        <div className="skeleton-shimmer h-11 w-full rounded-lg" />
+      </div>
+      <p className="pt-1 text-center text-sm font-semibold text-slate-900">
+        正在生成{label}
+      </p>
+      <p className="text-center text-xs leading-relaxed text-slate-500">
+        {LOCAL_OLLAMA_HINT
+          ? "本机 Ollama 分析中，约需 2–3 分钟，请勿关闭页面"
+          : "Gemma 4 分析中，约需 15–30 秒，请勿关闭页面"}
+      </p>
     </div>
   );
 }
@@ -662,7 +659,7 @@ export default function AnalysisWorkflow({
           <WizardStepIndicator current={wizardStep} flow={flow} />
 
           {wizardStep === 1 && (
-            <div id="tool-upload" className="scroll-mt-24 space-y-5">
+            <div id="tool-upload" className="scroll-mt-24 w-full space-y-5 md:space-y-6">
               {showIntro && !flow && (
                 <div>
                   <h2 className="text-base font-bold text-slate-900 md:text-lg">
@@ -738,10 +735,14 @@ export default function AnalysisWorkflow({
           )}
 
           {wizardStep === 2 && (
-            <div id="tool-analyzing" className="relative space-y-5">
-              {isLoading && (
-                <SubmitLoadingOverlay label={RECORD_MODES[recordMode].label} />
-              )}
+            <div
+              id="tool-analyzing"
+              className="relative w-full min-h-[min(320px,48vh)] space-y-5 md:space-y-6"
+            >
+              {isLoading ? (
+                <SubmitLoadingPanel label={RECORD_MODES[recordMode].label} />
+              ) : (
+                <>
               <h3 className={stepTitleClass}>确认并生成</h3>
 
               {previewUrl && (
@@ -865,8 +866,7 @@ export default function AnalysisWorkflow({
                   )}
                 </button>
               </div>
-              {isLoading && (
-                <AiAnalysisPipeline running={isLoading} result={null} />
+                </>
               )}
             </div>
           )}

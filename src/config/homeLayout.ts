@@ -14,5 +14,5 @@ export const HOME_SURFACE_CARD =
 export const HOME_SURFACE_CARD_DARK =
   `${HOME_SURFACE_RADIUS} border border-white/10 shadow-[0_24px_80px_-24px_rgba(15,23,42,0.45)]`;
 
-/** 全宽背景条 + 内部内容轨 */
-export const HOME_BAND_INNER = `${HOME_CONTENT_RAIL} ${HOME_SECTION_Y}`;
+/** 工作台区：与内容轨同宽，卡片铺满可用区域 */
+export const HOME_TOOL_RAIL = HOME_CONTENT_RAIL;

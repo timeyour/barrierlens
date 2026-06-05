@@ -20,4 +20,4 @@ export function resolveWorkflowPhase(input: {
   return "idle";
 }
 
-export const FOCUS_PHASES: WorkflowPhase[] = ["step2", "loading", "success"];
+export const FOCUS_PHASES: WorkflowPhase[] = ["step1", "step2", "loading", "success"];

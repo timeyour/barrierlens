@@ -20,7 +20,7 @@ import V2ScenarioCards from "@/components/V2ScenarioCards";
 import { resolveNavLayoutFromSearchParam, type NavLayout } from "@/config/navLayout";
 import { resolveWorkbenchLayout } from "@/config/workbenchLayout";
 import { resolveUiMode } from "@/config/featureFlags";
-import { HOME_CONTENT_RAIL, HOME_SECTION_Y } from "@/config/homeLayout";
+import { HOME_CONTENT_RAIL, HOME_SECTION_Y, HOME_TOOL_RAIL } from "@/config/homeLayout";
 
 function firstValue(raw?: string | string[]): string | undefined {
   if (Array.isArray(raw)) return raw[0];
@@ -60,7 +60,7 @@ export default async function Home({
           <HomeFlowShowcase snapScreen={false} />
 
           <section className={`relative z-20 ${HOME_SECTION_Y}`} data-nav-surface="light">
-            <div className={HOME_CONTENT_RAIL}>
+            <div className={HOME_TOOL_RAIL}>
               <MixedHomeWorkbench layout={workbenchLayout} />
             </div>
           </section>
