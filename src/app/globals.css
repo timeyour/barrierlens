@@ -15,7 +15,7 @@
   --font-mono-stack: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
     "Liberation Mono", monospace;
   --mobile-header-offset: 3.75rem;
-  --mobile-tab-bar-offset: 4rem;
+  --mobile-tab-bar-offset: 4.5rem;
 }
 
 @theme inline {

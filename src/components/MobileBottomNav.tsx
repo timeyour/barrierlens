@@ -1,6 +1,7 @@
 "use client";
 
 import AnchorLink from "@/components/AnchorLink";
+import { MobileTabBarIcon } from "@/components/mobile/MobileTabBarIcons";
 import {
   resolveMobileTabHref,
   resolveMobileTabs,
@@ -16,6 +17,16 @@ interface MobileBottomNavProps {
   layout?: NavLayout;
 }
 
+function tabSurfaceClass(active: boolean, primary: boolean): string {
+  if (active) {
+    return "bg-blue-600 text-white shadow-sm shadow-blue-900/20";
+  }
+  if (primary) {
+    return "bg-blue-50/90 text-blue-800 ring-1 ring-blue-200/80";
+  }
+  return "text-slate-500 hover:bg-slate-50/90 hover:text-slate-700";
+}
+
 function TabLink({
   item,
   href,
@@ -25,41 +36,49 @@ function TabLink({
   href: string;
   active: boolean;
 }) {
+  const primary = Boolean(item.primary);
+  const surface = tabSurfaceClass(active, primary && !active);
+
   const className = [
-    "relative flex min-h-[3.25rem] flex-1 flex-col items-center justify-center gap-0.5 px-0.5 py-2.5 text-sm font-semibold tracking-wide transition-colors",
-    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-blue-500",
-    active
-      ? "text-blue-700"
-      : item.primary
-        ? "text-slate-700"
-        : "text-slate-600",
-    item.primary && !active ? "font-bold" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+    "relative mx-0.5 flex min-h-[3.5rem] min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 transition-colors duration-200",
+    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500",
+    surface,
+  ].join(" ");
+
+  const labelClass = [
+    "max-w-full truncate text-[13px] leading-none tracking-wide",
+    active || primary ? "font-semibold" : "font-medium",
+  ].join(" ");
 
   const content = (
     <>
-      {active ? (
-        <span
-          className="absolute inset-x-2 top-0 h-0.5 rounded-full bg-blue-600"
-          aria-hidden
-        />
-      ) : null}
-      <span>{item.label}</span>
+      <MobileTabBarIcon match={item.match} />
+      <span className={labelClass}>{item.label}</span>
     </>
   );
 
+  const aria = item.ariaLabel ?? item.label;
+
   if (item.anchor) {
     return (
-      <AnchorLink href={href} className={className} aria-label={item.ariaLabel ?? item.label}>
+      <AnchorLink
+        href={href}
+        className={className}
+        aria-label={aria}
+        aria-current={active ? "page" : undefined}
+      >
         {content}
       </AnchorLink>
     );
   }
 
   return (
-    <Link href={href} className={className} aria-label={item.ariaLabel ?? item.label}>
+    <Link
+      href={href}
+      className={className}
+      aria-label={aria}
+      aria-current={active ? "page" : undefined}
+    >
       {content}
     </Link>
   );
@@ -80,21 +99,23 @@ export default function MobileBottomNav({ layout: layoutProp }: MobileBottomNavP
 
   return (
     <nav
-      className="mobile-tab-bar fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200/90 bg-white/96 backdrop-blur-md md:hidden"
+      className="mobile-tab-bar fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200/90 bg-[#f8fafc]/98 backdrop-blur-lg md:hidden"
       aria-label="手机快捷导航"
     >
-      <ul className="mx-auto flex max-w-lg">
-        {tabs.map((item) => {
-          const href = resolveMobileTabHref(item, layout);
-          const active = tabIsActive(item);
+      <div className="mx-auto w-full max-w-lg px-1.5 pt-1">
+        <ul className="flex items-stretch">
+          {tabs.map((item) => {
+            const href = resolveMobileTabHref(item, layout);
+            const active = tabIsActive(item);
 
-          return (
-            <li key={`${item.match}-${item.label}`} className="flex min-w-0 flex-1">
-              <TabLink item={item} href={href} active={active} />
-            </li>
-          );
-        })}
-      </ul>
+            return (
+              <li key={`${item.match}-${item.label}`} className="flex min-w-0 flex-1">
+                <TabLink item={item} href={href} active={active} />
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </nav>
   );
 }
