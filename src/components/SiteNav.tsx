@@ -2,6 +2,7 @@
 
 import AnchorLink from "@/components/AnchorLink";
 import AuthSyncButton from "@/components/AuthSyncButton";
+import { useAuthDialog } from "@/components/AuthDialogProvider";
 import Link from "next/link";
 import {
   navBrandClasses,
@@ -49,6 +50,7 @@ function withNavQuery(href: string, layout: NavLayout, isRoute: boolean): string
 
 export default function SiteNav({ initialLayout }: SiteNavProps) {
   const layout = useNavLayout(initialLayout);
+  const { openAuthDialog } = useAuthDialog();
   const [navZone, setNavZone] = useState<ReturnType<typeof readNavSurfaceZone>>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -202,13 +204,16 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
               </li>
             )}
             <li>
-              <Link
-                href="/login"
-                className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-50"
-                onClick={closeMenu}
+              <button
+                type="button"
+                className="block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-500 hover:bg-slate-50"
+                onClick={() => {
+                  closeMenu();
+                  openAuthDialog();
+                }}
               >
                 同步记录
-              </Link>
+              </button>
             </li>
           </ul>
         </nav>

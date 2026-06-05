@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AuthDialogProvider } from "@/components/AuthDialogProvider";
 import LocalDevBanner from "@/components/LocalDevBanner";
 import { HERO_POSTER, HERO_VIDEO } from "@/config/uiAssets";
 import "./globals.css";
@@ -22,7 +23,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen font-sans antialiased">
         <LocalDevBanner />
-        {children}
+        <AuthDialogProvider>{children}</AuthDialogProvider>
       </body>
     </html>
   );

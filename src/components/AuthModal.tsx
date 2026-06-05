@@ -40,14 +40,15 @@ export default function AuthModal({ open, onClose }: AuthModalProps) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/55 px-4 py-8"
+      className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-slate-950/55 p-4 sm:p-6"
+      style={{ minHeight: "100dvh" }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="auth-modal-title"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-6"
+        className="my-auto w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-6"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-3">
