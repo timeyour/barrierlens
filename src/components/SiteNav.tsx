@@ -59,8 +59,6 @@ function linkAriaLabel(link: NavLinkDef): string | undefined {
 
 interface SiteNavProps {
   initialLayout?: NavLayout;
-  /** 首页由服务端标记，避免滚动到第二/三屏时顶栏品牌仍被 SSR/缓存渲染 */
-  hideBrand?: boolean;
 }
 
 function withNavQuery(href: string, layout: NavLayout, isRoute: boolean): string {
@@ -69,7 +67,7 @@ function withNavQuery(href: string, layout: NavLayout, isRoute: boolean): string
   return href.includes("?") ? `${href}&nav=${layout}` : `${href}${q}`;
 }
 
-export default function SiteNav({ initialLayout, hideBrand }: SiteNavProps) {
+export default function SiteNav({ initialLayout }: SiteNavProps) {
   const layout = useNavLayout(initialLayout);
   const [navZone, setNavZone] = useState<ReturnType<typeof readNavSurfaceZone>>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -85,9 +83,11 @@ export default function SiteNav({ initialLayout, hideBrand }: SiteNavProps) {
     sync();
     window.addEventListener("scroll", sync, { passive: true });
     window.addEventListener("resize", sync);
+    window.addEventListener("hashchange", sync);
     return () => {
       window.removeEventListener("scroll", sync);
       window.removeEventListener("resize", sync);
+      window.removeEventListener("hashchange", sync);
     };
   }, [onSubPage, pathname]);
 
@@ -102,8 +102,8 @@ export default function SiteNav({ initialLayout, hideBrand }: SiteNavProps) {
   const links = isFix ? FIXMYSTREET_LINKS : isMixed ? MIXED_LINKS : CLASSIC_LINKS;
   const mobileTabs = resolveMobileTabs(layout);
   const showMobileMenu = mobileTabs === null;
-  /** 首页 Hero 已有大标题，顶栏不再重复品牌（含滚动至第二、三屏） */
-  const hideHomeBrand = hideBrand === true || pathname === "/";
+  /** 首页第一屏 Hero 已有大标题；滚到第二/三/四屏再显示顶栏 logo */
+  const hideHomeBrand = !onSubPage && (navZone === "hero" || navZone === null);
   const homeHref =
     isFix ? "/?nav=fixmystreet" : isMixed ? "/" : "/?nav=classic";
   const closeMenu = () => setMenuOpen(false);

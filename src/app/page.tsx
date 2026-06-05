@@ -50,7 +50,7 @@ export default async function Home({
     >
       <PageBackground />
       <HashScrollHandler />
-      <SiteNav initialLayout={navLayout} hideBrand />
+      <SiteNav initialLayout={navLayout} />
       <ParallaxVideoHero variant="full" singleViewport={isMixed} />
 
       {isFixMyStreet && <FixMyStreetHomeStrip />}
