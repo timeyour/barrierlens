@@ -53,20 +53,28 @@ type WizardStep = 1 | 2;
 
 const DEMO_IMAGE_URL = "/images/scene-blocked-close.png";
 const DEFAULT_ANALYZE_TIMEOUT_MS = 55_000;
-const OLLAMA_ANALYZE_TIMEOUT_MS = 180_000;
+const OLLAMA_ANALYZE_TIMEOUT_MS = 240_000;
 const VERCEL_ANALYZE_TIMEOUT_MS = 90_000;
+
+function isLocalDevHost(): boolean {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  return host === "localhost" || host === "127.0.0.1";
+}
+
+function prefersLocalOllama(): boolean {
+  return process.env.NEXT_PUBLIC_OLLAMA_PREFERRED === "true" || isLocalDevHost();
+}
 
 function getAnalyzeClientTimeoutMs(): number {
   const fromEnv = Number(process.env.NEXT_PUBLIC_ANALYZE_TIMEOUT_MS);
   if (Number.isFinite(fromEnv) && fromEnv > 0) return fromEnv;
-  if (process.env.NEXT_PUBLIC_OLLAMA_PREFERRED === "true") return OLLAMA_ANALYZE_TIMEOUT_MS;
+  if (prefersLocalOllama()) return OLLAMA_ANALYZE_TIMEOUT_MS;
   if (typeof window !== "undefined" && /\.vercel\.app$/i.test(window.location.hostname)) {
     return VERCEL_ANALYZE_TIMEOUT_MS;
   }
   return DEFAULT_ANALYZE_TIMEOUT_MS;
 }
-
-const LOCAL_OLLAMA_HINT = process.env.NEXT_PUBLIC_OLLAMA_PREFERRED === "true";
 
 type AnalyzeApiResponse = AnalysisResult & {
   mockMode?: boolean;
@@ -113,7 +121,7 @@ function SubmitLoadingPanel({ label }: { label: string }) {
         正在生成{label}
       </p>
       <p className="text-center text-xs leading-relaxed text-slate-500">
-        {LOCAL_OLLAMA_HINT
+        {prefersLocalOllama()
           ? "本机 Ollama 分析中，约需 2–3 分钟，请勿关闭页面"
           : "Gemma 4 分析中，约需 15–30 秒，请勿关闭页面"}
       </p>
@@ -529,8 +537,8 @@ export default function AnalysisWorkflow({
       setStatus("error");
       if (error instanceof Error && error.name === "AbortError") {
         setErrorMessage(
-          LOCAL_OLLAMA_HINT
-            ? `分析超时（已等待 ${Math.round(getAnalyzeClientTimeoutMs() / 1000)} 秒）。请确认 Ollama App 在运行，或稍后再试。`
+          prefersLocalOllama()
+            ? `分析超时（已等待 ${Math.round(getAnalyzeClientTimeoutMs() / 1000)} 秒）。请确认 Ollama App 在运行且已拉取 gemma4 模型，或稍后再试。`
             : "分析超时，请使用样例图或稍后重试",
         );
         return;

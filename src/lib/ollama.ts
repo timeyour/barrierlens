@@ -3,7 +3,7 @@ import { buildAnalysisPrompt, parseAndNormalizeGemmaContent, parseDataUrl } from
 
 const DEFAULT_BASE_URL = "http://127.0.0.1:11434";
 const DEFAULT_MODEL = "gemma4:latest";
-const DEFAULT_TIMEOUT_MS = 180_000;
+const DEFAULT_TIMEOUT_MS = 240_000;
 
 type OllamaChatResponse = {
   message?: { content?: string };
@@ -121,7 +121,7 @@ export async function analyzeWithOllama(
       ],
       options: {
         temperature: 0.2,
-        num_predict: 1400,
+        num_predict: 1024,
       },
     },
     timeoutMs,
