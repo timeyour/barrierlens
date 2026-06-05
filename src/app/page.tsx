@@ -14,7 +14,6 @@ import HashScrollHandler from "@/components/HashScrollHandler";
 import PageBackground from "@/components/PageBackground";
 import ParallaxVideoHero from "@/components/ParallaxVideoHero";
 import RecordTimeline from "@/components/RecordTimeline";
-import ScrollProgressBar from "@/components/ScrollProgress";
 import ScrollReveal from "@/components/ScrollReveal";
 import SiteNav from "@/components/SiteNav";
 import V2ScenarioCards from "@/components/V2ScenarioCards";
@@ -49,7 +48,6 @@ export default async function Home({
     <div className={`relative min-h-screen ${isMixed ? "mixed-home-layout pb-24 md:pb-0" : ""}`}>
       <PageBackground />
       <HashScrollHandler />
-      <ScrollProgressBar />
       <SiteNav initialLayout={navLayout} />
       <ParallaxVideoHero variant="full" singleViewport={isMixed} />
 
@@ -61,13 +59,16 @@ export default async function Home({
         <>
           <HomeFlowShowcase snapScreen={false} />
 
-          <section className={`relative z-20 ${HOME_SECTION_Y}`}>
+          <section className={`relative z-20 ${HOME_SECTION_Y}`} data-nav-surface="light">
             <div className={HOME_CONTENT_RAIL}>
               <MixedHomeWorkbench layout={workbenchLayout} />
             </div>
           </section>
 
-          <section className="relative z-20 border-t border-slate-200/80 bg-slate-50/50 pb-24 md:pb-0">
+          <section
+            className="relative z-20 border-t border-slate-200/80 bg-slate-50/50 pb-24 md:pb-0"
+            data-nav-surface="light"
+          >
             <WorkflowFocusGate>
               <div className={`${HOME_CONTENT_RAIL} ${HOME_SECTION_Y} mobile-no-snap scroll-mt-20`}>
                 <RecordTimeline />
@@ -78,6 +79,7 @@ export default async function Home({
       ) : (
       <main
         className={`relative z-20 isolate mx-auto flex max-w-6xl flex-col px-4 pb-4 md:px-6 md:py-10 lg:py-16 ${mobileNavPad ? "pb-24 md:pb-16" : ""} pt-0`}
+        data-nav-surface="light"
       >
             {(isClassic || isFixMyStreet) && (
               <div className="mobile-snap-screen order-0 flex flex-col gap-3 bg-[var(--background)] px-0 py-5 md:contents md:min-h-0 md:bg-transparent md:py-0">

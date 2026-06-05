@@ -130,7 +130,7 @@ function FullParallaxHero({ singleViewport = false }: { singleViewport?: boolean
 
   if (singleViewport) {
     return (
-      <header className="mobile-no-snap relative z-0 h-[100svh] min-h-[100svh] max-h-[100svh] overflow-hidden">
+      <header className="mobile-no-snap relative z-0 h-[100svh] min-h-[100svh] max-h-[100svh] overflow-hidden" data-nav-surface="hero">
         <HeroVideoLayer />
         <div className="pointer-events-none relative z-10 flex h-full items-center justify-center px-4 py-20 md:px-6">
           <div className="pointer-events-auto">
@@ -145,6 +145,7 @@ function FullParallaxHero({ singleViewport = false }: { singleViewport?: boolean
     <header
       ref={containerRef}
       className="mobile-snap-screen mobile-snap-screen-fixed relative z-0 md:h-[160vh] lg:h-[180vh]"
+      data-nav-surface="hero"
     >
       <div className="relative h-[100svh] max-h-[100svh] overflow-hidden pointer-events-none md:sticky md:top-0 md:h-screen md:max-h-none md:min-h-0">
         <motion.div className="absolute inset-0 overflow-hidden" style={{ scale: bgScale }}>

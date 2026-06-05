@@ -5,9 +5,7 @@ import Link from "next/link";
 import PublicReportCard from "@/components/PublicReportCard";
 import { HOME_SURFACE_CARD } from "@/config/homeLayout";
 import {
-  RECORD_MODES,
   SCENE_TYPE_LABELS,
-  type RecordMode,
 } from "@/types/analysis";
 import type { CloudReportSummary } from "@/types/cloudReport";
 import { displayLocationLabel } from "@/lib/locationValidation";

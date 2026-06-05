@@ -45,7 +45,10 @@ export default function HomeFlowShowcase({ snapScreen = true }: HomeFlowShowcase
       className={`${snapClass} relative z-10 scroll-mt-20 border-b border-slate-200/70 bg-[var(--background)]`}
     >
       <div className={`${HOME_CONTENT_RAIL} ${HOME_SECTION_Y}`}>
-        <div className={`relative overflow-hidden ${HOME_SURFACE_CARD_DARK}`}>
+        <div
+          className={`relative overflow-hidden ${HOME_SURFACE_CARD_DARK}`}
+          data-nav-surface="dark"
+        >
           <div className="pointer-events-none absolute inset-0" aria-hidden>
             <Image
               src={HOME_FLOW_ASSETS.heroBg.src}

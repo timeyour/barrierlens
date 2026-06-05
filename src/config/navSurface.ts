@@ -12,38 +12,38 @@ export type NavSurfaceStyle = {
 };
 
 const GLASS_BASE =
-  "backdrop-blur-xl transition-[background,box-shadow,border-color] duration-300";
+  "backdrop-blur-md transition-[background,box-shadow,border-color] duration-300";
 
 const SURFACES: Record<NavSurfaceVariant, NavSurfaceStyle> = {
   hero: {
     variant: "hero",
     tone: "onDark",
-    header: `${GLASS_BASE} border-b border-white/12 bg-slate-950/28 shadow-none`,
+    header: `${GLASS_BASE} border-b border-white/10 bg-slate-950/10 shadow-none`,
   },
   mixed: {
     variant: "mixed",
     tone: "onLight",
-    header: `${GLASS_BASE} border-b border-slate-200/55 bg-slate-50/72 shadow-[0_8px_28px_-14px_rgba(15,23,42,0.1)]`,
+    header: `${GLASS_BASE} border-b border-slate-200/40 bg-white/40 shadow-none`,
   },
   paper: {
     variant: "paper",
     tone: "onLight",
-    header: `${GLASS_BASE} border-b border-slate-200/60 bg-[#f8fafc]/78 shadow-[0_8px_28px_-14px_rgba(15,23,42,0.08)]`,
+    header: `${GLASS_BASE} border-b border-slate-200/45 bg-[#f8fafc]/45 shadow-none`,
   },
   fix: {
     variant: "fix",
     tone: "onLight",
-    header: `${GLASS_BASE} border-b border-slate-200/65 bg-white/76 shadow-[0_8px_28px_-14px_rgba(15,23,42,0.09)]`,
+    header: `${GLASS_BASE} border-b border-slate-200/50 bg-white/50 shadow-none`,
   },
 };
 
 export function resolveNavSurface(input: {
   pathname: string;
   layout: NavLayout;
-  /** 首页 Hero 视频区顶部（未滚动） */
-  overHero: boolean;
+  /** 当前顶栏下方的页面分区（由 data-nav-surface 标记） */
+  zone?: "hero" | "dark" | "light" | null;
 }): NavSurfaceStyle {
-  const { pathname, layout, overHero } = input;
+  const { pathname, layout, zone } = input;
 
   if (pathname !== "/") {
     return SURFACES.paper;
@@ -53,7 +53,7 @@ export function resolveNavSurface(input: {
     return SURFACES.fix;
   }
 
-  if (overHero) {
+  if (zone === "hero" || zone === "dark") {
     return SURFACES.hero;
   }
 

@@ -9,6 +9,7 @@ import {
   navMobileMenuClasses,
   resolveNavSurface,
 } from "@/config/navSurface";
+import { readNavSurfaceZone } from "@/lib/navSurfaceZone";
 import { navLayoutQuery, useNavLayout, type NavLayout } from "@/hooks/useNavLayout";
 import { HOME_CONTENT_RAIL } from "@/config/homeLayout";
 import { usePathname } from "next/navigation";
@@ -48,7 +49,7 @@ function withNavQuery(href: string, layout: NavLayout, isRoute: boolean): string
 
 export default function SiteNav({ initialLayout }: SiteNavProps) {
   const layout = useNavLayout(initialLayout);
-  const [scrolled, setScrolled] = useState(false);
+  const [navZone, setNavZone] = useState<ReturnType<typeof readNavSurfaceZone>>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
   const onSubPage = pathname !== "/";
@@ -56,14 +57,25 @@ export default function SiteNav({ initialLayout }: SiteNavProps) {
   const isMixed = layout === "mixed";
 
   useEffect(() => {
-    const onScroll = () => setScrolled(onSubPage || window.scrollY > 80);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [onSubPage]);
+    if (onSubPage) return;
 
-  const overHero = !onSubPage && !scrolled && !isFix;
-  const surface = resolveNavSurface({ pathname, layout, overHero });
+    const sync = () => setNavZone(readNavSurfaceZone());
+    sync();
+    window.addEventListener("scroll", sync, { passive: true });
+    window.addEventListener("resize", sync);
+    return () => {
+      window.removeEventListener("scroll", sync);
+      window.removeEventListener("resize", sync);
+    };
+  }, [onSubPage, pathname]);
+
+  const surface = onSubPage
+    ? resolveNavSurface({ pathname, layout, zone: "light" })
+    : resolveNavSurface({
+        pathname,
+        layout,
+        zone: navZone ?? (layout === "fixmystreet" ? "light" : "hero"),
+      });
   const brand = navBrandClasses(surface.tone);
   const links = isFix ? FIXMYSTREET_LINKS : isMixed ? MIXED_LINKS : CLASSIC_LINKS;
   const homeHref =
