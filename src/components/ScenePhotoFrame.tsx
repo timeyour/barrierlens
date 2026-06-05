@@ -1,7 +1,9 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { AnalysisResult } from "@/types/analysis";
-import { PATH_STATUS_LABELS } from "@/types/analysis";
+
+type ScenePhotoSize = "compact" | "hero" | "default" | "expanded" | "split";
 
 type SceneConfig = {
   mainPath: string;
@@ -16,160 +18,55 @@ interface ScenePhotoFrameProps {
   alt: string;
   dense?: boolean;
   expanded?: boolean;
-  blockedPath: string;
-  statusLabel: string;
-  activeStatus: AnalysisResult["pathStatus"];
-  dangerColor: string;
-  usingUserPhoto: boolean;
-  obstacles: AnalysisResult["obstacles"];
-  markerPoints: Array<{ x: number; y: number }>;
-  pinPoint: { x: number; y: number };
-  config: SceneConfig;
+  size?: ScenePhotoSize;
+  usingUserPhoto?: boolean;
+  /** 叠在照片左侧的诊断摘要 */
+  overlay?: ReactNode;
+  blockedPath?: string;
+  statusLabel?: string;
+  activeStatus?: AnalysisResult["pathStatus"];
+  dangerColor?: string;
+  obstacles?: AnalysisResult["obstacles"];
+  markerPoints?: Array<{ x: number; y: number }>;
+  pinPoint?: { x: number; y: number };
+  config?: SceneConfig;
 }
 
-function PhotoAnnotations({
-  usingUserPhoto,
-  config,
-  dangerColor,
-  pinPoint,
-  obstacles,
-  markerPoints,
-  blockedPath,
-  expanded,
-}: Pick<
-  ScenePhotoFrameProps,
-  | "usingUserPhoto"
-  | "config"
-  | "dangerColor"
-  | "pinPoint"
-  | "obstacles"
-  | "markerPoints"
-  | "blockedPath"
-  | "expanded"
->) {
-  return (
-    <>
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/55 via-slate-950/10 to-slate-950/25" />
-      <svg
-        viewBox="0 0 520 280"
-        preserveAspectRatio="xMidYMid meet"
-        className="pointer-events-none absolute inset-0 h-full w-full"
-        role="img"
-        aria-label="无障碍通行风险标注"
-      >
-        {!usingUserPhoto &&
-          config.zones.map((zone) => (
-            <g key={`${zone.x}-${zone.label}`}>
-              <rect
-                x={zone.x}
-                y={zone.y}
-                width={zone.w}
-                height={zone.h}
-                rx="8"
-                fill="#2563EB"
-                opacity="0.18"
-              />
-              <text
-                x={zone.x + 8}
-                y={zone.y + 18}
-                fontSize={expanded ? "13" : "11"}
-                fill="#E2E8F0"
-              >
-                {zone.label}
-              </text>
-            </g>
-          ))}
-
-        {!usingUserPhoto && (
-          <>
-            <path
-              d={config.mainPath}
-              stroke="#94A3B8"
-              strokeWidth="8"
-              strokeLinecap="round"
-              fill="none"
-              opacity="0.85"
-            />
-            <path
-              d={config.riskPath}
-              stroke={dangerColor}
-              strokeWidth="8"
-              strokeLinecap="round"
-              fill="none"
-            />
-          </>
-        )}
-
-        <circle cx={pinPoint.x} cy={pinPoint.y} r="14" fill={dangerColor} opacity="0.35" />
-        <circle
-          cx={pinPoint.x}
-          cy={pinPoint.y}
-          r="6"
-          fill={dangerColor}
-          stroke="#fff"
-          strokeWidth="2"
-        />
-
-        {obstacles.length > 0 ? (
-          obstacles.map((obstacle, index) => {
-            const point = markerPoints[index] ?? markerPoints[0];
-            return (
-              <g key={`${obstacle.name}-${index}`}>
-                <rect
-                  x={point.x - 10}
-                  y={point.y - 10}
-                  width="20"
-                  height="20"
-                  rx="4"
-                  fill="#DC2626"
-                  opacity="0.95"
-                />
-                <text
-                  x={point.x + 14}
-                  y={point.y + 4}
-                  fontSize={expanded ? "13" : "11"}
-                  fill="#FEE2E2"
-                >
-                  {obstacle.name}
-                </text>
-              </g>
-            );
-          })
-        ) : usingUserPhoto ? (
-          <text x="16" y="24" fontSize={expanded ? "13" : "11"} fill="#FEE2E2">
-            {blockedPath.length > (expanded ? 48 : 28)
-              ? `${blockedPath.slice(0, expanded ? 48 : 28)}…`
-              : blockedPath}
-          </text>
-        ) : null}
-      </svg>
-    </>
-  );
+function resolveSize(
+  size: ScenePhotoSize | undefined,
+  dense: boolean,
+  expanded: boolean,
+): ScenePhotoSize {
+  if (size) return size;
+  if (expanded) return "expanded";
+  if (dense) return "compact";
+  return "default";
 }
+
+const SIZE_CLASS: Record<ScenePhotoSize, string> = {
+  compact: "aspect-[4/3] max-h-52 rounded-lg",
+  hero: "aspect-[4/3] min-h-[12rem] w-full rounded-none sm:min-h-[15rem]",
+  split: "absolute inset-0 h-full w-full rounded-none",
+  default: "aspect-[16/10] rounded-xl",
+  expanded: "aspect-[4/3] max-h-[min(72vh,calc(100dvh-11rem))] rounded-xl",
+};
 
 export default function ScenePhotoFrame({
   mapPhoto,
   alt,
   dense = false,
   expanded = false,
-  blockedPath,
-  statusLabel,
-  activeStatus,
-  dangerColor,
-  usingUserPhoto,
-  obstacles,
-  markerPoints,
-  pinPoint,
-  config,
+  size,
+  usingUserPhoto = true,
+  overlay,
 }: ScenePhotoFrameProps) {
+  const resolved = resolveSize(size, dense, expanded);
+  const hasOverlay = Boolean(overlay);
+
   return (
     <div
-      className={`relative w-full overflow-hidden bg-slate-900 ${
-        expanded
-          ? "aspect-[4/3] max-h-[min(72vh,calc(100dvh-11rem))] rounded-xl"
-          : dense
-            ? "aspect-[4/3] max-h-44 rounded-lg"
-            : "aspect-[16/10] rounded-xl"
+      className={`relative overflow-hidden bg-slate-900 ${
+        resolved === "split" ? "h-full w-full" : SIZE_CLASS[resolved]
       }`}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -179,32 +76,32 @@ export default function ScenePhotoFrame({
         className="absolute inset-0 h-full w-full object-contain"
         draggable={false}
       />
-      <PhotoAnnotations
-        usingUserPhoto={usingUserPhoto}
-        config={config}
-        dangerColor={dangerColor}
-        pinPoint={pinPoint}
-        obstacles={obstacles}
-        markerPoints={markerPoints}
-        blockedPath={blockedPath}
-        expanded={expanded}
-      />
-      <div
-        className={`pointer-events-none absolute rounded-lg bg-slate-950/75 text-slate-100 backdrop-blur-sm ${
-          dense && !expanded
-            ? "bottom-2 left-2 right-2 px-2 py-1.5 text-[10px] leading-snug"
-            : "bottom-3 left-3 right-3 px-3 py-2 text-[11px]"
-        }`}
-      >
-        <p className={dense && !expanded ? "line-clamp-2" : undefined}>
-          受阻路径：{blockedPath}
-        </p>
-        <p style={{ color: dangerColor }}>
-          {statusLabel}状态：{PATH_STATUS_LABELS[activeStatus]}
-        </p>
-      </div>
+
+      {hasOverlay && (
+        <>
+          <div
+            className="pointer-events-none absolute inset-y-0 left-0 z-10 w-[min(46%,11.5rem)] bg-gradient-to-r from-slate-950/95 via-slate-950/82 to-slate-950/0 sm:w-[min(42%,13rem)]"
+            aria-hidden
+          />
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-20 flex w-[min(46%,11.5rem)] flex-col p-2 sm:w-[min(42%,13rem)] sm:p-2.5">
+            {overlay}
+          </div>
+        </>
+      )}
+
+      {!usingUserPhoto && (
+        <span className="absolute right-2 top-2 z-30 rounded bg-slate-900/70 px-1.5 py-0.5 text-[9px] text-white">
+          示意底图
+        </span>
+      )}
+
+      {hasOverlay && (
+        <span className="pointer-events-none absolute bottom-2 right-2 z-30 rounded bg-black/45 px-1.5 py-0.5 text-[9px] text-white/90">
+          左侧为示意摘要
+        </span>
+      )}
     </div>
   );
 }
 
-export type { SceneConfig };
+export type { SceneConfig, ScenePhotoSize };

@@ -40,10 +40,10 @@ function SchematicSvg({ patternId }: { patternId: string }) {
         strokeWidth="8"
         strokeLinecap="round"
       />
-      <circle cx="320" cy="172" r="28" fill="#2563eb" opacity="0.12" />
-      <circle cx="320" cy="172" r="9" fill="#2563eb" stroke="#fff" strokeWidth="3" />
+      <circle cx="120" cy="172" r="28" fill="#2563eb" opacity="0.12" />
+      <circle cx="120" cy="172" r="9" fill="#2563eb" stroke="#fff" strokeWidth="3" />
       <path
-        d="M320 148 L330 172 L320 166 L310 172 Z"
+        d="M120 148 L130 172 L120 166 L110 172 Z"
         fill="#1d4ed8"
         stroke="#fff"
         strokeWidth="1.5"

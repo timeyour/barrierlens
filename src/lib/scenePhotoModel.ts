@@ -36,48 +36,39 @@ function statusColor(pathStatus: AnalysisResult["pathStatus"]): string {
   return "#EF4444";
 }
 
+/** 示意标注统一落在照片左侧，避免误导为精确像素定位 */
+const LEFT_MARKER_X = 72;
+const LEFT_MARKER_START_Y = 68;
+const LEFT_MARKER_STEP_Y = 52;
+
+function leftObstaclePoints(count: number): Array<{ x: number; y: number }> {
+  const n = Math.max(1, Math.min(count, 3));
+  return Array.from({ length: n }, (_, index) => ({
+    x: LEFT_MARKER_X,
+    y: LEFT_MARKER_START_Y + index * LEFT_MARKER_STEP_Y,
+  }));
+}
+
 function fixedObstaclePoints(
   sceneType: AnalysisResult["sceneType"],
 ): Array<{ x: number; y: number }> {
   if (sceneType === "no_issue") return [];
-  if (sceneType === "accessible_entrance_blocked") {
-    return [
-      { x: 350, y: 150 },
-      { x: 310, y: 130 },
-      { x: 380, y: 170 },
-    ];
-  }
-  if (sceneType === "access_route_discontinuity") {
-    return [
-      { x: 280, y: 150 },
-      { x: 340, y: 190 },
-      { x: 235, y: 125 },
-    ];
-  }
-  return [
-    { x: 260, y: 130 },
-    { x: 300, y: 160 },
-    { x: 220, y: 105 },
-  ];
+  return leftObstaclePoints(3);
 }
 
 function photoObstaclePoints(count: number): Array<{ x: number; y: number }> {
-  const n = Math.max(1, Math.min(count, 3));
-  return Array.from({ length: n }, (_, index) => ({
-    x: Math.round(100 + (320 / (n + 1)) * (index + 1)),
-    y: 95 + (index % 2) * 55,
-  }));
+  return leftObstaclePoints(count);
 }
 
 export function getSceneConfig(sceneType: AnalysisResult["sceneType"]): SceneConfig {
   if (sceneType === "no_issue") {
     return {
       title: sceneTitle(sceneType),
-      mainPath: "M70 150 L180 150 L260 150 L340 150 L430 150",
+      mainPath: "M36 150 L108 150 L156 150",
       riskPath: "",
-      pin: { x: 250, y: 150 },
+      pin: { x: LEFT_MARKER_X, y: 150 },
       zones: [
-        { x: 34, y: 122, w: 380, h: 56, label: "通行路径清晰" },
+        { x: 20, y: 122, w: 168, h: 56, label: "通行路径清晰" },
       ],
       obstaclePoints: [],
     };
@@ -85,12 +76,12 @@ export function getSceneConfig(sceneType: AnalysisResult["sceneType"]): SceneCon
   if (sceneType === "accessible_entrance_blocked") {
     return {
       title: sceneTitle(sceneType),
-      mainPath: "M80 200 L220 200 L290 160 L360 120 L440 120",
-      riskPath: "M220 200 L290 160 L360 120",
-      pin: { x: 310, y: 145 },
+      mainPath: "M36 200 L96 200 L120 160",
+      riskPath: "M96 200 L120 160",
+      pin: { x: LEFT_MARKER_X, y: 155 },
       zones: [
-        { x: 28, y: 170, w: 150, h: 58, label: "人行区域" },
-        { x: 270, y: 88, w: 200, h: 70, label: "无障碍入口/坡道" },
+        { x: 20, y: 170, w: 132, h: 58, label: "人行区域" },
+        { x: 20, y: 88, w: 132, h: 70, label: "无障碍入口/坡道" },
       ],
       obstaclePoints: fixedObstaclePoints(sceneType),
     };
@@ -98,25 +89,24 @@ export function getSceneConfig(sceneType: AnalysisResult["sceneType"]): SceneCon
   if (sceneType === "access_route_discontinuity") {
     return {
       title: sceneTitle(sceneType),
-      mainPath: "M70 90 L180 90 L250 130 L300 180 L420 180",
-      riskPath: "M180 90 L250 130 L300 180",
-      pin: { x: 265, y: 155 },
+      mainPath: "M36 90 L96 90 L120 130",
+      riskPath: "M96 90 L120 130",
+      pin: { x: LEFT_MARKER_X, y: 130 },
       zones: [
-        { x: 24, y: 66, w: 180, h: 54, label: "道路侧" },
-        { x: 210, y: 114, w: 130, h: 90, label: "断点区域" },
-        { x: 356, y: 148, w: 130, h: 54, label: "入口通道" },
+        { x: 20, y: 66, w: 132, h: 54, label: "道路侧" },
+        { x: 20, y: 124, w: 132, h: 72, label: "断点区域" },
       ],
       obstaclePoints: fixedObstaclePoints(sceneType),
     };
   }
   return {
     title: sceneTitle(sceneType),
-    mainPath: "M70 80 L180 80 L240 130 L300 170 L430 170",
-    riskPath: "M180 80 L240 130 L300 170 L360 170",
-    pin: { x: 270, y: 135 },
+    mainPath: "M36 80 L96 80 L120 130",
+    riskPath: "M96 80 L120 130",
+    pin: { x: LEFT_MARKER_X, y: 120 },
     zones: [
-      { x: 34, y: 56, w: 170, h: 52, label: "盲道连续段" },
-      { x: 216, y: 110, w: 176, h: 78, label: "阻断风险段" },
+      { x: 20, y: 56, w: 132, h: 52, label: "盲道连续段" },
+      { x: 20, y: 112, w: 132, h: 78, label: "阻断风险段" },
     ],
     obstaclePoints: fixedObstaclePoints(sceneType),
   };
@@ -157,7 +147,7 @@ export function resolveScenePhotoModel(
       ? photoObstaclePoints(obstacles.length || 1)
       : config.obstaclePoints;
   const pinPoint = usingUserPhoto
-    ? markerPoints[0] ?? { x: 260, y: 130 }
+    ? markerPoints[0] ?? { x: LEFT_MARKER_X, y: 130 }
     : config.pin;
   const hasReviewPhoto = Boolean(result.reviewImageDataUrl);
   const statusLabel = hasReviewPhoto && compareView === "after" ? "整改后" : "现场";
@@ -185,44 +175,34 @@ function escapeXml(text: string): string {
 }
 
 export function buildAnnotationSvgMarkup(model: ScenePhotoModel): string {
-  const {
-    usingUserPhoto,
-    config,
-    dangerColor,
-    pinPoint,
-    obstacles,
-    markerPoints,
-    blockedPath,
-  } = model;
+  const { obstacles, blockedPath, dangerColor, activeStatus, statusLabel } = model;
+  const statusText = PATH_STATUS_LABELS[activeStatus];
 
-  const zones = !usingUserPhoto
-    ? config.zones
-        .map(
-          (zone) =>
-            `<rect x="${zone.x}" y="${zone.y}" width="${zone.w}" height="${zone.h}" rx="8" fill="#2563EB" opacity="0.18" /><text x="${zone.x + 8}" y="${zone.y + 18}" font-size="11" fill="#E2E8F0">${escapeXml(zone.label)}</text>`,
-        )
-        .join("")
-    : "";
-
-  const paths = !usingUserPhoto
-    ? `<path d="${config.mainPath}" stroke="#94A3B8" stroke-width="8" stroke-linecap="round" fill="none" opacity="0.85" /><path d="${config.riskPath}" stroke="${dangerColor}" stroke-width="8" stroke-linecap="round" fill="none" />`
-    : "";
-
-  const obstacleMarkup =
+  const cards =
     obstacles.length > 0
       ? obstacles
-          .map((obstacle, index) => {
-            const point = markerPoints[index] ?? markerPoints[0];
-            return `<rect x="${point.x - 10}" y="${point.y - 10}" width="20" height="20" rx="4" fill="#DC2626" opacity="0.95" /><text x="${point.x + 14}" y="${point.y + 4}" font-size="11" fill="#FEE2E2">${escapeXml(obstacle.name)}</text>`;
-          })
+          .map(
+            (obstacle) =>
+              `<li style="margin:0 0 8px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;list-style:none;">
+                <p style="margin:0;font-size:11px;font-weight:600;color:#0f172a;">${escapeXml(obstacle.name)}</p>
+                ${obstacle.position ? `<p style="margin:4px 0 0;font-size:10px;color:#475569;">${escapeXml(obstacle.position)}</p>` : ""}
+                ${obstacle.blocks ? `<p style="margin:4px 0 0;font-size:10px;color:#64748b;">影响：${escapeXml(obstacle.blocks)}</p>` : ""}
+              </li>`,
+          )
           .join("")
-      : usingUserPhoto
-        ? `<text x="16" y="24" font-size="11" fill="#FEE2E2">${escapeXml(
-            blockedPath.length > 40 ? `${blockedPath.slice(0, 40)}…` : blockedPath,
-          )}</text>`
-        : "";
+      : `<p style="margin:0;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;font-size:10px;color:#334155;">${escapeXml(blockedPath)}</p>`;
 
-  return `<svg viewBox="0 0 520 280" preserveAspectRatio="xMidYMid meet" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;">${zones}${paths}<circle cx="${pinPoint.x}" cy="${pinPoint.y}" r="14" fill="${dangerColor}" opacity="0.35" /><circle cx="${pinPoint.x}" cy="${pinPoint.y}" r="6" fill="${dangerColor}" stroke="#fff" stroke-width="2" />${obstacleMarkup}</svg>`;
+  return `<div style="position:absolute;inset:0;pointer-events:none;">
+  <div style="position:absolute;inset:0;background:linear-gradient(to right,rgba(2,6,23,0.95) 0%,rgba(2,6,23,0.82) 42%,transparent 78%);"></div>
+  <aside style="position:absolute;inset:0 auto 0 0;width:min(46%,13rem);display:flex;flex-direction:column;padding:10px;color:#f8fafc;">
+    <p style="margin:0;font-size:10px;font-weight:600;color:#e2e8f0;">诊断摘要</p>
+    <ul style="margin:8px 0 0;padding:0;list-style:none;flex:1;overflow:hidden;">${cards}</ul>
+    <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.15);font-size:9px;color:#cbd5e1;">
+      <p style="margin:0;">${escapeXml(blockedPath.length > 48 ? `${blockedPath.slice(0, 48)}…` : blockedPath)}</p>
+      <p style="margin:4px 0 0;color:${dangerColor};">${escapeXml(statusLabel)} · ${escapeXml(statusText)}</p>
+    </div>
+  </aside>
+</div>`;
 }
 
 export function buildAnnotatedPhotoSectionHtml(
@@ -230,20 +210,14 @@ export function buildAnnotatedPhotoSectionHtml(
   imageDataUrl: string,
 ): string {
   const model = resolveScenePhotoModel({ ...result, imageDataUrl });
-  const svg = buildAnnotationSvgMarkup(model);
-  const statusText = PATH_STATUS_LABELS[model.activeStatus];
+  const findings = buildAnnotationSvgMarkup(model);
 
   return `<section>
-  <h2>现场照片 · 示意标注</h2>
-  <p class="photo-note">标注来自 AI 诊断摘要，供核对参考，非精确测绘。</p>
-  <div class="photo-wrap">
+  <h2>现场照片 · 左侧标注</h2>
+  <p class="photo-note">摘要叠在照片左侧，非像素级定位。</p>
+  <div class="photo-wrap" style="position:relative;aspect-ratio:4/3;min-height:220px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#0f172a;">
     <img src="${imageDataUrl}" alt="现场照片" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;" />
-    <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(2,6,23,0.55),rgba(2,6,23,0.1),rgba(2,6,23,0.25));pointer-events:none;"></div>
-    ${svg}
-    <div style="position:absolute;left:10px;right:10px;bottom:10px;border-radius:8px;background:rgba(2,6,23,0.75);color:#f8fafc;padding:8px 10px;font-size:10px;line-height:1.45;">
-      <p style="margin:0 0 4px;">受阻路径：${escapeXml(model.blockedPath)}</p>
-      <p style="margin:0;color:${model.dangerColor};">${escapeXml(model.statusLabel)}状态：${escapeXml(statusText)}</p>
-    </div>
+    ${findings}
   </div>
 </section>`;
 }
