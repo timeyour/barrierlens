@@ -110,8 +110,8 @@ export function updateRecordReview(
     reviewNote?: string;
     reviewedAt?: string;
     reviewImageDataUrl?: string | null;
-    cloudReportId?: string;
-    reviewToken?: string;
+    cloudReportId?: string | null;
+    reviewToken?: string | null;
   },
 ): StoredRecord | null {
   const records = readAll();
@@ -140,12 +140,20 @@ export function updateRecordReview(
               : patch.reviewImageDataUrl,
         }
       : {}),
-    ...(patch.cloudReportId !== undefined
-      ? { cloudReportId: patch.cloudReportId }
-      : {}),
-    ...(patch.reviewToken !== undefined ? { reviewToken: patch.reviewToken } : {}),
     reviewedAt: patch.reviewedAt ?? (touched ? new Date().toISOString() : current.reviewedAt),
   };
+
+  if (patch.cloudReportId === null) {
+    delete next.cloudReportId;
+  } else if (patch.cloudReportId !== undefined) {
+    next.cloudReportId = patch.cloudReportId;
+  }
+
+  if (patch.reviewToken === null) {
+    delete next.reviewToken;
+  } else if (patch.reviewToken !== undefined) {
+    next.reviewToken = patch.reviewToken;
+  }
   records[idx] = next;
   writeAll(records);
   return next;

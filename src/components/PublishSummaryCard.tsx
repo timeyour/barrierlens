@@ -10,6 +10,9 @@ interface PublishSummaryCardProps {
   publishedId: string | null;
   publishError: string | null;
   onPublish: () => void | Promise<void>;
+  unpublishing?: boolean;
+  unpublishError?: string | null;
+  onUnpublish?: () => void | Promise<void>;
   embedded?: boolean;
 }
 
@@ -19,6 +22,9 @@ export default function PublishSummaryCard({
   publishedId,
   publishError,
   onPublish,
+  unpublishing = false,
+  unpublishError = null,
+  onUnpublish,
   embedded = false,
 }: PublishSummaryCardProps) {
   const [consented, setConsented] = useState(false);
@@ -36,6 +42,26 @@ export default function PublishSummaryCard({
         >
           查看公开页
         </Link>
+        {onUnpublish && (
+          <div className="mt-3 space-y-2">
+            <button
+              type="button"
+              disabled={unpublishing}
+              onClick={() => void onUnpublish()}
+              className="rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-50 disabled:opacity-50"
+            >
+              {unpublishing ? "正在撤回…" : "撤回公开"}
+            </button>
+            <p className="text-[11px] leading-relaxed text-emerald-900/80">
+              仅本人可撤回；本机档案仍保留，可再次公开。
+            </p>
+            {unpublishError && (
+              <p className="text-xs text-red-600" role="alert">
+                {unpublishError}
+              </p>
+            )}
+          </div>
+        )}
       </section>
     );
   }

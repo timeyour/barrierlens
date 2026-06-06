@@ -5,6 +5,7 @@ import BarrierMap from "@/components/BarrierMap";
 import PhotoCompareSlider from "@/components/PhotoCompareSlider";
 import ReportLocationMap from "@/components/ReportLocationMap";
 import PhotoAccessRequestsPanel from "@/components/PhotoAccessRequestsPanel";
+import SavedRecordPublicSection from "@/components/SavedRecordPublicSection";
 import SpatialDiagnosisTags from "@/components/SpatialDiagnosisTags";
 import { downloadPdfReport } from "@/lib/exportPdf";
 import { displayLocationLabel } from "@/lib/locationValidation";
@@ -144,6 +145,8 @@ export default function SavedRecordArchive({ record }: SavedRecordArchiveProps) 
 
       <PhotoAccessRequestsPanel record={record} />
 
+      <SavedRecordPublicSection record={record} />
+
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
@@ -169,7 +172,7 @@ export default function SavedRecordArchive({ record }: SavedRecordArchiveProps) 
       </div>
 
       <p className="text-[11px] text-slate-500">
-        完整地址仅在本机。公开到案例池需单独勾选确认，公开后他人可见现场照片（位置仍模糊）。
+        完整地址仅在本机。公开到案例池需单独勾选确认；公开后可在本页撤回，他人可见现场照片（位置仍模糊）。
       </p>
     </article>
   );

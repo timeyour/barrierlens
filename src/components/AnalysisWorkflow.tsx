@@ -25,6 +25,10 @@ import { getBrowserLocation } from "@/lib/geolocation";
 import PublishSummaryCard, { previewFuzzyLocation } from "@/components/PublishSummaryCard";
 import { publishReportToCloud } from "@/lib/syncReport";
 import {
+  UNPUBLISH_CONFIRM_MESSAGE,
+  unpublishStoredRecord,
+} from "@/lib/unpublishReport";
+import {
   displayLocationLabel,
   isLocationUsable,
   locationValidationHint,
@@ -178,6 +182,8 @@ export default function AnalysisWorkflow({
   const [cloudReportId, setCloudReportId] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
+  const [unpublishing, setUnpublishing] = useState(false);
+  const [unpublishError, setUnpublishError] = useState<string | null>(null);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
   useEffect(() => {
@@ -238,6 +244,8 @@ export default function AnalysisWorkflow({
     setCloudReportId(null);
     setPublishError(null);
     setPublishing(false);
+    setUnpublishError(null);
+    setUnpublishing(false);
     setShowAdvancedOptions(false);
   }, []);
 
@@ -412,6 +420,29 @@ export default function AnalysisWorkflow({
       }
     } finally {
       setPublishing(false);
+    }
+  };
+
+  const handleUnpublishSummary = async () => {
+    if (!savedRecordId) return;
+    const stored = getRecordByLocalId(savedRecordId);
+    if (!stored?.cloudReportId) {
+      setUnpublishError("该记录未公开");
+      return;
+    }
+    if (!window.confirm(UNPUBLISH_CONFIRM_MESSAGE)) return;
+
+    setUnpublishing(true);
+    setUnpublishError(null);
+    try {
+      const result = await unpublishStoredRecord(stored);
+      if (result.ok) {
+        setCloudReportId(null);
+        return;
+      }
+      setUnpublishError(result.message);
+    } finally {
+      setUnpublishing(false);
     }
   };
 
@@ -988,6 +1019,9 @@ export default function AnalysisWorkflow({
                     publishedId={cloudReportId}
                     publishError={publishError}
                     onPublish={handlePublishSummary}
+                    unpublishing={unpublishing}
+                    unpublishError={unpublishError}
+                    onUnpublish={handleUnpublishSummary}
                   />
                 ) : null
               }

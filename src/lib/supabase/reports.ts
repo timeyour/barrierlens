@@ -213,6 +213,55 @@ export async function listPhotoAccessRequests(input: {
   return (data ?? []) as PhotoAccessRequest[];
 }
 
+export async function deleteCloudReport(input: {
+  reportId: string;
+  localId: string;
+  reviewToken: string;
+}): Promise<"deleted" | "forbidden" | "not_found" | "error"> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return "error";
+
+  const { data: report, error: reportError } = await supabase
+    .from(REPORTS_TABLE)
+    .select("local_id, review_token, image_path")
+    .eq("id", input.reportId)
+    .maybeSingle();
+
+  if (reportError) {
+    console.error("[supabase] load report for delete failed:", reportError.message);
+    return "error";
+  }
+  if (!report) return "not_found";
+  if (report.local_id !== input.localId) return "forbidden";
+  if (report.review_token !== input.reviewToken) return "forbidden";
+
+  const imagePath =
+    typeof report.image_path === "string" && report.image_path
+      ? report.image_path
+      : null;
+
+  const { error: deleteError } = await supabase
+    .from(REPORTS_TABLE)
+    .delete()
+    .eq("id", input.reportId);
+
+  if (deleteError) {
+    console.error("[supabase] delete report failed:", deleteError.message);
+    return "error";
+  }
+
+  if (imagePath) {
+    const { error: storageError } = await supabase.storage
+      .from(IMAGE_BUCKET)
+      .remove([imagePath]);
+    if (storageError) {
+      console.error("[supabase] delete report image failed:", storageError.message);
+    }
+  }
+
+  return "deleted";
+}
+
 export async function updatePhotoAccessRequestStatus(input: {
   reportId: string;
   requestId: string;
