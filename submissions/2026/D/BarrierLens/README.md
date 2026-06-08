@@ -77,5 +77,5 @@ Production 验收：结果页 banner 显示 `analysisSource=gemma`（非 Mock）
 ## PR 信息（组委会）
 
 - **PR 标题**：`[赛道D] 无碍 BarrierLens - 小马过河`
-- **Fork 路径**：`submissions/2026/D/BarrierLens/`
+- **Fork 路径**：`submissions/2026/track_D/BarrierLens/`（官方仓实际目录名是 `track_D`，不是 `D`）
 - **登记表单**：https://hackathon.googdg.cn/onsite-submit（上传方式选 **A. Official repo Fork & PR**）

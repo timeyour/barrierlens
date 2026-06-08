@@ -18,11 +18,11 @@
 ```bash
 # 假设已 clone 你的 fork 到 ../Gemma4-Hackathon-ShangHai
 FORK=../Gemma4-Hackathon-ShangHai   # 改成你的 fork 路径
-mkdir -p "$FORK/submissions/2026/D/BarrierLens"
-cp submissions/2026/D/BarrierLens/* "$FORK/submissions/2026/D/BarrierLens/"
+mkdir -p "$FORK/submissions/2026/track_D/BarrierLens"
+cp submissions/2026/D/BarrierLens/* "$FORK/submissions/2026/track_D/BarrierLens/"
 cd "$FORK"
 git checkout -b submit/barrierlens-d
-git add submissions/2026/D/BarrierLens/
+git add submissions/2026/track_D/BarrierLens/
 git commit -m "submit: [赛道D] 无碍 BarrierLens - 小马过河"
 git push -u origin submit/barrierlens-d
 ```
@@ -56,7 +56,7 @@ https://hackathon.googdg.cn/onsite-submit
 | 字段 | 填写 |
 |------|------|
 | 上传方式 | **A. Official repo Fork & PR** |
-| Fork 文件夹 URL | `https://github.com/gdgshanghai/Gemma4-Hackathon-ShangHai/tree/main/submissions/2026/D/BarrierLens`（PR 合并前填你 fork 里同路径链接） |
+| Fork 文件夹 URL | `https://github.com/timeyour/Gemma4-Hackathon-ShangHai/tree/submit/barrierlens-d/submissions/2026/track_D/BarrierLens`（Fork 并 push 后填写） |
 | 赛道 | Track D: AI for Social Good |
 | 项目描述 | 见下方 |
 
