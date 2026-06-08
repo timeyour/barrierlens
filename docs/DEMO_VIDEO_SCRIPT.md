@@ -78,3 +78,13 @@
 - 移动端截图或短片展示响应式可用。
 - 如果使用 Mock，口播和画面必须明确说明。
 - 视频时长不要超过 5 分钟。
+
+## 成片（最终版）
+
+| 项 | 内容 |
+|----|------|
+| **标题** | BarrierLens_Gemma4_demo_final |
+| **链接** | https://www.bilibili.com/video/BV1LtEg6zEqS/ |
+| **平台** | B 站（国内评委 / 分享） |
+| **时长** | ≤ 5 分钟（按本脚本录制） |
+| **录制站点** | https://barrierlens-1utx.vercel.app/#tool |

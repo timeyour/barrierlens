@@ -11,9 +11,10 @@
 | **赛事** | [Gemma 4 开发者大赛 2026](https://ai.google.dev/) · 上海站 · **赛道 D · AI for Social Good** |
 | **仓库** | https://github.com/timeyour/barrierlens |
 | **在线 Demo** | https://barrierlens-1utx.vercel.app/#tool （提交 / 录视频 / 评委只用这一条；`#tool` 直达工作台） |
+| **Demo 视频** | [BarrierLens_Gemma4_demo_final](https://www.bilibili.com/video/BV1LtEg6zEqS/)（B 站 · ≤5 分钟） |
 | **Hackathon 版本** | [`v0.1-hackathon-demo`](https://github.com/timeyour/barrierlens/releases/tag/v0.1-hackathon-demo) |
 
-**提交四件套：** 代码仓库 · 在线 Demo · Demo 视频 · [技术报告](docs/TECHNICAL_REPORT.md)
+**提交四件套：** 代码仓库 · 在线 Demo · [Demo 视频](https://www.bilibili.com/video/BV1LtEg6zEqS/) · [技术报告](docs/TECHNICAL_REPORT.md)
 
 - Demo 视频脚本: [docs/DEMO_VIDEO_SCRIPT.md](docs/DEMO_VIDEO_SCRIPT.md)
 
@@ -24,6 +25,7 @@
 | 用途 | 地址 |
 |------|------|
 | **在线 Demo** | https://barrierlens-1utx.vercel.app/#tool |
+| **Demo 视频** | https://www.bilibili.com/video/BV1LtEg6zEqS/（`BarrierLens_Gemma4_demo_final`） |
 | **代码仓库** | https://github.com/timeyour/barrierlens |
 
 说明（不必记第三条链接）：
@@ -191,7 +193,7 @@ npm run test:multiround
 |------|------|------|
 | 代码仓库 | 已具备 | GitHub `timeyour/barrierlens` |
 | 在线 Demo | 已具备 | Vercel 部署 |
-| Demo 视频 <= 5 分钟 | 待录制 | 见 `docs/DEMO_VIDEO_SCRIPT.md` |
+| Demo 视频 <= 5 分钟 | 已具备 | [B 站 · BarrierLens_Gemma4_demo_final](https://www.bilibili.com/video/BV1LtEg6zEqS/) · 脚本见 `docs/DEMO_VIDEO_SCRIPT.md` |
 | 技术报告 | 初稿已补 | 见 `docs/TECHNICAL_REPORT.md` |
 | Gemma 证明链 | 已补 | 见 `docs/MODEL_PROVENANCE.md` 等三文档 |
 | 官方提交包 | 已建目录 | 见 `submissions/2026/D/BarrierLens/` |

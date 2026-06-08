@@ -11,6 +11,7 @@
 | 用途 | 地址 |
 |------|------|
 | **在线 Demo** | https://barrierlens-1utx.vercel.app/#tool |
+| **Demo 视频** | https://www.bilibili.com/video/BV1LtEg6zEqS/（`BarrierLens_Gemma4_demo_final`） |
 | **代码仓库** | https://github.com/timeyour/barrierlens |
 
 `barrierlens.vercel.app` 为同一部署的短别名（国内部分 DNS 可能 403）；提交材料与录视频**只写上表 Demo**，不要另写其它 `barrierlens-*.vercel.app`。
@@ -23,7 +24,7 @@
 |------|------|------|
 | 代码仓库 | ✅ | https://github.com/timeyour/barrierlens |
 | 在线 Demo | ✅ | https://barrierlens-1utx.vercel.app/#tool |
-| Demo 视频（≤5 分钟） | ⏳ 待录制 | 脚本：[docs/DEMO_VIDEO_SCRIPT.md](../../docs/DEMO_VIDEO_SCRIPT.md) |
+| Demo 视频（≤5 分钟） | ✅ | [B 站 · BarrierLens_Gemma4_demo_final](https://www.bilibili.com/video/BV1LtEg6zEqS/) · 脚本：[docs/DEMO_VIDEO_SCRIPT.md](../../docs/DEMO_VIDEO_SCRIPT.md) |
 | 技术报告 | ✅ | [docs/TECHNICAL_REPORT.md](../../docs/TECHNICAL_REPORT.md) |
 
 ---
@@ -71,5 +72,5 @@ Vercel → 项目 **barrierlens** → Deployments → Production：
 - [ ] `npm run build` 通过
 - [ ] Production Gemma 4 真实推理可用
 - [ ] `/reports` 有可读公开案例（可选但建议）
-- [ ] Demo 视频已录制并填入链接
+- [x] Demo 视频已录制并填入链接
 - [ ] 演示中 Mock / mock_fallback 已口播标注

@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["127.0.0.1", "localhost"],
   // 确保构建时注入 NEXT_PUBLIC_AMAP_KEY（Vercel 配好后需 Redeploy）
   env: {
     NEXT_PUBLIC_AMAP_KEY: process.env.NEXT_PUBLIC_AMAP_KEY ?? "",

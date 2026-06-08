@@ -113,10 +113,30 @@ export default function ParallaxVideoHero({
     return <WorkbenchHero />;
   }
 
-  return <FullParallaxHero singleViewport={singleViewport} />;
+  if (singleViewport) {
+    return <SingleViewportHero />;
+  }
+
+  return <FullParallaxScrollHero />;
 }
 
-function FullParallaxHero({ singleViewport = false }: { singleViewport?: boolean }) {
+function SingleViewportHero() {
+  return (
+    <header
+      className="mobile-no-snap relative z-0 h-[100svh] min-h-[100svh] max-h-[100svh] overflow-hidden"
+      data-nav-surface="hero"
+    >
+      <HeroVideoLayer />
+      <div className="pointer-events-none relative z-10 flex h-full items-center justify-center px-4 py-20 md:px-6">
+        <div className="pointer-events-auto">
+          <HeroKineticType />
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function FullParallaxScrollHero() {
   const containerRef = useRef<HTMLElement>(null);
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
@@ -127,19 +147,6 @@ function FullParallaxHero({ singleViewport = false }: { singleViewport?: boolean
 
   const bgScale = useTransform(scrollYProgress, [0, 1], isDesktop ? [1, 1.06] : [1, 1]);
   const scrollHintOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
-
-  if (singleViewport) {
-    return (
-      <header className="mobile-no-snap relative z-0 h-[100svh] min-h-[100svh] max-h-[100svh] overflow-hidden" data-nav-surface="hero">
-        <HeroVideoLayer />
-        <div className="pointer-events-none relative z-10 flex h-full items-center justify-center px-4 py-20 md:px-6">
-          <div className="pointer-events-auto">
-            <HeroKineticType />
-          </div>
-        </div>
-      </header>
-    );
-  }
 
   return (
     <header

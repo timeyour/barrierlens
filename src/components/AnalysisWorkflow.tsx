@@ -13,7 +13,7 @@ import GemmaJsonOutput from "@/components/GemmaJsonOutput";
 import WizardStepIndicator from "@/components/WizardStepIndicator";
 import { downloadPdfReport } from "@/lib/exportPdf";
 import { buildDispatchScript } from "@/lib/dispatchScript";
-import { compressImageForUpload, fileToStoredImageDataUrl } from "@/lib/imageUtils";
+import { compressImageForUpload, fileFromStoredImage, fileToStoredImageDataUrl } from "@/lib/imageUtils";
 import { RecordStorageError, getRecordByLocalId, saveRecord, updateRecordReview } from "@/lib/recordStore";
 import { syncRecordToCloud } from "@/lib/recordSync";
 import { scrollResultsIntoView, scrollToAnchor } from "@/lib/scrollAnchor";
@@ -184,6 +184,8 @@ export default function AnalysisWorkflow({
   const [publishError, setPublishError] = useState<string | null>(null);
   const [unpublishing, setUnpublishing] = useState(false);
   const [unpublishError, setUnpublishError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
   useEffect(() => {
@@ -246,6 +248,8 @@ export default function AnalysisWorkflow({
     setPublishing(false);
     setUnpublishError(null);
     setUnpublishing(false);
+    setExportError(null);
+    setExporting(false);
     setShowAdvancedOptions(false);
   }, []);
 
@@ -375,8 +379,8 @@ export default function AnalysisWorkflow({
   }, [savedRecordId]);
 
   const handlePublishSummary = async () => {
-    if (!savedRecordId || !file) {
-      setPublishError("无法公开：缺少本机档案或照片");
+    if (!savedRecordId) {
+      setPublishError("无法公开：本机档案未保存，请重新分析或清理浏览器旧记录后重试");
       return;
     }
     const stored = getRecordByLocalId(savedRecordId);
@@ -385,12 +389,21 @@ export default function AnalysisWorkflow({
       return;
     }
 
+    let imageFile = file;
+    if (!imageFile) {
+      imageFile = await fileFromStoredImage(stored);
+    }
+    if (!imageFile) {
+      setPublishError("无法公开：缺少现场照片，请重新上传并分析");
+      return;
+    }
+
     setPublishing(true);
     setPublishError(null);
     try {
       const publish = await publishReportToCloud({
         stored,
-        imageFile: file,
+        imageFile,
         analysisSource,
         requireLocationForCloud: flags.locationRequired,
       });
@@ -480,7 +493,14 @@ export default function AnalysisWorkflow({
     scrollToAnchor("#tool-analyzing", "auto");
 
     const formData = new FormData();
-    const uploadFile = await compressImageForUpload(analyzeFile);
+    let uploadFile: File;
+    try {
+      uploadFile = await compressImageForUpload(analyzeFile);
+    } catch (error) {
+      throw new Error(
+        error instanceof Error ? error.message : "图片处理失败，请换 JPG/PNG 后重试",
+      );
+    }
     formData.append("image", uploadFile);
     formData.append("targetDepartment", targetDepartment);
     formData.append("recordMode", recordMode);
@@ -651,14 +671,24 @@ export default function AnalysisWorkflow({
 
   const handleExport = async () => {
     if (!result) return;
+    setExportError(null);
+    setExporting(true);
     try {
+      const imageDataUrl =
+        "imageDataUrl" in result && typeof result.imageDataUrl === "string"
+          ? result.imageDataUrl
+          : previewUrl ?? undefined;
       await downloadPdfReport(result, {
         mode: recordMode,
-        imageDataUrl: previewUrl ?? undefined,
+        imageDataUrl,
       });
       markRecordExported();
-    } catch {
-      setErrorMessage("PDF 导出失败，请稍后重试");
+    } catch (error) {
+      setExportError(
+        error instanceof Error ? error.message : "PDF 导出失败，请稍后重试",
+      );
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -1003,16 +1033,18 @@ export default function AnalysisWorkflow({
                   }
                   copySuccess={copySuccess}
                   onCopy={() => void handleCopy()}
-                  onExport={handleExport}
+                  onExport={() => void handleExport()}
                   onMarkReported={markRecordReported}
                   analysisNote={analysisNote}
                   dispatchScriptEnabled={flags.dispatchScript}
                   dispatchCopySuccess={dispatchCopySuccess}
                   onCopyDispatch={() => void handleCopyDispatch()}
+                  exportError={exportError}
+                  exporting={exporting}
                 />
               }
               publishSlot={
-                savedRecordId ? (
+                result ? (
                   <PublishSummaryCard
                     fuzzyLocationPreview={previewFuzzyLocation(result.location)}
                     publishing={publishing}
@@ -1022,6 +1054,7 @@ export default function AnalysisWorkflow({
                     unpublishing={unpublishing}
                     unpublishError={unpublishError}
                     onUnpublish={handleUnpublishSummary}
+                    archiveReady={Boolean(savedRecordId)}
                   />
                 ) : null
               }

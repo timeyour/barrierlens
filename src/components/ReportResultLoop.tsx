@@ -36,6 +36,8 @@ interface ReportResultLoopProps {
   dispatchScriptEnabled?: boolean;
   dispatchCopySuccess?: boolean;
   onCopyDispatch?: () => void;
+  exportError?: string | null;
+  exporting?: boolean;
 }
 
 export default function ReportResultLoop({
@@ -49,6 +51,8 @@ export default function ReportResultLoop({
   dispatchScriptEnabled = false,
   dispatchCopySuccess = false,
   onCopyDispatch,
+  exportError = null,
+  exporting = false,
 }: ReportResultLoopProps) {
   const step = progressIndex(reviewStatus);
   const reported = step >= 2;
@@ -81,10 +85,11 @@ export default function ReportResultLoop({
       <div className="mt-3 flex flex-wrap gap-2">
         <button
           type="button"
+          disabled={exporting}
           onClick={onExport}
-          className="btn-primary rounded-lg px-4 py-2 text-sm font-semibold"
+          className="btn-primary rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-60"
         >
-          导出 PDF
+          {exporting ? "正在导出…" : "导出 PDF"}
         </button>
         {dispatchScriptEnabled && onCopyDispatch ? (
           <button
@@ -119,6 +124,11 @@ export default function ReportResultLoop({
         递出前请核对摘要与照片
         {dispatchScriptEnabled ? " · AI 仅供参考" : ""}
       </p>
+      {exportError && (
+        <p className="mt-2 text-xs text-red-600" role="alert">
+          {exportError}
+        </p>
+      )}
     </section>
   );
 }

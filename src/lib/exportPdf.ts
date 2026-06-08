@@ -4,6 +4,7 @@ import {
   getEffectiveMode,
   type ExportReportOptions,
 } from "@/lib/exportReportContent";
+import { resolveImageDataUrlForExport } from "@/lib/imageUtils";
 import type { AnalysisResult } from "@/types/analysis";
 
 export async function downloadPdfReport(
@@ -13,12 +14,14 @@ export async function downloadPdfReport(
   if (typeof window === "undefined") return;
 
   const mode = getEffectiveMode(result, options?.mode);
-  const html = buildReportHtml(result, mode, options?.imageDataUrl);
+  const imageDataUrl = await resolveImageDataUrlForExport(options?.imageDataUrl);
+  const html = buildReportHtml(result, mode, imageDataUrl);
   const container = document.createElement("div");
   container.innerHTML = html;
   container.style.position = "fixed";
   container.style.left = "-10000px";
   container.style.top = "0";
+  container.style.width = "210mm";
   document.body.appendChild(container);
 
   const reportNode = container.querySelector(".report");
@@ -28,7 +31,8 @@ export async function downloadPdfReport(
   }
 
   try {
-    const html2pdf = (await import("html2pdf.js")).default;
+    const mod = await import("html2pdf.js");
+    const html2pdf = mod.default ?? mod;
     await html2pdf()
       .set({
         margin: [10, 10, 10, 10],
@@ -36,7 +40,8 @@ export async function downloadPdfReport(
         image: { type: "jpeg", quality: 0.92 },
         html2canvas: {
           scale: 2,
-          useCORS: true,
+          useCORS: false,
+          allowTaint: true,
           logging: false,
         },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
@@ -44,6 +49,10 @@ export async function downloadPdfReport(
       })
       .from(reportNode)
       .save();
+  } catch (error) {
+    const detail =
+      error instanceof Error && error.message ? error.message : "html2pdf 渲染失败";
+    throw new Error(`PDF 导出失败：${detail}`);
   } finally {
     document.body.removeChild(container);
   }

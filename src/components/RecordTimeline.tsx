@@ -8,7 +8,7 @@ import {
   purgeDemoRecords,
   updateRecordReview,
 } from "@/lib/recordStore";
-import { fileToStoredImageDataUrl } from "@/lib/imageUtils";
+import { fileToStoredImageDataUrl, isAcceptableImageFile } from "@/lib/imageUtils";
 import {
   REVIEW_STATUS_LABELS,
   type ReviewStatus,
@@ -199,7 +199,7 @@ function RecordItem({ record, flow = false }: { record: StoredRecord; flow?: boo
   };
 
   const handleReviewPhotoSelect = async (file: File | undefined) => {
-    if (!file || !file.type.startsWith("image/")) return;
+    if (!file || !isAcceptableImageFile(file)) return;
     setUploading(true);
     try {
       const reviewImageDataUrl = await fileToStoredImageDataUrl(file);
