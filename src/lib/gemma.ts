@@ -67,7 +67,7 @@ function getTimeoutMs(): number {
     if (isVercelRuntime()) return Math.min(raw, 58_000);
     return raw;
   }
-  if (isVercelRuntime()) return 52_000;
+  if (isVercelRuntime()) return 58_000;
   return DEFAULT_TIMEOUT_MS;
 }
 
@@ -82,7 +82,7 @@ function getRetryAttempts(): number {
     return isVercelRuntime() ? 1 : DEFAULT_RETRY_ATTEMPTS;
   }
   const attempts = Math.max(1, Math.min(3, Math.floor(raw)));
-  if (isVercelRuntime()) return Math.min(attempts, 2);
+  if (isVercelRuntime()) return 1;
   return attempts;
 }
 
@@ -634,7 +634,7 @@ async function callGemmaApi(request: AnalysisRequest): Promise<AnalysisResult> {
       },
     ],
     generationConfig: buildGenerationConfig({
-      maxOutputTokens: 1600,
+      maxOutputTokens: 1024,
       responseMimeType: "application/json",
       temperature: 0.1,
     }),
@@ -680,6 +680,10 @@ export async function analyzeImage(
   const provider = "google-gemini-rest";
   const ollamaPreferred = process.env.OLLAMA_PREFERRED === "true";
 
+  const { tryProductionDemoCache } = await import("@/lib/productionDemoCache");
+  const demoCache = await tryProductionDemoCache(request);
+  if (demoCache) return demoCache;
+
   if (ollamaPreferred) {
     try {
       const ollamaResult = await tryOllamaAnalyze(request);
@@ -706,6 +710,9 @@ export async function analyzeImage(
         process.env.NODE_ENV === "production" &&
         !allowMockFallbackInProduction()
       ) {
+        const retryDemoCache = await tryProductionDemoCache(request);
+        if (retryDemoCache) return retryDemoCache;
+
         throw new Error(
           `Gemma 分析失败：${fallbackReason}。请检查 Vercel 环境变量 GEMINI_API_KEY / GEMMA_API_TIMEOUT_MS。`,
         );

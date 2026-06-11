@@ -127,7 +127,9 @@ function SubmitLoadingPanel({ label }: { label: string }) {
       <p className="text-center text-xs leading-relaxed text-slate-500">
         {prefersLocalOllama()
           ? "本机 Ollama 分析中，约需 2–3 分钟，请勿关闭页面"
-          : "Gemma 4 分析中，约需 15–30 秒，请勿关闭页面"}
+          : prefersLocalOllama()
+            ? "Gemma 4 分析中，约需 15–60 秒，请勿关闭页面"
+            : "Gemma 4 分析中（样例图约 2 秒，上传照片约 15–60 秒），请勿关闭页面"}
       </p>
     </div>
   );

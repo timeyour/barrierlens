@@ -90,15 +90,18 @@ export async function mockAnalyze(
   recordMode: RecordMode,
   location?: string,
   fileName?: string,
+  options?: { skipDelay?: boolean },
 ): Promise<AnalysisResult> {
   const seed = fileName ?? imageBase64.slice(0, 64);
   const preset = pickMockPreset(fileName, seed);
   const recordedAt = new Date().toISOString();
   const place = location?.trim() || "";
 
-  await new Promise((resolve) =>
-    setTimeout(resolve, 600 + (hashString(seed) % 400)),
-  );
+  if (!options?.skipDelay) {
+    await new Promise((resolve) =>
+      setTimeout(resolve, 600 + (hashString(seed) % 400)),
+    );
+  }
 
   const advocacyText = buildAdvocacyText(preset, place, targetDepartment);
   const inspectionText = buildInspectionText(preset, place, targetDepartment);
