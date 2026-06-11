@@ -791,6 +791,12 @@ export async function analyzeImage(
   const demoCache = await tryProductionDemoCache(request);
   if (demoCache) return demoCache;
 
+  if (request.demoSample && isVercelRuntime()) {
+    throw new Error(
+      "样例图分析失败：线上快速通道未生效。请刷新页面后先点「使用样例图」，或换 https://barrierlens.vercel.app/#tool 再试。",
+    );
+  }
+
   if (nvidiaPreferred) {
     try {
       const nvidiaResult = await tryNvidiaNimAnalyze(request);

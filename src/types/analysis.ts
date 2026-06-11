@@ -77,6 +77,8 @@ export interface AnalysisRequest {
   recordMode: RecordMode;
   location?: string;
   fileName?: string;
+  /** 客户端标记内置样例图，线上走 productionDemoCache */
+  demoSample?: boolean;
   /** 服务端：供 Vercel 多级压缩重试，勿传到客户端 */
   sourceBuffer?: Buffer;
 }

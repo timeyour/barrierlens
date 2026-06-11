@@ -87,6 +87,8 @@ export async function POST(request: Request) {
     );
 
     const startedAt = performance.now();
+    const demoSample = formData.get("demoSample") === "1";
+
     const analysis = await analyzeImage({
       imageBase64,
       sourceBuffer,
@@ -94,6 +96,7 @@ export async function POST(request: Request) {
       recordMode,
       location: locationResult.location,
       fileName: image.name,
+      demoSample,
     });
     const analysisTimeMs = Math.round(performance.now() - startedAt);
 
@@ -120,7 +123,10 @@ export async function POST(request: Request) {
 
 function formatAnalyzeErrorMessage(detail: string): string {
   if (/timeout|abort/i.test(detail)) {
-    return "分析超时：Gemma 4 在时限内未完成（已尝试备用模型）。演示请用「使用样例图」，自拍可稍后或换 gemma-4-31b-it 再试。";
+    return "分析超时：上传照片在 Vercel 60 秒内未完成 Gemma 推理。演示请先点「使用样例图」（标签应显示「样例图」），约 2 秒出结果；若仍是自拍，请点清除后重选样例图。";
+  }
+  if (/样例图分析失败/i.test(detail)) {
+    return detail;
   }
   if (/HTTP 500|Internal error encountered|InternalServerError/i.test(detail)) {
     return "Google Gemma API 暂时故障（500）。请稍后重试，或先点「使用样例图」完成演示。";

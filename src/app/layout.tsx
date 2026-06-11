@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { AuthDialogProvider } from "@/components/AuthDialogProvider";
 import LocalDevBanner from "@/components/LocalDevBanner";
-import { HERO_POSTER, HERO_VIDEO } from "@/config/uiAssets";
+import { HERO_POSTER } from "@/config/uiAssets";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -25,7 +25,6 @@ export default function RootLayout({
     <html lang="zh-CN">
       <head>
         <link rel="preload" href={HERO_POSTER} as="image" />
-        <link rel="preload" href={HERO_VIDEO.split("#")[0]} as="fetch" crossOrigin="anonymous" />
       </head>
       <body className="min-h-screen font-sans antialiased">
         <LocalDevBanner />

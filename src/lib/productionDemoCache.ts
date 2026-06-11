@@ -27,7 +27,9 @@ export async function tryProductionDemoCache(
   modelName: string;
   provider: string;
 } | null> {
-  if (!isProductionDemoCacheEnabled() || !isDemoSampleFile(request.fileName)) {
+  const isDemo =
+    request.demoSample === true || isDemoSampleFile(request.fileName);
+  if (!isProductionDemoCacheEnabled() || !isDemo) {
     return null;
   }
 

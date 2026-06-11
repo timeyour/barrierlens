@@ -264,18 +264,17 @@ function RecordItem({ record, flow = false }: { record: StoredRecord; flow?: boo
           >
             展开 ↓
           </p>
+        </summary>
+
+        <div className="border-t border-slate-100 px-4 pb-4 pt-3">
           <Link
             href={`/saved/${record.id}`}
-            onClick={(e) => e.stopPropagation()}
-            className={`mt-2 inline-block text-xs font-semibold ${
+            className={`mb-3 inline-block text-xs font-semibold ${
               flow ? "text-emerald-300 hover:text-emerald-200" : "text-emerald-700 hover:text-emerald-800"
             }`}
           >
             档案 →
           </Link>
-        </summary>
-
-        <div className="border-t border-slate-100 px-4 pb-4 pt-3">
           <p className="text-xs leading-relaxed text-slate-600">{record.sceneDescription}</p>
           {preview && (
             <p className="mt-2 line-clamp-3 text-[11px] text-slate-400">{preview.slice(0, 200)}…</p>

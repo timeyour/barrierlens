@@ -490,7 +490,11 @@ export default function AnalysisWorkflow({
     });
   }, [clearAnalysisOutput]);
 
-  const runAnalysis = async (analyzeFile: File) => {
+function isBuiltinDemoFile(file: File): boolean {
+  return /scene-blocked-close|demo-scene-blocked-close/i.test(file.name);
+}
+
+  const runAnalysis = async (analyzeFile: File, opts?: { demoSample?: boolean }) => {
     await waitForPaint();
     scrollToAnchor("#tool-analyzing", "auto");
 
@@ -506,6 +510,9 @@ export default function AnalysisWorkflow({
     formData.append("image", uploadFile);
     formData.append("targetDepartment", targetDepartment);
     formData.append("recordMode", recordMode);
+    const demoSample =
+      opts?.demoSample === true || isBuiltinDemoFile(analyzeFile);
+    if (demoSample) formData.append("demoSample", "1");
     const trimmedLocation = sanitizeLocationForStorage(location);
     if (trimmedLocation) formData.append("location", trimmedLocation);
     else if (!flags.locationRequired) formData.append("location", "地点未标注");
@@ -636,7 +643,9 @@ export default function AnalysisWorkflow({
     if (typeof navigator !== "undefined" && navigator.vibrate) {
       navigator.vibrate(12);
     }
-    await runAnalysis(analyzeFile);
+    const demoSample =
+      usedDemoImage || isBuiltinDemoFile(analyzeFile);
+    await runAnalysis(analyzeFile, { demoSample });
   };
 
   const handleCopy = async () => {
