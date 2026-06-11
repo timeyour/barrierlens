@@ -109,10 +109,19 @@ export async function fileToStoredImageDataUrl(file: File): Promise<string> {
   return compressDataUrl(raw, { maxWidth: 480, quality: 0.55 });
 }
 
-/** 上传 API 前压缩：保留更多细节供视觉识别 */
+function isVercelHostedClient(): boolean {
+  if (typeof window === "undefined") return false;
+  return /\.vercel\.app$/i.test(window.location.hostname);
+}
+
+/** 上传 API 前压缩：线上再压小一档，配合服务端 sharp 双级重试 */
 export async function compressImageForUpload(file: File): Promise<File> {
   const raw = await readFileAsDataUrl(file);
-  const compressed = await compressDataUrl(raw, { maxWidth: 1024, quality: 0.72 });
+  const onVercel = isVercelHostedClient();
+  const compressed = await compressDataUrl(raw, {
+    maxWidth: onVercel ? 720 : 1024,
+    quality: onVercel ? 0.68 : 0.72,
+  });
   const baseName = file.name.replace(/\.[^.]+$/i, "") || "upload";
   return dataUrlToFile(compressed, `${baseName}.jpg`);
 }

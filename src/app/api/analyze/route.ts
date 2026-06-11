@@ -1,4 +1,5 @@
 import { analyzeImage } from "@/lib/gemma";
+import { prepareUploadImageForGemma } from "@/lib/serverImageUtils";
 import {
   analyzeApiErrorResponse,
   parseRecordMode,
@@ -80,11 +81,15 @@ export async function POST(request: Request) {
 
     const { file: image, mimeType } = imageResult;
     const buffer = Buffer.from(await image.arrayBuffer());
-    const imageBase64 = `data:${mimeType};base64,${buffer.toString("base64")}`;
+    const { imageBase64, sourceBuffer } = await prepareUploadImageForGemma(
+      buffer,
+      mimeType,
+    );
 
     const startedAt = performance.now();
     const analysis = await analyzeImage({
       imageBase64,
+      sourceBuffer,
       targetDepartment,
       recordMode,
       location: locationResult.location,
@@ -109,7 +114,7 @@ export async function POST(request: Request) {
     console.error("Analysis failed:", error);
     const detail = error instanceof Error ? error.message : String(error);
     const message = /timeout|abort/i.test(detail)
-      ? "分析超时：Gemma 4 响应过慢。请先点「生成」使用样例图，或换较小照片后重试。"
+      ? "分析超时：Gemma 4 响应过慢。请换较小照片或稍后重试；系统已自动压缩并重试一次。"
       : detail.startsWith("Gemma 分析失败")
         ? detail
         : "分析失败，请稍后重试";

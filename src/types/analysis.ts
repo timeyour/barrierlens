@@ -77,6 +77,8 @@ export interface AnalysisRequest {
   recordMode: RecordMode;
   location?: string;
   fileName?: string;
+  /** 服务端：供 Vercel 多级压缩重试，勿传到客户端 */
+  sourceBuffer?: Buffer;
 }
 
 export interface StoredRecord extends AnalysisResult {

@@ -611,20 +611,24 @@ export async function callGemmaText(prompt: string): Promise<string> {
   }, getTimeoutMs());
 }
 
-async function callGemmaApi(request: AnalysisRequest): Promise<AnalysisResult> {
+async function callGemmaApi(
+  request: AnalysisRequest,
+  timeoutMsOverride?: number,
+): Promise<AnalysisResult> {
   const apiKey = getApiKey();
   if (!apiKey) {
     throw new Error("Missing GEMINI_API_KEY");
   }
 
   const modelName = getModelName();
-  const timeoutMs = getTimeoutMs();
+  const timeoutMs = timeoutMsOverride ?? getTimeoutMs();
   const prompt = buildAnalysisPrompt(
     request.targetDepartment,
     request.recordMode,
     request.location,
   );
   const { mimeType, data } = parseDataUrl(request.imageBase64);
+  const maxOutputTokens = isVercelRuntime() ? 896 : 1024;
 
   const content = await requestGemmaContent(apiKey, modelName, {
     contents: [
@@ -634,13 +638,71 @@ async function callGemmaApi(request: AnalysisRequest): Promise<AnalysisResult> {
       },
     ],
     generationConfig: buildGenerationConfig({
-      maxOutputTokens: 1024,
+      maxOutputTokens,
       responseMimeType: "application/json",
       temperature: 0.1,
     }),
   }, timeoutMs);
 
   return normalizeResult(parseGemmaJson(content), request);
+}
+
+function isTimeoutLikeError(error: unknown): boolean {
+  return /timeout|abort/i.test(errorMessage(error));
+}
+
+async function tryGemmaAnalyze(request: AnalysisRequest): Promise<AnalyzeImageResponse> {
+  const modelName = getModelName();
+  const provider = "google-gemini-rest";
+
+  if (!isVercelRuntime()) {
+    return {
+      result: await callGemmaApi(request),
+      source: "gemma",
+      mockMode: false,
+      modelName,
+      provider,
+    };
+  }
+
+  const { compressBufferForGemma } = await import("@/lib/serverImageUtils");
+  const buffer =
+    request.sourceBuffer ??
+    Buffer.from(parseDataUrl(request.imageBase64).data, "base64");
+
+  const tiers = [
+    { maxWidth: 720, timeoutMs: 42_000, quality: 72, label: "720px" },
+    { maxWidth: 480, timeoutMs: 16_000, quality: 68, label: "480px" },
+  ] as const;
+
+  let lastError: unknown;
+  for (let i = 0; i < tiers.length; i += 1) {
+    const tier = tiers[i];
+    try {
+      const imageBase64 =
+        i === 0
+          ? request.imageBase64
+          : await compressBufferForGemma(buffer, tier.maxWidth, tier.quality);
+
+      const result = await callGemmaApi({ ...request, imageBase64 }, tier.timeoutMs);
+      return {
+        result,
+        source: "gemma",
+        mockMode: false,
+        modelName,
+        provider,
+        fallbackReason:
+          i > 0 ? `首次请求超时，已用 ${tier.label} 压缩重试成功` : undefined,
+      };
+    } catch (error) {
+      lastError = error;
+      const retryable = isTimeoutLikeError(error) || isRetryableGemmaError(error);
+      if (!retryable || i >= tiers.length - 1) break;
+      console.warn(`[gemma] ${tier.label} tier failed, retrying:`, errorMessage(error));
+    }
+  }
+
+  throw lastError;
 }
 
 export function parseAndNormalizeGemmaContent(
@@ -695,13 +757,7 @@ export async function analyzeImage(
 
   if (getApiKey()) {
     try {
-      return {
-        result: await callGemmaApi(request),
-        source: "gemma",
-        mockMode: false,
-        modelName,
-        provider,
-      };
+      return await tryGemmaAnalyze(request);
     } catch (error) {
       const fallbackReason = errorMessage(error);
       console.error("Gemma API failed:", fallbackReason);
