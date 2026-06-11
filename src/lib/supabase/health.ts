@@ -18,13 +18,26 @@ export type SupabaseCloudHealth = {
   supabaseConfigured: boolean;
   hasUrl: boolean;
   hasServiceKey: boolean;
+  /** 仅长度，不暴露密钥内容；0=未注入，200+=正常 JWT */
+  serviceKeyLength: number;
   serviceKeyRole: string | null;
   storageBucketReady: boolean;
   databaseReadable: boolean;
+  vercelEnv: string | null;
   ok: boolean;
   error?: string;
   hint?: string;
 };
+
+function notConfiguredHint(serviceKeyLength: number): string {
+  if (serviceKeyLength === 0) {
+    return "SUPABASE_SERVICE_ROLE_KEY 在生产环境未注入。请在 Vercel 项目 barrierlens → Settings → Environment Variables 添加该变量（勾选 Production），保存后 Deployments → Redeploy。";
+  }
+  if (serviceKeyLength <= 20) {
+    return `SUPABASE_SERVICE_ROLE_KEY 过短（当前 ${serviceKeyLength} 字符）。请从 Supabase → Settings → API → service_role 复制完整 JWT（通常 200+ 字符），不要只粘贴一小段。`;
+  }
+  return "在 Vercel 项目 barrierlens 的 Production 环境配置 NEXT_PUBLIC_SUPABASE_URL 与 SUPABASE_SERVICE_ROLE_KEY，然后 Redeploy。";
+}
 
 export async function checkSupabaseCloudHealth(): Promise<SupabaseCloudHealth> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() ?? "";
@@ -34,9 +47,11 @@ export async function checkSupabaseCloudHealth(): Promise<SupabaseCloudHealth> {
     supabaseConfigured: isSupabaseConfigured(),
     hasUrl: url.length > 0,
     hasServiceKey: key.length > 20,
+    serviceKeyLength: key.length,
     serviceKeyRole,
     storageBucketReady: false,
     databaseReadable: false,
+    vercelEnv: process.env.VERCEL_ENV ?? null,
     ok: false,
   };
 
@@ -44,7 +59,7 @@ export async function checkSupabaseCloudHealth(): Promise<SupabaseCloudHealth> {
     return {
       ...base,
       error: "not_configured",
-      hint: "在 Vercel 项目 barrierlens 的 Production 环境配置 NEXT_PUBLIC_SUPABASE_URL 与 SUPABASE_SERVICE_ROLE_KEY，然后 Redeploy。",
+      hint: notConfiguredHint(key.length),
     };
   }
 
