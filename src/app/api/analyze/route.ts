@@ -113,11 +113,26 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Analysis failed:", error);
     const detail = error instanceof Error ? error.message : String(error);
-    const message = /timeout|abort/i.test(detail)
-      ? "分析超时：Gemma 4 响应过慢。请换较小照片或稍后重试；系统已自动压缩并重试一次。"
-      : detail.startsWith("Gemma 分析失败")
-        ? detail
-        : "分析失败，请稍后重试";
+    const message = formatAnalyzeErrorMessage(detail);
     return analyzeApiErrorResponse(request, 500, "INTERNAL_ERROR", message);
   }
+}
+
+function formatAnalyzeErrorMessage(detail: string): string {
+  if (/timeout|abort/i.test(detail)) {
+    return "分析超时：Gemma 4 响应过慢。请换较小照片或稍后重试；系统已自动压缩并重试一次。";
+  }
+  if (/HTTP 500|Internal error encountered|InternalServerError/i.test(detail)) {
+    return "Google Gemma API 暂时故障（500）。请稍后重试，或先点「使用样例图」完成演示。";
+  }
+  if (detail.startsWith("Gemma 分析失败")) {
+    return detail;
+  }
+  if (/Gemma API HTTP|Missing GEMINI/i.test(detail)) {
+    return `Gemma 分析失败：${detail}`;
+  }
+  if (detail.length > 0 && detail.length <= 280) {
+    return `分析失败：${detail}`;
+  }
+  return "分析失败，请稍后重试";
 }

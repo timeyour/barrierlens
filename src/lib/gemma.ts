@@ -520,9 +520,18 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+function isGoogleInternalError(error: unknown): boolean {
+  return /HTTP 500|Internal error encountered|InternalServerError/i.test(
+    errorMessage(error),
+  );
+}
+
 function isRetryableGemmaError(error: unknown): boolean {
   const message = errorMessage(error);
-  return /fetch failed|ECONNRESET|ETIMEDOUT|UND_ERR|network|socket/i.test(message);
+  return (
+    /fetch failed|ECONNRESET|ETIMEDOUT|UND_ERR|network|socket/i.test(message) ||
+    isGoogleInternalError(error)
+  );
 }
 
 function wait(ms: number): Promise<void> {
@@ -580,20 +589,21 @@ async function requestGemmaContent(
   body: Record<string, unknown>,
   timeoutMs: number,
 ): Promise<string> {
-  const attempts = getRetryAttempts();
+  const baseAttempts = getRetryAttempts();
   let lastError: unknown;
 
-  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+  for (let attempt = 1; ; attempt += 1) {
     try {
       return await requestGemmaContentOnce(apiKey, modelName, body, timeoutMs);
     } catch (error) {
       lastError = error;
-      if (attempt >= attempts || !isRetryableGemmaError(error)) throw error;
-      await wait(350 * attempt);
+      const maxAttempts = isGoogleInternalError(error)
+        ? Math.max(baseAttempts, 2)
+        : baseAttempts;
+      if (attempt >= maxAttempts || !isRetryableGemmaError(error)) throw error;
+      await wait(isGoogleInternalError(error) ? 1500 : 350 * attempt);
     }
   }
-
-  throw lastError;
 }
 
 export async function callGemmaText(prompt: string): Promise<string> {
