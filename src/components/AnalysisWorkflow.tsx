@@ -705,6 +705,8 @@ export default function AnalysisWorkflow({
   const analysisNote =
     analysisSource === "gemma"
       ? `analysisSource=gemma · 模型 ${modelName ?? "gemma-4-26b-a4b-it"} · 真实 Gemma 4 多模态识图${analysisTimeMs ? `（${analysisTimeMs}ms）` : ""}`
+      : analysisSource === "nvidia_nim"
+        ? `analysisSource=nvidia_nim · 模型 ${modelName ?? "google/gemma-4-31b-it"} · NVIDIA NIM Gemma 4${analysisTimeMs ? `（${analysisTimeMs}ms）` : ""}`
       : analysisSource === "ollama"
         ? `本次为本地 Ollama · ${modelName ?? "gemma4"}${analysisTimeMs ? `（${analysisTimeMs}ms）` : ""}。`
       : analysisSource === "mock_fallback"

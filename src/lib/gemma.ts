@@ -756,16 +756,49 @@ async function tryOllamaAnalyze(
   };
 }
 
+async function tryNvidiaNimAnalyze(
+  request: AnalysisRequest,
+): Promise<AnalyzeImageResponse | null> {
+  const { analyzeWithNvidiaNim, isNvidiaNimEnabled, nvidiaNimProviderLabel } =
+    await import("@/lib/nvidiaNim");
+
+  if (!isNvidiaNimEnabled()) return null;
+
+  const modelName =
+    process.env.NVIDIA_NIM_MODEL?.trim() ||
+    process.env.NVIDIA_NIM_MODEL_NAME?.trim() ||
+    "google/gemma-4-31b-it";
+
+  return {
+    result: await analyzeWithNvidiaNim(request),
+    source: "nvidia_nim",
+    mockMode: false,
+    modelName,
+    provider: nvidiaNimProviderLabel(),
+  };
+}
+
 export async function analyzeImage(
   request: AnalysisRequest,
 ): Promise<AnalyzeImageResponse> {
   const modelName = getModelName();
   const provider = "google-gemini-rest";
   const ollamaPreferred = process.env.OLLAMA_PREFERRED === "true";
+  const { isNvidiaNimPreferred } = await import("@/lib/nvidiaNim");
+  const nvidiaPreferred = isNvidiaNimPreferred();
 
   const { tryProductionDemoCache } = await import("@/lib/productionDemoCache");
   const demoCache = await tryProductionDemoCache(request);
   if (demoCache) return demoCache;
+
+  if (nvidiaPreferred) {
+    try {
+      const nvidiaResult = await tryNvidiaNimAnalyze(request);
+      if (nvidiaResult) return nvidiaResult;
+    } catch (error) {
+      console.error("NVIDIA NIM preferred but failed:", errorMessage(error));
+    }
+  }
 
   if (ollamaPreferred) {
     try {
@@ -789,6 +822,18 @@ export async function analyzeImage(
       ) {
         const retryDemoCache = await tryProductionDemoCache(request);
         if (retryDemoCache) return retryDemoCache;
+
+        try {
+          const nvidiaResult = await tryNvidiaNimAnalyze(request);
+          if (nvidiaResult) {
+            return {
+              ...nvidiaResult,
+              fallbackReason: `Google API 失败，已改用 NVIDIA NIM：${fallbackReason}`,
+            };
+          }
+        } catch (nvidiaError) {
+          console.error("NVIDIA NIM fallback failed:", errorMessage(nvidiaError));
+        }
 
         throw new Error(
           `Gemma 分析失败：${fallbackReason}。请检查 Vercel 环境变量 GEMINI_API_KEY / GEMMA_API_TIMEOUT_MS。`,

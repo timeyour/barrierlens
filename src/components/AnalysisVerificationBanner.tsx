@@ -28,6 +28,18 @@ export default function AnalysisVerificationBanner({
     );
   }
 
+  if (analysisSource === "nvidia_nim") {
+    return (
+      <div
+        className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs leading-relaxed text-emerald-900"
+        role="status"
+      >
+        <strong>analysisSource=nvidia_nim</strong>
+        {modelName ? ` · 模型 ${modelName}` : ""} · 本次由 NVIDIA NIM（Gemma 4）分析。请核对摘要是否与照片一致。
+      </div>
+    );
+  }
+
   if (analysisSource === "ollama") {
     return (
       <div

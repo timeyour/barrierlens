@@ -24,6 +24,8 @@ export default function GemmaJsonOutput({
   const sourceText =
     source === "gemma"
       ? `真实模型 · ${modelName ?? "Gemma 4"}`
+      : source === "nvidia_nim"
+        ? `NVIDIA NIM · ${modelName ?? "google/gemma-4-31b-it"}`
       : source === "ollama"
         ? `本地 Ollama · ${modelName ?? "gemma4:latest"}`
       : source === "mock_fallback"

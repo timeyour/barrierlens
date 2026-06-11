@@ -70,6 +70,7 @@ export default function ReportResultPanel({
 
   const showVerificationBanner =
     analysisSource === "gemma" ||
+    analysisSource === "nvidia_nim" ||
     analysisSource === "ollama" ||
     analysisSource === "mock" ||
     analysisSource === "mock_fallback" ||

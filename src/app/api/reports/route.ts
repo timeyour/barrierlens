@@ -29,7 +29,7 @@ function isDiagnosisPayload(value: unknown): value is AnalysisResult {
 }
 
 function normalizeAnalysisSource(raw: unknown): AnalysisSource | null {
-  if (raw === "gemma" || raw === "ollama" || raw === "mock" || raw === "mock_fallback") {
+  if (raw === "gemma" || raw === "nvidia_nim" || raw === "ollama" || raw === "mock" || raw === "mock_fallback") {
     return raw;
   }
   return null;

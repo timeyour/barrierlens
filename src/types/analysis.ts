@@ -17,7 +17,7 @@ export type SceneType =
   | "access_route_discontinuity"
   | "no_issue";
 export type PathStatus = "clear" | "partial" | "blocked";
-export type AnalysisSource = "gemma" | "ollama" | "mock" | "mock_fallback";
+export type AnalysisSource = "gemma" | "nvidia_nim" | "ollama" | "mock" | "mock_fallback";
 export type ReviewStatus =
   | "pending"
   | "exported"

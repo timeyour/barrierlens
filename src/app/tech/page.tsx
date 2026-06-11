@@ -22,7 +22,8 @@ const DEMO_URL = "https://barrierlens-1utx.vercel.app/#tool";
 const REPO_URL = "https://github.com/timeyour/barrierlens";
 
 const ANALYSIS_SOURCE_ROWS = [
-  { value: "gemma", meaning: "真实 Gemma 4 推理" },
+  { value: "gemma", meaning: "真实 Gemma 4 推理（Google API）" },
+  { value: "nvidia_nim", meaning: "NVIDIA NIM 托管 Gemma 4（自拍/upload）" },
   { value: "ollama", meaning: "本地 Gemma / Ollama 推理" },
   { value: "mock", meaning: "演示数据" },
   {
