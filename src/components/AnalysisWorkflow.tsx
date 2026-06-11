@@ -540,7 +540,9 @@ export default function AnalysisWorkflow({
         throw new Error(
           rawText.startsWith("Request")
             ? "服务器拒绝请求（可能图片过大），请使用样例图或换一张较小的照片"
-            : "分析失败，请稍后重试",
+            : response.status >= 500 && rawText.includes("__next_error__")
+              ? "服务器内部错误（路由崩溃）。请刷新后先点「使用样例图」；若仍失败，请确认 Vercel 未配置 GEMMA_API_PROXY。"
+              : "分析失败，请稍后重试",
         );
       }
 

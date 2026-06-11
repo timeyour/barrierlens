@@ -87,6 +87,8 @@ function getRetryAttempts(): number {
 }
 
 function getProxyUrl(): string | undefined {
+  // Vercel 在海外直连 Google；切勿配置本机代理（127.0.0.1 会导致线上请求失败）
+  if (process.env.VERCEL) return undefined;
   return (
     process.env.GEMMA_API_PROXY ||
     process.env.HTTPS_PROXY ||
@@ -681,8 +683,8 @@ async function tryGemmaAnalyze(request: AnalysisRequest): Promise<AnalyzeImageRe
     Buffer.from(parseDataUrl(request.imageBase64).data, "base64");
 
   const tiers = [
-    { maxWidth: 720, timeoutMs: 42_000, quality: 72, label: "720px" },
-    { maxWidth: 480, timeoutMs: 16_000, quality: 68, label: "480px" },
+    { maxWidth: 720, timeoutMs: 52_000, quality: 72, label: "720px" },
+    { maxWidth: 720, timeoutMs: 16_000, quality: 68, label: "重试" },
   ] as const;
 
   let lastError: unknown;
@@ -690,7 +692,7 @@ async function tryGemmaAnalyze(request: AnalysisRequest): Promise<AnalyzeImageRe
     const tier = tiers[i];
     try {
       const imageBase64 =
-        i === 0
+        i === 0 || tier.label === "重试"
           ? request.imageBase64
           : await compressBufferForGemma(buffer, tier.maxWidth, tier.quality);
 
