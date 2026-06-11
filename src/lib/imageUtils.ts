@@ -112,7 +112,7 @@ export async function fileToStoredImageDataUrl(file: File): Promise<string> {
 /** 上传 API 前压缩：保留更多细节供视觉识别 */
 export async function compressImageForUpload(file: File): Promise<File> {
   const raw = await readFileAsDataUrl(file);
-  const compressed = await compressDataUrl(raw, { maxWidth: 1280, quality: 0.78 });
+  const compressed = await compressDataUrl(raw, { maxWidth: 1024, quality: 0.72 });
   const baseName = file.name.replace(/\.[^.]+$/i, "") || "upload";
   return dataUrlToFile(compressed, `${baseName}.jpg`);
 }

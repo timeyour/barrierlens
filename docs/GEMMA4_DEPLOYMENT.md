@@ -17,8 +17,8 @@
 |------|--------|------|
 | `GEMINI_API_KEY` 或 `GEMMA_API_KEY` | （AI Studio 申请） | 启用真实 Gemma 4 推理 |
 | `GEMMA_MODEL_NAME` | `gemma-4-26b-a4b-it` | 模型 ID |
-| `GEMMA_API_TIMEOUT_MS` | `55000` | Vercel 冷启动 + 多模态耗时 |
-| `GEMMA_API_RETRY_ATTEMPTS` | `2` | 网络类错误重试 |
+| `GEMMA_API_TIMEOUT_MS` | `52000`～`55000` | 勿超过 `58000`（Hobby 函数约 60s 上限） |
+| `GEMMA_API_RETRY_ATTEMPTS` | **`1`** | 线上务必为 1；2 次重试易整请求超时 |
 | `ALLOW_MOCK_FALLBACK` | **`false`** | Gemma 失败时**不**返回 Mock |
 | `GEMMA_API_PROXY` | （留空） | Vercel 不需要代理 |
 | `OLLAMA_PREFERRED` | `false` | 生产不走本机 Ollama |
@@ -76,7 +76,7 @@ Key 缺失时用户仍可**手动输入路名**继续分析，不阻断主流程
 | 现象 | 处理 |
 |------|------|
 | banner 显示 Mock | 检查 Production 是否配置 `GEMINI_API_KEY` 并已 Redeploy |
-| 分析超时 | 增大 `GEMMA_API_TIMEOUT_MS` 至 55000 |
+| 分析超时 | Production 设 `GEMMA_API_RETRY_ATTEMPTS=1`、`GEMMA_API_TIMEOUT_MS=52000`，Redeploy；先用样例图测 |
 | 定位失败 | 使用正式域名；或手动输入路名 |
 | 页脚 commit 与 GitHub 不一致 | 确认 Production 指向 Git 部署，非旧 CLI alias |
 

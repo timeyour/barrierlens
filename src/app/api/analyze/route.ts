@@ -107,9 +107,11 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("Analysis failed:", error);
-    const message =
-      error instanceof Error && /timeout|abort/i.test(error.message)
-        ? "分析超时，请稍后重试或使用样例图"
+    const detail = error instanceof Error ? error.message : String(error);
+    const message = /timeout|abort/i.test(detail)
+      ? "分析超时：Gemma 4 响应过慢。请先点「生成」使用样例图，或换较小照片后重试。"
+      : detail.startsWith("Gemma 分析失败")
+        ? detail
         : "分析失败，请稍后重试";
     return analyzeApiErrorResponse(request, 500, "INTERNAL_ERROR", message);
   }

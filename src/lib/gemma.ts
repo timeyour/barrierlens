@@ -56,11 +56,18 @@ function getModelName(): string {
   return process.env.GEMMA_MODEL_NAME || DEFAULT_MODEL_NAME;
 }
 
+function isVercelRuntime(): boolean {
+  return Boolean(process.env.VERCEL);
+}
+
+/** Vercel Hobby 函数上限约 60s；单次 Gemma 请求 + 解析需留余量 */
 function getTimeoutMs(): number {
   const raw = Number(process.env.GEMMA_API_TIMEOUT_MS);
-  if (Number.isFinite(raw) && raw > 0) return raw;
-  // Vercel 上多模态常需 15–45s；本地默认 25s
-  if (process.env.VERCEL) return 55_000;
+  if (Number.isFinite(raw) && raw > 0) {
+    if (isVercelRuntime()) return Math.min(raw, 58_000);
+    return raw;
+  }
+  if (isVercelRuntime()) return 52_000;
   return DEFAULT_TIMEOUT_MS;
 }
 
@@ -70,8 +77,13 @@ function allowMockFallbackInProduction(): boolean {
 
 function getRetryAttempts(): number {
   const raw = Number(process.env.GEMMA_API_RETRY_ATTEMPTS);
-  if (!Number.isFinite(raw) || raw <= 0) return DEFAULT_RETRY_ATTEMPTS;
-  return Math.max(1, Math.min(3, Math.floor(raw)));
+  if (!Number.isFinite(raw) || raw <= 0) {
+    // 线上默认 1 次：2 次 × 55s 易超过 Vercel 60s 函数上限
+    return isVercelRuntime() ? 1 : DEFAULT_RETRY_ATTEMPTS;
+  }
+  const attempts = Math.max(1, Math.min(3, Math.floor(raw)));
+  if (isVercelRuntime()) return Math.min(attempts, 2);
+  return attempts;
 }
 
 function getProxyUrl(): string | undefined {
