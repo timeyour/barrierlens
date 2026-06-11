@@ -67,7 +67,7 @@ function getTimeoutMs(): number {
     if (isVercelRuntime()) return Math.min(raw, 58_000);
     return raw;
   }
-  if (isVercelRuntime()) return 58_000;
+  if (isVercelRuntime()) return 54_000;
   return DEFAULT_TIMEOUT_MS;
 }
 
@@ -102,8 +102,8 @@ function getProxyUrl(): string | undefined {
 
 function buildGenerationConfig(
   overrides: Record<string, unknown>,
+  modelName = getModelName(),
 ): Record<string, unknown> {
-  const modelName = getModelName();
   const config: Record<string, unknown> = { ...overrides };
 
   // Gemma 4 MoE 默认输出英文推理链，会淹没 JSON；MINIMAL 可拿到正式答案 part
@@ -625,22 +625,22 @@ export async function callGemmaText(prompt: string): Promise<string> {
 
 async function callGemmaApi(
   request: AnalysisRequest,
-  timeoutMsOverride?: number,
+  options?: { timeoutMs?: number; modelName?: string },
 ): Promise<AnalysisResult> {
   const apiKey = getApiKey();
   if (!apiKey) {
     throw new Error("Missing GEMINI_API_KEY");
   }
 
-  const modelName = getModelName();
-  const timeoutMs = timeoutMsOverride ?? getTimeoutMs();
+  const modelName = options?.modelName ?? getModelName();
+  const timeoutMs = options?.timeoutMs ?? getTimeoutMs();
   const prompt = buildAnalysisPrompt(
     request.targetDepartment,
     request.recordMode,
     request.location,
   );
   const { mimeType, data } = parseDataUrl(request.imageBase64);
-  const maxOutputTokens = isVercelRuntime() ? 896 : 1024;
+  const maxOutputTokens = isVercelRuntime() ? 768 : 1024;
 
   const content = await requestGemmaContent(apiKey, modelName, {
     contents: [
@@ -649,11 +649,14 @@ async function callGemmaApi(
         parts: [{ text: prompt }, { inlineData: { mimeType, data } }],
       },
     ],
-    generationConfig: buildGenerationConfig({
-      maxOutputTokens,
-      responseMimeType: "application/json",
-      temperature: 0.1,
-    }),
+    generationConfig: buildGenerationConfig(
+      {
+        maxOutputTokens,
+        responseMimeType: "application/json",
+        temperature: 0.1,
+      },
+      modelName,
+    ),
   }, timeoutMs);
 
   return normalizeResult(parseGemmaJson(content), request);
@@ -664,57 +667,55 @@ function isTimeoutLikeError(error: unknown): boolean {
 }
 
 async function tryGemmaAnalyze(request: AnalysisRequest): Promise<AnalyzeImageResponse> {
-  const modelName = getModelName();
+  const primaryModel = getModelName();
   const provider = "google-gemini-rest";
+  const fallbackModel =
+    process.env.GEMMA_FALLBACK_MODEL_NAME?.trim() || "gemma-4-31b-it";
 
   if (!isVercelRuntime()) {
     return {
       result: await callGemmaApi(request),
       source: "gemma",
       mockMode: false,
-      modelName,
+      modelName: primaryModel,
       provider,
     };
   }
 
-  const { compressBufferForGemma } = await import("@/lib/serverImageUtils");
-  const buffer =
-    request.sourceBuffer ??
-    Buffer.from(parseDataUrl(request.imageBase64).data, "base64");
+  /** Hobby 硬上限 ~60s；单次 50s，500 时换模型再试 45s（500 通常几秒内返回） */
+  const primaryTimeoutMs = 50_000;
+  const fallbackTimeoutMs = 45_000;
 
-  const tiers = [
-    { maxWidth: 720, timeoutMs: 52_000, quality: 72, label: "720px" },
-    { maxWidth: 720, timeoutMs: 16_000, quality: 68, label: "重试" },
-  ] as const;
-
-  let lastError: unknown;
-  for (let i = 0; i < tiers.length; i += 1) {
-    const tier = tiers[i];
-    try {
-      const imageBase64 =
-        i === 0 || tier.label === "重试"
-          ? request.imageBase64
-          : await compressBufferForGemma(buffer, tier.maxWidth, tier.quality);
-
-      const result = await callGemmaApi({ ...request, imageBase64 }, tier.timeoutMs);
-      return {
-        result,
-        source: "gemma",
-        mockMode: false,
-        modelName,
-        provider,
-        fallbackReason:
-          i > 0 ? `首次请求超时，已用 ${tier.label} 压缩重试成功` : undefined,
-      };
-    } catch (error) {
-      lastError = error;
-      const retryable = isTimeoutLikeError(error) || isRetryableGemmaError(error);
-      if (!retryable || i >= tiers.length - 1) break;
-      console.warn(`[gemma] ${tier.label} tier failed, retrying:`, errorMessage(error));
+  try {
+    const result = await callGemmaApi(request, { timeoutMs: primaryTimeoutMs });
+    return {
+      result,
+      source: "gemma",
+      mockMode: false,
+      modelName: primaryModel,
+      provider,
+    };
+  } catch (error) {
+    if (!isGoogleInternalError(error) || fallbackModel === primaryModel) {
+      throw error;
     }
+    console.warn(
+      `[gemma] ${primaryModel} returned 500, trying ${fallbackModel}:`,
+      errorMessage(error),
+    );
+    const result = await callGemmaApi(request, {
+      timeoutMs: fallbackTimeoutMs,
+      modelName: fallbackModel,
+    });
+    return {
+      result,
+      source: "gemma",
+      mockMode: false,
+      modelName: fallbackModel,
+      provider,
+      fallbackReason: `${primaryModel} 暂时 500，已改用 ${fallbackModel}`,
+    };
   }
-
-  throw lastError;
 }
 
 export function parseAndNormalizeGemmaContent(

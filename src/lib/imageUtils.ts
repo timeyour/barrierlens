@@ -114,13 +114,13 @@ function isVercelHostedClient(): boolean {
   return /\.vercel\.app$/i.test(window.location.hostname);
 }
 
-/** 上传 API 前压缩：线上再压小一档，配合服务端 sharp 双级重试 */
+/** 上传 API 前压缩：线上压到 480px，减轻 Gemma 多模态耗时 */
 export async function compressImageForUpload(file: File): Promise<File> {
   const raw = await readFileAsDataUrl(file);
   const onVercel = isVercelHostedClient();
   const compressed = await compressDataUrl(raw, {
-    maxWidth: onVercel ? 720 : 1024,
-    quality: onVercel ? 0.68 : 0.72,
+    maxWidth: onVercel ? 480 : 1024,
+    quality: onVercel ? 0.62 : 0.72,
   });
   const baseName = file.name.replace(/\.[^.]+$/i, "") || "upload";
   return dataUrlToFile(compressed, `${baseName}.jpg`);

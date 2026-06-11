@@ -120,7 +120,7 @@ export async function POST(request: Request) {
 
 function formatAnalyzeErrorMessage(detail: string): string {
   if (/timeout|abort/i.test(detail)) {
-    return "分析超时：Gemma 4 响应过慢。请换较小照片或稍后重试；系统已自动压缩并重试一次。";
+    return "分析超时：Gemma 4 在 50 秒内未完成。请先点「使用样例图」演示，或换更小照片后再试。";
   }
   if (/HTTP 500|Internal error encountered|InternalServerError/i.test(detail)) {
     return "Google Gemma API 暂时故障（500）。请稍后重试，或先点「使用样例图」完成演示。";
