@@ -13,6 +13,7 @@ export type CloudSyncResult =
         | "server"
         | "location"
         | "already_published";
+      hint?: string;
     };
 
 /** 用户勾选确认后，才公开到案例池（位置模糊，含现场照片） */
@@ -69,20 +70,42 @@ export async function publishReportToCloud(input: {
     return { ok: false, reason: "network" };
   }
 
-  const data = (await response.json()) as {
+  const raw = await response.text();
+  let data: {
     id?: string;
     url?: string;
     reviewToken?: string;
     error?: string;
     code?: string;
-  };
+    hint?: string;
+  } = {};
+
+  if (raw) {
+    try {
+      data = JSON.parse(raw) as typeof data;
+    } catch {
+      return {
+        ok: false,
+        reason: "server",
+        hint: `服务器返回异常（HTTP ${response.status}），请打开 /api/health/cloud 自检或 Redeploy 后再试`,
+      };
+    }
+  }
 
   if (response.status === 503 && data.code === "not_configured") {
     return { ok: false, reason: "not_configured" };
   }
 
   if (!response.ok || !data.id || !data.reviewToken) {
-    return { ok: false, reason: "server" };
+    const fallbackHint =
+      response.status >= 500
+        ? "请打开 /api/health/cloud 查看 Supabase 连接详情"
+        : undefined;
+    return {
+      ok: false,
+      reason: "server",
+      hint: data.hint ?? data.error ?? fallbackHint,
+    };
   }
 
   return {

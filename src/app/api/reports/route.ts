@@ -115,8 +115,16 @@ export async function POST(request: Request) {
     imageFile: image,
   });
 
-  if (!inserted) {
-    return NextResponse.json({ error: "云端保存失败" }, { status: 500 });
+  if (!inserted.ok) {
+    const code = inserted.step === "storage" ? "storage_failed" : "database_failed";
+    return NextResponse.json(
+      {
+        error: "云端保存失败",
+        code,
+        hint: inserted.message,
+      },
+      { status: 500 },
+    );
   }
 
   return NextResponse.json({

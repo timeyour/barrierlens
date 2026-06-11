@@ -82,9 +82,14 @@ export async function insertCloudReport(input: {
   diagnosis: CloudReport["diagnosis"];
   analysisSource?: string | null;
   imageFile: File;
-}): Promise<{ report: CloudReport; reviewToken: string } | null> {
+}): Promise<
+  | { ok: true; report: CloudReport; reviewToken: string }
+  | { ok: false; step: "storage" | "database"; message: string }
+> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return null;
+  if (!supabase) {
+    return { ok: false, step: "database", message: "Supabase 未配置" };
+  }
 
   const reportId = crypto.randomUUID();
   const extension = input.imageFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
@@ -102,7 +107,12 @@ export async function insertCloudReport(input: {
 
   if (uploadError) {
     console.error("[supabase] upload image failed:", uploadError.message);
-    return null;
+    const hint =
+      uploadError.message.includes("Bucket not found") ||
+      uploadError.message.includes("not found")
+        ? "请在 Supabase Storage 创建私有桶 report-images"
+        : uploadError.message;
+    return { ok: false, step: "storage", message: hint };
   }
 
   const fuzzyLocation = fuzzLocationForPublic(input.location);
@@ -143,11 +153,18 @@ export async function insertCloudReport(input: {
   if (error) {
     console.error("[supabase] insert report failed:", error.message);
     await supabase.storage.from(IMAGE_BUCKET).remove([imagePath]);
-    return null;
+    const hint = error.message.includes("review_token")
+      ? "请在 Supabase SQL Editor 执行 docs/supabase-setup.sql（含 review_token 字段）"
+      : error.message.includes("row-level security") ||
+          error.message.includes("violates row-level")
+        ? "Vercel 的 SUPABASE_SERVICE_ROLE_KEY 可能填成了 anon key；请改用 Supabase → API → service_role"
+        : error.message;
+    return { ok: false, step: "database", message: hint };
   }
 
   const enriched = withPublicPhotoUrl(data as ReportDbRow);
   return {
+    ok: true,
     report: toPublicCloudReport(enriched as CloudReport),
     reviewToken: input.reviewToken,
   };

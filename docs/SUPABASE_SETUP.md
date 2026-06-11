@@ -63,18 +63,27 @@ Supabase **内置邮件**额度很低（约 **每小时 3～4 封/项目**，测
 1. Dashboard → **Authentication** → **Rate Limits**：适当调大 OTP 间隔（同一邮箱两次发送的最短间隔）
 2. **Authentication** → **SMTP Settings**：配置自定义 SMTP（Resend、SendGrid 等），再在 Rate Limits 提高 `email sent` 上限
 
-### 5.3 URL Configuration
+### 5.3 URL Configuration（换域名后必改）
+
+Production 主域名为 **`https://barrierlens.vercel.app`**；`barrierlens-1utx.vercel.app` 会 307 跳转至该域名。
+
+Dashboard → **Authentication** → **URL Configuration**：
 
 | 项 | 建议值 |
 |----|--------|
-| **Site URL** | `https://barrierlens-1utx.vercel.app`（与 README 在线 Demo 一致） |
-| **Redirect URLs** | `https://barrierlens-1utx.vercel.app/**`（须包含 `/auth/callback`；可选再加 `https://barrierlens.vercel.app/**` 作短别名） |
+| **Site URL** | `https://barrierlens.vercel.app` |
+| **Redirect URLs** | `https://barrierlens.vercel.app/**` |
+| （可选保留旧链） | `https://barrierlens-1utx.vercel.app/**` |
 
-Vercel：
+Vercel（项目 **barrierlens** → Production）：
 
 ```env
-NEXT_PUBLIC_SITE_URL=https://barrierlens-1utx.vercel.app
+NEXT_PUBLIC_SITE_URL=https://barrierlens.vercel.app
 ```
+
+改完 Supabase / Vercel 后：**Vercel → Redeploy Production**。
+
+自检：`https://barrierlens.vercel.app/api/health/cloud` 应返回 `"supabaseConfigured": true`。
 
 ## 6. 验证
 

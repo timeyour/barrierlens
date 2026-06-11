@@ -429,7 +429,11 @@ export default function AnalysisWorkflow({
         setCloudReportId(stored.cloudReportId ?? null);
         setPublishError("该记录已公开");
       } else if (publish.reason === "server") {
-        setPublishError("云端保存失败，请稍后重试或检查 Supabase 项目是否正常");
+        setPublishError(
+          publish.hint
+            ? `云端保存失败：${publish.hint}`
+            : "云端保存失败，请稍后重试或检查 Supabase 项目是否正常",
+        );
       } else {
         setPublishError("公开失败，请稍后重试");
       }

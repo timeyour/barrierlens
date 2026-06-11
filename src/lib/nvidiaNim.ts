@@ -33,9 +33,14 @@ function getModelName(): string {
 
 function getTimeoutMs(): number {
   const raw = Number(process.env.NVIDIA_NIM_TIMEOUT_MS);
-  if (!Number.isFinite(raw) || raw <= 0) return DEFAULT_TIMEOUT_MS;
-  if (process.env.VERCEL) return Math.min(raw, 58_000);
-  return raw;
+  let ms =
+    Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_TIMEOUT_MS;
+  if (process.env.VERCEL) {
+    // Hobby ~60s 墙钟：NVIDIA 优先时需给 Google 回退留时间
+    const cap = isNvidiaNimPreferred() ? 28_000 : 58_000;
+    return Math.min(ms, cap);
+  }
+  return ms;
 }
 
 export function isNvidiaNimEnabled(): boolean {
