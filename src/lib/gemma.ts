@@ -682,12 +682,15 @@ async function tryGemmaAnalyze(request: AnalysisRequest): Promise<AnalyzeImageRe
     };
   }
 
-  /** Hobby 硬上限 ~60s；单次 50s，500 时换模型再试 45s（500 通常几秒内返回） */
-  const primaryTimeoutMs = 50_000;
-  const fallbackTimeoutMs = 45_000;
+  /** Hobby ~60s 墙钟：26B 试 38s，超时/500 后 31B 再试 18s */
+  const primaryTimeoutMs = 38_000;
+  const fallbackTimeoutMs = 18_000;
 
   try {
-    const result = await callGemmaApi(request, { timeoutMs: primaryTimeoutMs });
+    const result = await callGemmaApi(request, {
+      timeoutMs: primaryTimeoutMs,
+      modelName: primaryModel,
+    });
     return {
       result,
       source: "gemma",
@@ -695,14 +698,19 @@ async function tryGemmaAnalyze(request: AnalysisRequest): Promise<AnalyzeImageRe
       modelName: primaryModel,
       provider,
     };
-  } catch (error) {
-    if (!isGoogleInternalError(error) || fallbackModel === primaryModel) {
-      throw error;
-    }
+  } catch (primaryError) {
+    if (fallbackModel === primaryModel) throw primaryError;
+
+    const retryable =
+      isGoogleInternalError(primaryError) || isTimeoutLikeError(primaryError);
+    if (!retryable) throw primaryError;
+
+    const reason = isGoogleInternalError(primaryError) ? "500" : "超时";
     console.warn(
-      `[gemma] ${primaryModel} returned 500, trying ${fallbackModel}:`,
-      errorMessage(error),
+      `[gemma] ${primaryModel} ${reason}, trying ${fallbackModel}:`,
+      errorMessage(primaryError),
     );
+
     const result = await callGemmaApi(request, {
       timeoutMs: fallbackTimeoutMs,
       modelName: fallbackModel,
@@ -713,7 +721,7 @@ async function tryGemmaAnalyze(request: AnalysisRequest): Promise<AnalyzeImageRe
       mockMode: false,
       modelName: fallbackModel,
       provider,
-      fallbackReason: `${primaryModel} 暂时 500，已改用 ${fallbackModel}`,
+      fallbackReason: `${primaryModel} ${reason}，已改用 ${fallbackModel}`,
     };
   }
 }
