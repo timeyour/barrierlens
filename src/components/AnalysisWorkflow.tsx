@@ -60,6 +60,11 @@ const DEFAULT_ANALYZE_TIMEOUT_MS = 55_000;
 const OLLAMA_ANALYZE_TIMEOUT_MS = 240_000;
 const VERCEL_ANALYZE_TIMEOUT_MS = 90_000;
 
+function isVercelProductionSite(): boolean {
+  if (typeof window === "undefined") return false;
+  return /\.vercel\.app$/i.test(window.location.hostname);
+}
+
 function isLocalDevHost(): boolean {
   if (typeof window === "undefined") return false;
   const host = window.location.hostname;
@@ -285,13 +290,18 @@ export default function AnalysisWorkflow({
     try {
       const demoFile = await fetchDemoFile();
       const url = URL.createObjectURL(demoFile);
-      handleImageSelect(demoFile, url);
+      setFile(demoFile);
+      setPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return url;
+      });
       setUsedDemoImage(true);
+      resetAnalysis();
       setErrorMessage(null);
     } catch {
       setErrorMessage("样例图加载失败，请手动上传照片");
     }
-  }, [handleImageSelect]);
+  }, [resetAnalysis]);
 
   const handleReset = useCallback(() => {
     handleClearImage();
@@ -605,7 +615,9 @@ function isBuiltinDemoFile(file: File): boolean {
         setErrorMessage(
           prefersLocalOllama()
             ? `分析超时（已等待 ${Math.round(getAnalyzeClientTimeoutMs() / 1000)} 秒）。请确认 Ollama App 在运行且已拉取 gemma4 模型，或稍后再试。`
-            : "分析超时，请使用样例图或稍后重试",
+            : isVercelProductionSite()
+              ? "分析超时：请点「清除」→「使用样例图」，确认出现「当前：样例图」后再点生成（约 2 秒）。"
+              : "分析超时，请使用样例图或稍后重试",
         );
         return;
       }
@@ -643,12 +655,23 @@ function isBuiltinDemoFile(file: File): boolean {
       }
     }
 
+    const isDemoRun =
+      usedDemoImage || isBuiltinDemoFile(analyzeFile);
+    if (
+      isVercelProductionSite() &&
+      !isDemoRun &&
+      !window.confirm(
+        "上传照片在 Vercel 上常超过 60 秒导致超时。答辩演示请先点「使用样例图」（约 2 秒）。仍要继续分析这张上传照片吗？",
+      )
+    ) {
+      return;
+    }
+
     beginAnalyzing();
     if (typeof navigator !== "undefined" && navigator.vibrate) {
       navigator.vibrate(12);
     }
-    const demoSample =
-      usedDemoImage || isBuiltinDemoFile(analyzeFile);
+    const demoSample = isDemoRun;
     await runAnalysis(analyzeFile, { demoSample });
   };
 
@@ -771,6 +794,19 @@ function isBuiltinDemoFile(file: File): boolean {
                   disabled={isLoading}
                   flow={flow}
                 />
+                {previewUrl && usedDemoImage && (
+                  <p
+                    className="text-sm font-semibold text-emerald-700"
+                    role="status"
+                  >
+                    当前：样例图（演示约 2 秒出结果）
+                  </p>
+                )}
+                {previewUrl && !usedDemoImage && isVercelProductionSite() && (
+                  <p className="text-xs leading-relaxed text-amber-800" role="status">
+                    当前为上传照片，线上分析可能超时。答辩请先点「清除」→「使用样例图」。
+                  </p>
+                )}
                 {!previewUrl && (
                   <button
                     type="button"

@@ -33,7 +33,7 @@ function getModelName(): string {
 
 function getTimeoutMs(): number {
   const raw = Number(process.env.NVIDIA_NIM_TIMEOUT_MS);
-  let ms =
+  const ms =
     Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_TIMEOUT_MS;
   if (process.env.VERCEL) {
     // Hobby ~60s 墙钟：NVIDIA 优先时需给 Google 回退留时间
