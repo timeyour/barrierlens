@@ -14,7 +14,8 @@
     "verify:gemma": "node --env-file=.env.local scripts/verify-gemma.mjs",
     "verify:ollama": "node --env-file=.env.local scripts/verify-ollama.mjs",
     "test:production": "node scripts/test-production-analyze.mjs",
-    "setup:supabase": "node scripts/setup-supabase.mjs"
+    "setup:supabase": "node scripts/setup-supabase.mjs",
+    "sync:vercel-supabase": "node scripts/sync-supabase-env-to-vercel.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
