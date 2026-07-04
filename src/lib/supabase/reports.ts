@@ -136,7 +136,7 @@ export async function insertCloudReport(input: {
     problem_summary: diagnosis.problemSummary,
     report_text: diagnosis.reportText,
     path_status: diagnosis.pathStatus,
-    review_status: diagnosis.reviewStatus ?? "pending",
+    review_status: diagnosis.reviewStatus ?? "pending_verification",
     image_url: publicReportPhotoPath(reportId),
     image_path: imagePath,
     diagnosis: publicDiagnosis,

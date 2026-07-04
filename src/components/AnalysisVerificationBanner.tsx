@@ -19,11 +19,7 @@ export default function AnalysisVerificationBanner({
         className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900"
         role="status"
       >
-        <strong>analysisSource=mock</strong> · 当前为演示数据（未连接 Gemma 4），摘要可能与照片不符。
-        <span className="mt-1 block text-[11px] text-amber-800/90">
-          这不代表 Gemma 4 真实识图能力，不可用于大赛能力证明。线上启用 Gemma 4：Vercel 配置{" "}
-          <strong>GEMINI_API_KEY</strong> 与 <strong>GEMMA_API_TIMEOUT_MS=55000</strong> 后 Redeploy。
-        </span>
+        <strong>analysisSource=demo-mock</strong> · 当前为比赛演示样例数据（未连接 Gemma 4），摘要可能与照片不符。建议人工复核。
       </div>
     );
   }
@@ -72,8 +68,7 @@ export default function AnalysisVerificationBanner({
         className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs leading-relaxed text-emerald-900"
         role="status"
       >
-        <strong>analysisSource=gemma</strong>
-        {modelName ? ` · 模型 ${modelName}` : " · Gemma 4"} · 本次为 Gemma 4 真实多模态识图结果（未微调，Prompt + JSON 约束）。请核对是否与照片中的可见障碍一致。
+        AI 识别结果仅作为辅助参考，建议人工复核后再登记台账。
       </div>
     );
   }

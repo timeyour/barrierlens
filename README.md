@@ -1,6 +1,9 @@
 # 无碍 BarrierLens
 
-> 拍照识别公共空间无障碍通行风险，生成可归档、可复查、可导出的现场证据。
+> **看见问题不难，留下证据才难。**  
+> 基于 Gemma 4 的无障碍问题记录与证据生成工具 · 照片 → 结构化证据 → 时间线 → 导出 / 复查
+
+**比赛交付文档：** [DEMO_GUIDE.md](./DEMO_GUIDE.md) · [SUBMISSION_NOTES.md](./SUBMISSION_NOTES.md)
 
 ## 团队归属
 
@@ -10,7 +13,7 @@
 | **产品** | 无碍 BarrierLens |
 | **赛事** | [Gemma 4 开发者大赛 2026](https://ai.google.dev/) · 上海站 · **赛道 D · AI for Social Good** |
 | **仓库** | https://github.com/timeyour/barrierlens |
-| **在线 Demo** | https://barrierlens-1utx.vercel.app/#tool （提交 / 录视频 / 评委只用这一条；`#tool` 直达工作台） |
+| **在线 Demo** | https://barrierlens.vercel.app/#tool （提交 / 录视频 / 评委只用这一条；`#tool` 直达工作台） |
 | **Demo 视频** | [BarrierLens_Gemma4_demo_final](https://www.bilibili.com/video/BV1LtEg6zEqS/)（B 站 · ≤5 分钟） |
 | **Hackathon 版本** | [`v0.1-hackathon-demo`](https://github.com/timeyour/barrierlens/releases/tag/v0.1-hackathon-demo) |
 
@@ -24,7 +27,7 @@
 
 | 用途 | 地址 |
 |------|------|
-| **在线 Demo** | https://barrierlens-1utx.vercel.app/#tool |
+| **在线 Demo** | https://barrierlens.vercel.app/#tool |
 | **Demo 视频** | https://www.bilibili.com/video/BV1LtEg6zEqS/（`BarrierLens_Gemma4_demo_final`） |
 | **代码仓库** | https://github.com/timeyour/barrierlens |
 
@@ -34,7 +37,24 @@
 - 其它 `barrierlens-*.vercel.app`、preview、legacy 仅供开发排查，**不要**写进提交材料。
 - 本地开发：`http://localhost:3000/#tool`；线上变量与部署见 [docs/MIGRATE_VERCEL.md](docs/MIGRATE_VERCEL.md)。
 
-## 1. 问题
+## 1. 项目是什么
+
+BarrierLens 是基于 **Gemma 4 多模态理解** 的城市无障碍问题**证据链**工具。
+
+核心判断：
+
+> 人拍照不是为了让 AI 看见，而是为了让问题**留下证据**。AI 的作用不是复述照片，而是把现场问题转成可整改、可归档、可复查的**结构化记录**。
+
+### 为什么不是普通拍照投诉
+
+| 普通拍照 | BarrierLens 证据链 |
+|----------|-------------------|
+| 一张照片 + 一句描述 | 结构化 JSON（场景、风险、人群、证据要点） |
+| 难以跟进 | 本地时间线 + 复查状态 |
+| 难以递出 | Markdown / PDF 导出 + 人工复核声明 |
+| 「AI 看图」单点 Demo | 现场 → 证据 → 时间线 → 导出 / 复查 执行链 |
+
+## 2. 问题
 
 盲道被共享单车占用、无障碍入口被电瓶车挡住、临时围挡造成通行链断点，这些问题往往能被路人看见，却很难形成可持续跟进的证据。
 
@@ -42,7 +62,7 @@ BarrierLens 的核心判断是：
 
 > 人拍照不是为了让 AI 看见，而是为了让问题留下证据。AI 的作用不是复述照片，而是把现场问题转成可整改、可归档、可复查的结构化记录。
 
-## 2. 方案
+## 3. 方案
 
 BarrierLens 是基于 Gemma 4 多模态理解的无障碍通行风险识别与证据生成工具。
 
@@ -63,7 +83,7 @@ BarrierLens 是基于 Gemma 4 多模态理解的无障碍通行风险识别与�
 | 入口 / 坡道受阻 | 商场、小区、医院等入口净宽或坡道被占 |
 | 通行链断点 | 路缘坡道缺失、门槛过高、围挡绕行、通道狭窄 |
 
-## 3. Gemma 4 作用
+## 4. Gemma 4 做了什么
 
 Gemma 4 负责无障碍场景理解与结构化证据生成，不只是识图。
 
@@ -96,7 +116,7 @@ Gemma 4 证明链文档：
 - [docs/LOCAL_REPRODUCE.md](docs/LOCAL_REPRODUCE.md) — 本地复现步骤
 - [docs/GEMMA4_DEPLOYMENT.md](docs/GEMMA4_DEPLOYMENT.md) — Vercel 部署与验收
 
-## 4. 技术架构
+## 5. 技术架构
 
 ```text
 Next.js 16 + TypeScript + Tailwind CSS 4 + framer-motion + GSAP
@@ -113,7 +133,7 @@ Next.js 16 + TypeScript + Tailwind CSS 4 + framer-motion + GSAP
 └── src/types/analysis.ts
 ```
 
-## 5. 本地运行
+## 6. 本地运行
 
 ```bash
 npm install
@@ -121,6 +141,20 @@ npm run dev
 ```
 
 浏览器打开 http://localhost:3000/#tool
+
+### 如何使用 Demo 样例
+
+1. **单条分析兜底：** 工具页点 **「使用演示样例」** → 填地点 → 生成（约 2 秒，不依赖 API）
+2. **时间线批量样例：** `#records` → **「加载演示样例（10 条）」**
+3. 演示样例的 `analysisSource` 显示为 **demo-mock**；真实 Gemma 分析为 **gemma**
+
+详见 [DEMO_GUIDE.md](./DEMO_GUIDE.md)。
+
+### 如何导出报告
+
+- 分析结果页：**导出 PDF** / **导出 Markdown**
+- 时间线：**生成巡检报告**（预览清单）
+- 导出含：项目名称、时间、地点、问题类型、风险、影响人群、证据摘要、整改建议、复查提示、**人工复核声明**
 
 ### 环境变量
 
@@ -153,7 +187,7 @@ URL 临时切换：
 - `/?mode=v2` 强制显示 V2 证据平台。
 - `/?mode=mvp` 强制显示 MVP 稳定版。
 
-## 6. 测试
+## 7. 测试
 
 ```bash
 npm run lint
@@ -177,7 +211,7 @@ npm run test:multiround
 | 平均分析耗时 | <= 8 秒 |
 | Demo 视频 | <= 5 分钟 |
 
-## 7. 隐私与边界
+## 8. 隐私与项目边界
 
 - 默认无账号；时间线保存在本机浏览器（约 5MB / 25 条上限）。
 - 公开池 `/reports` 需**用户勾选同意**后才发布摘要；公开时**位置自动模糊、不含现场照片**。
@@ -187,7 +221,7 @@ npm run test:multiround
 - 低置信度或接口失败时必须人工复核。
 - Mock 模式不是实时识图，提交材料和演示中必须标注。
 
-## 8. 提交四件套
+## 9. 提交四件套
 
 | 材料 | 状态 | 说明 |
 |------|------|------|

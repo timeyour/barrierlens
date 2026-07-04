@@ -1,4 +1,12 @@
 import type { ReviewStatus, StoredRecord } from "@/types/analysis";
+import {
+  buildDemoLedgerRecords,
+  hasDemoLedgerRecords,
+} from "@/data/demoLedgerRecords";
+import {
+  isDemoLedgerRecord,
+  migrateStoredRecord,
+} from "@/lib/ledgerStatus";
 
 const STORAGE_KEY = "barrierlens-records";
 /** 含缩略图时 localStorage 约 5MB 上限，条数不宜过多 */
@@ -29,7 +37,8 @@ function readAll(): StoredRecord[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as StoredRecord[];
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map(migrateStoredRecord);
   } catch {
     return [];
   }
@@ -173,11 +182,30 @@ function usesBundledDemoImage(url: string | undefined): boolean {
 }
 
 function isLegacyDemoRecord(record: StoredRecord): boolean {
+  if (isDemoLedgerRecord(record)) return false;
   if (record.id.startsWith(DEMO_RECORD_ID_PREFIX)) return true;
   if (usesBundledDemoImage(record.imageDataUrl)) return true;
   if (usesBundledDemoImage(record.reviewImageDataUrl)) return true;
   if (LEGACY_DEMO_LOCATIONS.has(record.location)) return true;
   return false;
+}
+
+/** 注入 10 条演示台账（不覆盖已有 demo-ledger 数据） */
+export function seedDemoLedgerRecords(): number {
+  const existing = readAll();
+  if (hasDemoLedgerRecords(existing)) return 0;
+  const demos = buildDemoLedgerRecords();
+  writeAll([...demos, ...existing.filter((r) => !isDemoLedgerRecord(r))]);
+  return demos.length;
+}
+
+/** 仅清除 demo-ledger 演示数据 */
+export function purgeDemoLedgerRecords(): number {
+  const existing = readAll();
+  const next = existing.filter((record) => !isDemoLedgerRecord(record));
+  if (next.length === existing.length) return 0;
+  writeAll(next);
+  return existing.length - next.length;
 }
 
 /** 清除历史注入或引用内置样例图的演示时间线数据 */

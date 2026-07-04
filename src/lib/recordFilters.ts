@@ -1,17 +1,20 @@
 import {
   SCENE_TYPE_LABELS,
+  type LedgerStatus,
   type RecordMode,
   type ReviewStatus,
   type RiskLevel,
   type SceneType,
   type StoredRecord,
 } from "@/types/analysis";
+import { migrateLegacyReviewStatus } from "@/lib/ledgerStatus";
 
 export type QueueView = "work" | "all" | "history";
 
 export interface RecordFilterState {
   query: string;
   queue: QueueView;
+  status: LedgerStatus | "all";
   mode: RecordMode | "all";
   risk: RiskLevel | "all";
   scene: SceneType | "all";
@@ -20,24 +23,24 @@ export interface RecordFilterState {
 export const DEFAULT_RECORD_FILTERS: RecordFilterState = {
   query: "",
   queue: "work",
+  status: "all",
   mode: "all",
   risk: "all",
   scene: "all",
 };
 
 const WORK_STATUSES: ReviewStatus[] = [
-  "pending",
-  "exported",
-  "reported",
-  "review_pending",
+  "pending_verification",
+  "pending_remediation",
 ];
 
-const HISTORY_STATUSES: ReviewStatus[] = ["fixed", "unfixed"];
+const HISTORY_STATUSES: ReviewStatus[] = ["remediated", "verified"];
 
 function matchesQuery(record: StoredRecord, query: string): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
   const haystack = [
+    record.id,
     record.location,
     record.issueType,
     record.sceneDescription,
@@ -55,12 +58,14 @@ export function filterRecords(
   filters: RecordFilterState,
 ): StoredRecord[] {
   return records.filter((record) => {
-    if (filters.queue === "work" && !WORK_STATUSES.includes(record.reviewStatus)) {
+    const status = migrateLegacyReviewStatus(record.reviewStatus);
+    if (filters.queue === "work" && !WORK_STATUSES.includes(status)) {
       return false;
     }
-    if (filters.queue === "history" && !HISTORY_STATUSES.includes(record.reviewStatus)) {
+    if (filters.queue === "history" && !HISTORY_STATUSES.includes(status)) {
       return false;
     }
+    if (filters.status !== "all" && status !== filters.status) return false;
     if (filters.mode !== "all" && record.recordMode !== filters.mode) return false;
     if (filters.risk !== "all" && record.riskLevel !== filters.risk) return false;
     if (filters.scene !== "all" && record.sceneType !== filters.scene) return false;
@@ -85,8 +90,12 @@ export function groupRecordsByLocation(
 
 export function countByQueue(records: StoredRecord[]) {
   return {
-    work: records.filter((r) => WORK_STATUSES.includes(r.reviewStatus)).length,
-    history: records.filter((r) => HISTORY_STATUSES.includes(r.reviewStatus)).length,
+    work: records.filter((r) =>
+      WORK_STATUSES.includes(migrateLegacyReviewStatus(r.reviewStatus)),
+    ).length,
+    history: records.filter((r) =>
+      HISTORY_STATUSES.includes(migrateLegacyReviewStatus(r.reviewStatus)),
+    ).length,
     all: records.length,
   };
 }

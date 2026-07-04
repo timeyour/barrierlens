@@ -5,19 +5,17 @@ import {
   type ReviewStatus,
 } from "@/types/analysis";
 
-const PROGRESS_LABELS = ["已生成", "已递出", "已反馈", "待复查"] as const;
+const PROGRESS_LABELS = ["待核查", "待整改", "已整改", "已复查"] as const;
 
 function progressIndex(reviewStatus: ReviewStatus): number {
   switch (reviewStatus) {
-    case "pending":
+    case "pending_verification":
       return 0;
-    case "exported":
+    case "pending_remediation":
       return 1;
-    case "reported":
+    case "remediated":
       return 2;
-    case "review_pending":
-    case "fixed":
-    case "unfixed":
+    case "verified":
       return 3;
     default:
       return 0;
@@ -31,6 +29,7 @@ interface ReportResultLoopProps {
   copySuccess: boolean;
   onCopy: () => void;
   onExport: () => void;
+  onExportMarkdown?: () => void;
   onMarkReported: () => void;
   analysisNote?: string | null;
   dispatchScriptEnabled?: boolean;
@@ -46,6 +45,7 @@ export default function ReportResultLoop({
   copySuccess,
   onCopy,
   onExport,
+  onExportMarkdown,
   onMarkReported,
   analysisNote,
   dispatchScriptEnabled = false,
@@ -55,16 +55,19 @@ export default function ReportResultLoop({
   exporting = false,
 }: ReportResultLoopProps) {
   const step = progressIndex(reviewStatus);
-  const reported = step >= 2;
 
   return (
     <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-900">递出与跟进</h3>
+        <h3 className="text-sm font-semibold text-slate-900">导出与时间线跟进</h3>
         <span className="rounded-md bg-white px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
           {REVIEW_STATUS_LABELS[reviewStatus]}
         </span>
       </div>
+
+      <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+        照片 → 结构化证据 → 时间线 → 导出 / 复查
+      </p>
 
       <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
         {PROGRESS_LABELS.map((label, index) => (
@@ -91,6 +94,15 @@ export default function ReportResultLoop({
         >
           {exporting ? "正在导出…" : "导出 PDF"}
         </button>
+        {onExportMarkdown && (
+          <button
+            type="button"
+            onClick={onExportMarkdown}
+            className="btn-secondary rounded-lg px-4 py-2 text-sm font-semibold text-slate-700"
+          >
+            导出 Markdown
+          </button>
+        )}
         {dispatchScriptEnabled && onCopyDispatch ? (
           <button
             type="button"
@@ -108,21 +120,21 @@ export default function ReportResultLoop({
             {copySuccess ? "已复制 ✓" : copyLabel}
           </button>
         )}
-        {!reported && (
+        {reviewStatus === "pending_verification" && (
           <button
             type="button"
             onClick={onMarkReported}
             className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline"
           >
-            标记已反馈
+            确认登记待整改
           </button>
         )}
       </div>
 
       <p className="mt-3 text-[10px] leading-relaxed text-slate-500">
         {analysisNote ? `${analysisNote.replace(/。$/, "")} · ` : ""}
-        递出前请核对摘要与照片
-        {dispatchScriptEnabled ? " · AI 仅供参考" : ""}
+        AI 辅助识别，建议人工复核后再纳入时间线
+        {dispatchScriptEnabled ? " · 对外话术仅供参考" : ""}
       </p>
       {exportError && (
         <p className="mt-2 text-xs text-red-600" role="alert">

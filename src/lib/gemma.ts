@@ -2,6 +2,7 @@ import { fetch as undiciFetch, ProxyAgent } from "undici";
 import { mockAnalyze } from "@/lib/mockAnalysis";
 import { isHackathonFlagEnabled } from "@/config/hackathonFlags";
 import { ensureObstaclesFromEvidence } from "@/lib/obstacleFallback";
+import { migrateLegacyReviewStatus } from "@/lib/ledgerStatus";
 import type {
   AnalysisRequest,
   AnalysisResult,
@@ -184,17 +185,10 @@ function normalizePathStatus(raw: unknown): PathStatus {
 }
 
 function normalizeReviewStatus(raw: unknown): ReviewStatus {
-  if (
-    raw === "pending" ||
-    raw === "exported" ||
-    raw === "reported" ||
-    raw === "review_pending" ||
-    raw === "fixed" ||
-    raw === "unfixed"
-  ) {
-    return raw;
+  if (typeof raw === "string") {
+    return migrateLegacyReviewStatus(raw);
   }
-  return "pending";
+  return "pending_verification";
 }
 
 function normalizeSceneType(raw: unknown): SceneType {

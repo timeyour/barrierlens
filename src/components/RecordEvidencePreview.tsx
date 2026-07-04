@@ -21,13 +21,14 @@ export default function RecordEvidencePreview({
   const hasBefore = Boolean(record.imageDataUrl);
   const hasAfter = Boolean(record.reviewImageDataUrl);
   const canCompare = hasBefore && hasAfter;
-  const isFixed = reviewStatus === "fixed";
-  const isUnfixed = reviewStatus === "unfixed";
+  const isRemediated =
+    reviewStatus === "remediated" || reviewStatus === "verified";
+  const isPendingFix = reviewStatus === "pending_remediation";
 
   useGSAP(
     () => {
       if (!flipRef.current || reducedMotion || !canCompare) return;
-      if (isFixed) {
+      if (isRemediated) {
         gsap.fromTo(
           flipRef.current,
           { rotateY: -72, autoAlpha: 0.5, transformOrigin: "center center" },
@@ -42,7 +43,7 @@ export default function RecordEvidencePreview({
     },
     {
       scope: flipRef,
-      dependencies: [isFixed, canCompare, reducedMotion],
+      dependencies: [isRemediated, canCompare, reducedMotion],
       revertOnUpdate: true,
     },
   );
@@ -62,10 +63,10 @@ export default function RecordEvidencePreview({
         <div
           ref={flipRef}
           className={`grid grid-cols-2 gap-2 rounded-xl border p-2 ${
-            isFixed
+            isRemediated
               ? "border-emerald-300 bg-emerald-50/50"
-              : isUnfixed
-                ? "border-red-200 bg-red-50/30"
+              : isPendingFix
+                ? "border-amber-200 bg-amber-50/30"
                 : "border-slate-200 bg-slate-50/80"
           }`}
           style={{ perspective: 900 }}
@@ -92,14 +93,14 @@ export default function RecordEvidencePreview({
               整改后
             </figcaption>
           </figure>
-          {isFixed && (
+          {isRemediated && (
             <p className="col-span-2 rounded-md bg-emerald-100 px-2 py-1.5 text-center text-[10px] font-semibold text-emerald-800">
-              整改证据已闭环 · 前后对比可复查
+              整改证据已闭环 · 建议人工复核后标记已复查
             </p>
           )}
-          {isUnfixed && (
-            <p className="col-span-2 rounded-md bg-red-100 px-2 py-1.5 text-center text-[10px] font-semibold text-red-800">
-              仍未整改 · 请继续跟进
+          {isPendingFix && !isRemediated && (
+            <p className="col-span-2 rounded-md bg-amber-100 px-2 py-1.5 text-center text-[10px] font-semibold text-amber-900">
+              待整改 · 请跟踪责任方处理进度
             </p>
           )}
         </div>

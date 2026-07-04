@@ -20,18 +20,18 @@ export type MobileTabItem = {
 };
 
 const MIXED_TABS: MobileTabItem[] = [
-  { href: "/#story", label: "流程", anchor: true, match: "story" },
+  { href: "/#story", label: "口径", anchor: true, match: "story" },
   {
     href: "/#tool",
     label: "记录",
     anchor: true,
     match: "tool",
     primary: true,
-    ariaLabel: "拍照记录",
+    ariaLabel: "问题记录",
   },
+  { href: "/#records", label: "时间线", anchor: true, match: "records" },
   { href: "/reports", label: "公开", anchor: false, match: "reports" },
   { href: "/tech", label: "技术", anchor: false, match: "tech", ariaLabel: "技术路线" },
-  { href: "/#records", label: "我的", anchor: true, match: "records" },
 ];
 
 const FIX_TABS: MobileTabItem[] = [

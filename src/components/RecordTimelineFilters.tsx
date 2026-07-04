@@ -1,12 +1,12 @@
-"use client";
-
 import {
   DEFAULT_RECORD_FILTERS,
   type QueueView,
   type RecordFilterState,
 } from "@/lib/recordFilters";
 import {
+  LEDGER_STATUS_LABELS,
   SCENE_TYPE_LABELS,
+  type LedgerStatus,
   type RecordMode,
   type RiskLevel,
   type SceneType,
@@ -16,19 +16,21 @@ interface RecordTimelineFiltersProps {
   filters: RecordFilterState;
   onChange: (next: RecordFilterState) => void;
   counts: { work: number; history: number; all: number };
+  statusCounts?: Record<LedgerStatus, number>;
   flow?: boolean;
 }
 
 const QUEUE_OPTIONS: { value: QueueView; label: string }[] = [
-  { value: "work", label: "工作队列" },
+  { value: "work", label: "进行中" },
   { value: "all", label: "全部" },
-  { value: "history", label: "历史归档" },
+  { value: "history", label: "已闭环" },
 ];
 
 export default function RecordTimelineFilters({
   filters,
   onChange,
   counts,
+  statusCounts,
   flow = false,
 }: RecordTimelineFiltersProps) {
   const set = (patch: Partial<RecordFilterState>) =>
@@ -56,7 +58,7 @@ export default function RecordTimelineFilters({
           type="search"
           value={filters.query}
           onChange={(e) => set({ query: e.target.value })}
-          placeholder="搜索地点或问题…"
+          placeholder="搜索地点、问题类型或 ID…"
           className={inputClass}
         />
         <div className={queueShell}>
@@ -84,20 +86,35 @@ export default function RecordTimelineFilters({
 
       <div className="flex flex-wrap gap-2">
         <select
+          value={filters.status}
+          onChange={(e) =>
+            set({ status: e.target.value as LedgerStatus | "all" })
+          }
+          className={selectClass}
+        >
+          <option value="all">全部状态</option>
+          {(Object.keys(LEDGER_STATUS_LABELS) as LedgerStatus[]).map((key) => (
+            <option key={key} value={key}>
+              {LEDGER_STATUS_LABELS[key]}
+              {statusCounts ? ` (${statusCounts[key]})` : ""}
+            </option>
+          ))}
+        </select>
+        <select
           value={filters.mode}
           onChange={(e) => set({ mode: e.target.value as RecordMode | "all" })}
           className={selectClass}
         >
           <option value="all">全部模式</option>
           <option value="public">公众</option>
-          <option value="inspection">自查</option>
+          <option value="inspection">巡检</option>
         </select>
         <select
           value={filters.risk}
           onChange={(e) => set({ risk: e.target.value as RiskLevel | "all" })}
           className={selectClass}
         >
-          <option value="all">全部风险</option>
+          <option value="all">全部严重程度</option>
           <option value="高">高</option>
           <option value="中">中</option>
           <option value="低">低</option>
@@ -118,6 +135,7 @@ export default function RecordTimelineFilters({
           filters.mode !== "all" ||
           filters.risk !== "all" ||
           filters.scene !== "all" ||
+          filters.status !== "all" ||
           filters.queue !== DEFAULT_RECORD_FILTERS.queue) && (
           <button
             type="button"

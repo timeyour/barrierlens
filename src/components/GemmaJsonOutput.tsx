@@ -1,5 +1,6 @@
 "use client";
 
+import { formatAnalysisSourceLabel } from "@/lib/evidenceFields";
 import { formatGemmaJson } from "@/lib/analysisJson";
 import type { AnalysisResult, AnalysisSource } from "@/types/analysis";
 import { useState } from "react";
@@ -21,18 +22,7 @@ export default function GemmaJsonOutput({
 }: GemmaJsonOutputProps) {
   const [copied, setCopied] = useState(false);
   const jsonText = formatGemmaJson(result);
-  const sourceText =
-    source === "gemma"
-      ? `真实模型 · ${modelName ?? "Gemma 4"}`
-      : source === "nvidia_nim"
-        ? `NVIDIA NIM · ${modelName ?? "google/gemma-4-31b-it"}`
-      : source === "ollama"
-        ? `本地 Ollama · ${modelName ?? "gemma4:latest"}`
-      : source === "mock_fallback"
-        ? "Mock 兜底 · 接口失败后自动降级"
-        : mockMode
-          ? "演示模式 · 结构与真实 API 一致"
-          : "来源未标注 · 请查看 analysisSource";
+  const sourceText = formatAnalysisSourceLabel(source, mockMode);
 
   const handleCopy = async () => {
     try {
@@ -52,7 +42,8 @@ export default function GemmaJsonOutput({
             Gemma 4 结构化输出
           </p>
           <p className="mt-0.5 text-[11px] text-slate-400">
-            {sourceText}
+            analysisSource={sourceText}
+            {modelName && source === "gemma" ? ` · ${modelName}` : ""}
           </p>
           {fallbackReason && (
             <p className="mt-0.5 max-w-xl text-[11px] text-amber-300">

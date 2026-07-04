@@ -18,13 +18,15 @@ export type SceneType =
   | "no_issue";
 export type PathStatus = "clear" | "partial" | "blocked";
 export type AnalysisSource = "gemma" | "nvidia_nim" | "ollama" | "mock" | "mock_fallback";
-export type ReviewStatus =
-  | "pending"
-  | "exported"
-  | "reported"
-  | "review_pending"
-  | "fixed"
-  | "unfixed";
+/** 整改台账状态（HITL 四态） */
+export type LedgerStatus =
+  | "pending_verification"
+  | "pending_remediation"
+  | "remediated"
+  | "verified";
+
+/** @deprecated 与 LedgerStatus 相同，保留字段名 reviewStatus 兼容 */
+export type ReviewStatus = LedgerStatus;
 
 /** 公众记录：证据归档与倡导；物业自查：内部巡查整改 */
 export type RecordMode = "public" | "inspection";
@@ -99,6 +101,8 @@ export interface StoredRecord extends AnalysisResult {
   cloudReportId?: string;
   /** 档案页拉取「照片复核申请」时校验用（仅存本机） */
   reviewToken?: string;
+  /** 演示样例或分析来源标记（时间线展示用） */
+  analysisSource?: AnalysisSource;
 }
 
 export const TARGET_DEPARTMENTS: TargetDepartment[] = [
@@ -146,11 +150,13 @@ export const PATH_STATUS_LABELS: Record<PathStatus, string> = {
   blocked: "阻断",
 };
 
-export const REVIEW_STATUS_LABELS: Record<ReviewStatus, string> = {
-  pending: "待处理",
-  exported: "已导出",
-  reported: "已反馈",
-  review_pending: "待复查",
-  fixed: "已整改",
-  unfixed: "未整改",
+export const LEDGER_STATUS_LABELS: Record<LedgerStatus, string> = {
+  pending_verification: "待核查",
+  pending_remediation: "待整改",
+  remediated: "已整改",
+  verified: "已复查",
 };
+
+/** @deprecated 使用 LEDGER_STATUS_LABELS */
+export const REVIEW_STATUS_LABELS: Record<ReviewStatus, string> =
+  LEDGER_STATUS_LABELS;

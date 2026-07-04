@@ -24,7 +24,7 @@ export default function MixedWorkbenchToolCard({
       className="scroll-mt-24 tool-card relative z-30 w-full min-w-0 p-4 sm:p-6 md:p-8"
     >
       <Suspense fallback={<WorkflowFallback />}>
-        <AnalysisWorkflow compact={compact} embedded showIntro />
+        <AnalysisWorkflow compact={compact} embedded showIntro={false} />
       </Suspense>
     </div>
   );

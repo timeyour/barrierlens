@@ -5,7 +5,9 @@ import {
   clearAllRecords,
   formatRecordTime,
   getRecords,
+  purgeDemoLedgerRecords,
   purgeDemoRecords,
+  seedDemoLedgerRecords,
   updateRecordReview,
 } from "@/lib/recordStore";
 import { fileToStoredImageDataUrl, isAcceptableImageFile } from "@/lib/imageUtils";
@@ -20,11 +22,19 @@ import PhotoCompareSlider from "@/components/PhotoCompareSlider";
 import RecordEvidencePreview from "@/components/RecordEvidencePreview";
 import RecordTimelineFilters from "@/components/RecordTimelineFilters";
 import ReviewStatusFlow from "@/components/ReviewStatusFlow";
+import LedgerReportPreview from "@/components/LedgerReportPreview";
+import ProductMethodologyNotice from "@/components/ProductMethodologyNotice";
 import ScrollReveal from "@/components/ScrollReveal";
 import HomeFlowSection from "@/components/HomeFlowSection";
 import SectionHeader from "@/components/SectionHeader";
 import SpatialDiagnosisTags from "@/components/SpatialDiagnosisTags";
 import { REVIEW_STATUS_BADGE, REVIEW_STATUS_BAR } from "@/lib/reviewStatusStyles";
+import { buildLedgerReport } from "@/lib/ledgerReport";
+import {
+  countByLedgerStatus,
+  formatLedgerDisplayId,
+  LEDGER_STATUS_FLOW,
+} from "@/lib/ledgerStatus";
 import {
   countByQueue,
   DEFAULT_RECORD_FILTERS,
@@ -34,14 +44,7 @@ import {
 } from "@/lib/recordFilters";
 import { useEffect, useRef, useState } from "react";
 
-const REVIEW_FLOW: ReviewStatus[] = [
-  "pending",
-  "exported",
-  "reported",
-  "review_pending",
-  "fixed",
-  "unfixed",
-];
+const REVIEW_FLOW = LEDGER_STATUS_FLOW;
 
 const EMPTY_RECORDS: StoredRecord[] = [];
 
@@ -168,7 +171,15 @@ function ReviewPhotoCompare({
   );
 }
 
-function RecordItem({ record, flow = false }: { record: StoredRecord; flow?: boolean }) {
+function RecordItem({
+  record,
+  flow = false,
+  displayIndex = 0,
+}: {
+  record: StoredRecord;
+  flow?: boolean;
+  displayIndex?: number;
+}) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [nextStatus, setNextStatus] = useState<ReviewStatus>(record.reviewStatus);
   const [reviewNote, setReviewNote] = useState(record.reviewNote ?? "");
@@ -230,6 +241,9 @@ function RecordItem({ record, flow = false }: { record: StoredRecord; flow?: boo
       <details className="group min-w-0 flex-1">
         <summary className="cursor-pointer list-none p-4 [&::-webkit-details-marker]:hidden">
           <div className="flex flex-wrap items-center gap-2">
+            <span className="font-mono text-[10px] font-semibold text-slate-400">
+              {formatLedgerDisplayId(record, displayIndex)}
+            </span>
             <span
               className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset ${REVIEW_STATUS_BADGE[record.reviewStatus]}`}
             >
@@ -273,9 +287,30 @@ function RecordItem({ record, flow = false }: { record: StoredRecord; flow?: boo
               flow ? "text-emerald-300 hover:text-emerald-200" : "text-emerald-700 hover:text-emerald-800"
             }`}
           >
-            档案 →
+            查看详情 →
           </Link>
-          <p className="text-xs leading-relaxed text-slate-600">{record.sceneDescription}</p>
+          <div className="grid gap-2 text-xs text-slate-600 sm:grid-cols-2">
+            <p>
+              <span className="font-semibold text-slate-700">AI 描述：</span>
+              {record.problemSummary}
+            </p>
+            <p>
+              <span className="font-semibold text-slate-700">整改建议：</span>
+              {record.suggestion}
+            </p>
+            {record.reviewNote && (
+              <p className="sm:col-span-2">
+                <span className="font-semibold text-slate-700">复查结果：</span>
+                {record.reviewNote}
+              </p>
+            )}
+          </div>
+          {!record.imageDataUrl && (
+            <div className="mt-3 flex aspect-[4/3] max-w-xs items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-100 text-[11px] text-slate-500">
+              演示数据 · 无现场图片
+            </div>
+          )}
+          <p className="mt-2 text-xs leading-relaxed text-slate-600">{record.sceneDescription}</p>
           {preview && (
             <p className="mt-2 line-clamp-3 text-[11px] text-slate-400">{preview.slice(0, 200)}…</p>
           )}
@@ -334,7 +369,7 @@ function RecordItem({ record, flow = false }: { record: StoredRecord; flow?: boo
                 <input
                   value={reviewNote}
                   onChange={(event) => setReviewNote(event.target.value)}
-                  placeholder="复查备注"
+                  placeholder="复查结果 / 备注"
                   className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 placeholder:text-slate-400"
                 />
                 <button
@@ -368,6 +403,7 @@ export default function RecordTimeline({ variant = "default" }: { variant?: "def
   const flow = variant === "flow";
   const [records, setRecords] = useState<StoredRecord[]>(EMPTY_RECORDS);
   const [filters, setFilters] = useState<RecordFilterState>(DEFAULT_RECORD_FILTERS);
+  const [reportOpen, setReportOpen] = useState(false);
 
   useEffect(() => {
     purgeDemoRecords();
@@ -382,15 +418,66 @@ export default function RecordTimeline({ variant = "default" }: { variant?: "def
   }, []);
 
   const counts = countByQueue(records);
+  const statusCounts = countByLedgerStatus(records);
   const visibleRecords = filterRecords(records, filters);
   const grouped = groupRecordsByLocation(visibleRecords);
+  const reportData = buildLedgerReport(visibleRecords);
+
+  const toolbar = (
+    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+      <button
+        type="button"
+        onClick={() => {
+          const added = seedDemoLedgerRecords();
+          setRecords(getRecords());
+          if (added > 0) {
+            window.alert(`已加载 ${added} 条演示台账数据。`);
+          } else {
+            window.alert("演示台账已存在，无需重复加载。");
+          }
+        }}
+        className={
+          flow
+            ? "flow-btn-secondary rounded-lg px-3 py-2 text-xs font-semibold"
+            : "rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-800"
+        }
+      >
+        加载演示样例（10 条）
+      </button>
+      <button
+        type="button"
+        disabled={visibleRecords.length === 0}
+        onClick={() => setReportOpen(true)}
+        className={
+          flow
+            ? "rounded-lg bg-white px-3 py-2 text-xs font-semibold text-slate-900 disabled:opacity-40"
+            : "rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-40"
+        }
+      >
+        生成巡检报告
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          const removed = purgeDemoLedgerRecords();
+          if (removed > 0) setRecords(getRecords());
+        }}
+        className="text-[11px] font-medium text-slate-500 underline underline-offset-2"
+      >
+        清除演示台账
+      </button>
+    </div>
+  );
 
   const content = (
     <>
+      <ProductMethodologyNotice compact />
+      {toolbar}
       <RecordTimelineFilters
         filters={filters}
         onChange={setFilters}
         counts={counts}
+        statusCounts={statusCounts}
         flow={flow}
       />
 
@@ -417,17 +504,25 @@ export default function RecordTimeline({ variant = "default" }: { variant?: "def
                 </span>
               </div>
               <ul className="space-y-3">
-                {groupRecords.map((record) => (
+                {groupRecords.map((record, index) => (
                   <RecordItem
                     key={`${record.id}-${record.reviewStatus}-${record.reviewNote ?? ""}`}
                     record={record}
                     flow={flow}
+                    displayIndex={index}
                   />
                 ))}
               </ul>
             </div>
           ))}
         </div>
+      )}
+
+      {reportOpen && (
+        <LedgerReportPreview
+          report={reportData}
+          onClose={() => setReportOpen(false)}
+        />
       )}
 
       {flow && records.length > 0 && (
@@ -454,9 +549,9 @@ export default function RecordTimeline({ variant = "default" }: { variant?: "def
       <ScrollReveal>
         <HomeFlowSection
           id="records"
-          index="03 · 我的"
-          title="记录"
-          hint="本机保存"
+          index="03 · 时间线"
+          title="证据时间线"
+          hint="状态跟踪 · 报告导出"
           className="mb-6 md:mb-10 lg:mb-14"
         >
           {content}
@@ -468,7 +563,12 @@ export default function RecordTimeline({ variant = "default" }: { variant?: "def
   return (
     <ScrollReveal>
       <section id="records" className="mb-6 scroll-mt-20 md:mb-10 lg:mb-14">
-        <SectionHeader eyebrow="Records" title="我的记录" align="center" />
+        <SectionHeader
+          eyebrow="Timeline"
+          title="证据时间线"
+          description="结构化记录归档 · 状态跟踪 · 导出与复查"
+          align="center"
+        />
         {content}
 
         <p className="mt-4 text-center text-[11px] text-slate-400">

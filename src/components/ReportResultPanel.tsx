@@ -4,6 +4,7 @@ import type { AnalysisResult, AnalysisSource, RecordMode } from "@/types/analysi
 import AnalysisResultDetails, {
   ResultConclusionHeader,
 } from "@/components/AnalysisResultDetails";
+import EvidenceStructuredSummary from "@/components/EvidenceStructuredSummary";
 import AnalysisVerificationBanner from "@/components/AnalysisVerificationBanner";
 import ReportCard from "@/components/ReportCard";
 import ReportEvidenceLayout from "@/components/ReportEvidenceLayout";
@@ -23,6 +24,7 @@ interface ReportResultPanelProps {
   reportTitle: string;
   analysisSource?: AnalysisSource | null;
   modelName?: string | null;
+  mockMode?: boolean;
   topBarSlot?: ReactNode;
   loopSlot?: ReactNode;
   publishSlot?: ReactNode;
@@ -37,6 +39,7 @@ export default function ReportResultPanel({
   reportTitle,
   analysisSource,
   modelName,
+  mockMode,
   topBarSlot,
   loopSlot,
   publishSlot,
@@ -99,6 +102,12 @@ export default function ReportResultPanel({
           obstaclesInferredFromEvidence={result.obstaclesInferredFromEvidence}
         />
       )}
+
+      <EvidenceStructuredSummary
+        result={result}
+        analysisSource={analysisSource}
+        mockMode={mockMode}
+      />
 
       {loopSlot}
 

@@ -9,9 +9,11 @@ import ModeSelector from "@/components/ModeSelector";
 import LocationInput from "@/components/LocationInput";
 import ReportResultPanel from "@/components/ReportResultPanel";
 import ReportResultLoop from "@/components/ReportResultLoop";
+import ProductMethodologyNotice from "@/components/ProductMethodologyNotice";
 import GemmaJsonOutput from "@/components/GemmaJsonOutput";
 import WizardStepIndicator from "@/components/WizardStepIndicator";
 import { downloadPdfReport } from "@/lib/exportPdf";
+import { downloadMarkdownReport } from "@/lib/exportMarkdown";
 import { buildDispatchScript } from "@/lib/dispatchScript";
 import { compressImageForUpload, fileFromStoredImage, fileToStoredImageDataUrl } from "@/lib/imageUtils";
 import { RecordStorageError, getRecordByLocalId, saveRecord, updateRecordReview } from "@/lib/recordStore";
@@ -334,7 +336,7 @@ export default function AnalysisWorkflow({
       location: resolvedLocation,
       recordMode: data.recordMode ?? recordMode,
       targetDepartment: data.targetDepartment ?? targetDepartment,
-      reviewStatus: data.reviewStatus ?? "pending",
+      reviewStatus: data.reviewStatus ?? "pending_verification",
       recordedAt: data.recordedAt ?? new Date().toISOString(),
       imageDataUrl,
       lat: coords?.lat ?? null,
@@ -374,19 +376,14 @@ export default function AnalysisWorkflow({
 
   const markRecordExported = useCallback(() => {
     if (!savedRecordId) return;
-    updateRecordReview(savedRecordId, { reviewStatus: "exported" });
-    setResult((prev) =>
-      prev && prev.reviewStatus === "pending"
-        ? { ...prev, reviewStatus: "exported" }
-        : prev,
-    );
+    updateRecordReview(savedRecordId, { reviewedAt: new Date().toISOString() });
   }, [savedRecordId]);
 
   const markRecordReported = useCallback(() => {
     if (!savedRecordId) return;
-    updateRecordReview(savedRecordId, { reviewStatus: "reported" });
+    updateRecordReview(savedRecordId, { reviewStatus: "pending_remediation" });
     setResult((prev) =>
-      prev ? { ...prev, reviewStatus: "reported" } : prev,
+      prev ? { ...prev, reviewStatus: "pending_remediation" } : prev,
     );
   }, [savedRecordId]);
 
@@ -732,6 +729,18 @@ function isBuiltinDemoFile(file: File): boolean {
     }
   };
 
+  const handleExportMarkdown = () => {
+    if (!result) return;
+    try {
+      downloadMarkdownReport(result, undefined, recordMode);
+      markRecordExported();
+    } catch (error) {
+      setExportError(
+        error instanceof Error ? error.message : "Markdown 导出失败，请稍后重试",
+      );
+    }
+  };
+
   const isLoading = status === "loading";
   const showWizard = status !== "success";
   const locationReady = !flags.locationRequired || isLocationUsable(location);
@@ -774,10 +783,10 @@ function isBuiltinDemoFile(file: File): boolean {
               {showIntro && !flow && (
                 <div>
                   <h2 className="text-base font-bold text-slate-900 md:text-lg">
-                    在哪？拍一张
+                    上传照片 · 填写地点
                   </h2>
                   <p className="mt-1 text-sm text-slate-600">
-                    选现场照片并填写路名，然后继续。
+                    选择公众记录或物业自查模式，由 Gemma 4 生成结构化证据并归档到本地时间线。
                   </p>
                 </div>
               )}
@@ -812,14 +821,14 @@ function isBuiltinDemoFile(file: File): boolean {
                     type="button"
                     disabled={isLoading}
                     onClick={() => void loadDemoImage()}
-                    aria-label="使用样例图"
+                    aria-label="使用演示样例"
                     className={
                       flow
                         ? "flow-btn-secondary w-full rounded-xl px-4 py-3 text-sm font-semibold disabled:opacity-50"
                         : "btn-secondary w-full rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 disabled:opacity-50"
                     }
                   >
-                    使用样例图
+                    使用演示样例
                   </button>
                 )}
               </div>
@@ -1050,6 +1059,7 @@ function isBuiltinDemoFile(file: File): boolean {
               recordMode={recordMode}
               analysisSource={analysisSource}
               modelName={modelName}
+              mockMode={mockMode}
               reportTitle={reportTitle}
               topBarSlot={
                 <div className="sticky top-0 z-10 -mx-1 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/95 pb-3 pt-0 backdrop-blur-sm">
@@ -1089,6 +1099,7 @@ function isBuiltinDemoFile(file: File): boolean {
                   copySuccess={copySuccess}
                   onCopy={() => void handleCopy()}
                   onExport={() => void handleExport()}
+                  onExportMarkdown={handleExportMarkdown}
                   onMarkReported={markRecordReported}
                   analysisNote={analysisNote}
                   dispatchScriptEnabled={flags.dispatchScript}
@@ -1115,6 +1126,7 @@ function isBuiltinDemoFile(file: File): boolean {
               }
               footerSlot={
                 <div className="space-y-3">
+                  <ProductMethodologyNotice compact />
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"

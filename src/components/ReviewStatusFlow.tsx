@@ -1,34 +1,16 @@
 "use client";
 
-import { REVIEW_STATUS_LABELS, type ReviewStatus } from "@/types/analysis";
+import { LEDGER_STATUS_LABELS, type LedgerStatus } from "@/types/analysis";
+import { LEDGER_STATUS_FLOW } from "@/lib/ledgerStatus";
 import { ensureGsapPlugins, gsap, useGSAP } from "@/lib/gsapClient";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { useRef } from "react";
 
-const BASE_FLOW: ReviewStatus[] = [
-  "pending",
-  "exported",
-  "reported",
-  "review_pending",
-];
-
-function buildFlow(status: ReviewStatus): ReviewStatus[] {
-  const terminal: ReviewStatus = status === "unfixed" ? "unfixed" : "fixed";
-  return [...BASE_FLOW, terminal];
-}
-
 function stepState(
   stepIndex: number,
-  status: ReviewStatus,
-  flow: ReviewStatus[],
+  status: LedgerStatus,
 ): "done" | "current" | "upcoming" {
-  const terminalIdx = flow.length - 1;
-
-  if (status === "fixed") {
-    return stepIndex <= terminalIdx ? "done" : "upcoming";
-  }
-
-  const statusIdx = flow.indexOf(status);
+  const statusIdx = LEDGER_STATUS_FLOW.indexOf(status);
   if (statusIdx < 0) return "upcoming";
   if (stepIndex < statusIdx) return "done";
   if (stepIndex === statusIdx) return "current";
@@ -36,7 +18,7 @@ function stepState(
 }
 
 interface ReviewStatusFlowProps {
-  status: ReviewStatus;
+  status: LedgerStatus;
 }
 
 ensureGsapPlugins();
@@ -44,7 +26,6 @@ ensureGsapPlugins();
 export default function ReviewStatusFlow({ status }: ReviewStatusFlowProps) {
   const ref = useRef<HTMLDivElement>(null);
   const reducedMotion = usePrefersReducedMotion();
-  const flow = buildFlow(status);
 
   useGSAP(
     () => {
@@ -64,50 +45,41 @@ export default function ReviewStatusFlow({ status }: ReviewStatusFlowProps) {
       className="mt-3 rounded-lg border border-slate-200 bg-white p-3"
     >
       <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-        记录状态流转
+        整改台账状态
       </p>
       <ol className="flex items-start justify-between gap-0.5">
-        {flow.map((step, index) => {
-          const state = stepState(index, status, flow);
-          const isTerminal = index === flow.length - 1;
-          const isUnfixedTerminal = step === "unfixed" && state === "current";
-          const isFixedTerminal = step === "fixed" && status === "fixed";
-
+        {LEDGER_STATUS_FLOW.map((step, index) => {
+          const state = stepState(index, status);
           let dotClass = "bg-slate-200 text-slate-400";
           let labelClass = "text-slate-400";
-          if (state === "done" || isFixedTerminal) {
+          if (state === "done") {
             dotClass = "bg-emerald-500 text-white";
             labelClass = "text-emerald-700";
           }
           if (state === "current") {
-            if (isUnfixedTerminal) {
-              dotClass = "bg-red-500 text-white";
-              labelClass = "text-red-700 font-semibold";
-            } else if (step === "fixed") {
-              dotClass = "bg-emerald-600 text-white";
-              labelClass = "text-emerald-800 font-semibold";
-            } else {
-              dotClass = "bg-blue-600 text-white";
-              labelClass = "text-blue-700 font-semibold";
-            }
+            dotClass = "bg-blue-600 text-white";
+            labelClass = "text-blue-700 font-semibold";
           }
 
           return (
-            <li key={`${step}-${index}`} className="relative flex min-w-0 flex-1 flex-col items-center">
+            <li
+              key={step}
+              className="relative flex min-w-0 flex-1 flex-col items-center"
+            >
               {index > 0 && (
                 <span
                   className={`absolute left-0 top-2.5 h-0.5 w-1/2 -translate-x-1/2 ${
-                    state === "done" || state === "current" || isFixedTerminal
+                    state === "done" || state === "current"
                       ? "bg-emerald-400"
                       : "bg-slate-200"
                   }`}
                   aria-hidden
                 />
               )}
-              {index < flow.length - 1 && (
+              {index < LEDGER_STATUS_FLOW.length - 1 && (
                 <span
                   className={`absolute right-0 top-2.5 h-0.5 w-1/2 translate-x-1/2 ${
-                    state === "done" || isFixedTerminal ? "bg-emerald-400" : "bg-slate-200"
+                    state === "done" ? "bg-emerald-400" : "bg-slate-200"
                   }`}
                   aria-hidden
                 />
@@ -115,30 +87,17 @@ export default function ReviewStatusFlow({ status }: ReviewStatusFlowProps) {
               <span
                 className={`relative z-10 flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold transition-all duration-500 ${dotClass}`}
               >
-                {state === "done" || isFixedTerminal ? "✓" : index + 1}
+                {state === "done" ? "✓" : index + 1}
               </span>
               <span
                 className={`mt-1 text-center text-[9px] font-medium leading-tight sm:text-[10px] ${labelClass}`}
               >
-                {REVIEW_STATUS_LABELS[step]}
-                {isTerminal && status === "review_pending" && step === "fixed"
-                  ? "（待确认）"
-                  : ""}
+                {LEDGER_STATUS_LABELS[step]}
               </span>
             </li>
           );
         })}
       </ol>
-      {status === "unfixed" && (
-        <p className="mt-2 rounded-md bg-red-50 px-2 py-1 text-center text-[10px] font-semibold text-red-700">
-          复查结论：未整改 — 需继续跟进
-        </p>
-      )}
-      {status === "fixed" && (
-        <p className="mt-2 rounded-md bg-emerald-50 px-2 py-1 text-center text-[10px] font-semibold text-emerald-800">
-          复查结论：已整改
-        </p>
-      )}
     </div>
   );
 }

@@ -128,7 +128,7 @@ export async function mockAnalyze(
     suggestedActions: preset.suggestedActions,
     confidence: preset.confidence,
     needsHumanReview: preset.confidence < 0.8,
-    reviewStatus: "pending" as const,
+    reviewStatus: "pending_verification" as const,
     targetDepartment,
     reportText,
     advocacyText,

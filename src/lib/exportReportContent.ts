@@ -7,6 +7,11 @@ import {
   type AnalysisResult,
   type RecordMode,
 } from "@/types/analysis";
+import {
+  buildEvidenceSummary,
+  buildReviewHint,
+  HUMAN_REVIEW_DECLARATION,
+} from "@/lib/evidenceFields";
 import { inferObstacleNature, inferSpatialCategory } from "@/lib/spatialDiagnosis";
 import { displayLocationLabel } from "@/lib/locationValidation";
 import { buildAnnotatedPhotoSectionHtml } from "@/lib/scenePhotoModel";
@@ -111,7 +116,7 @@ function buildDiagnosisTable(result: AnalysisResult): string {
 
 function buildPublicDisclaimer(): string {
   return [
-    "本文档由 AI 辅助整理，须人工核对后再对外使用。",
+    HUMAN_REVIEW_DECLARATION,
     "无碍 BarrierLens 不代为投诉或执法，不构成专业验收或法律责任认定。",
     "传播时请避免可识别路人面部、车牌；地点宜概括描述。",
     "如需向管理部门反映，请通过当地公开的政务服务渠道（如 12345）按官方要求提交。",
@@ -120,10 +125,40 @@ function buildPublicDisclaimer(): string {
 
 function buildInspectionDisclaimer(): string {
   return [
+    HUMAN_REVIEW_DECLARATION,
     "本建议书由 AI 辅助生成，须物业/管理方人工确认后执行。",
     "无碍 BarrierLens 不替代专业无障碍验收或法律责任认定。",
     "整改前后照片请脱敏处理，避免可识别路人面部与车牌。",
   ].join("\n");
+}
+
+function buildStructuredEvidenceSection(result: AnalysisResult): string {
+  const evidence = buildEvidenceSummary(result);
+  const reviewHint = buildReviewHint(result);
+  return `## 结构化证据摘要
+
+| 字段 | 内容 |
+|------|------|
+| 项目名称 | 无碍 BarrierLens |
+| 记录时间 | ${formatRecordedTime(result)} |
+| 地点 | ${displayLocationLabel(result.location, "未标注")} |
+| 问题类型 | ${result.issueType} |
+| 场景类型 | ${SCENE_TYPE_LABELS[result.sceneType]} |
+| 风险等级 | ${result.riskLevel} |
+| 影响人群 | ${result.affectedGroups.join("、") || "待核实"} |
+| 证据摘要 | ${evidence} |
+| 整改建议 | ${result.suggestion || result.managementAction} |
+| 复查提示 | ${reviewHint} |
+| 复查状态 | ${REVIEW_STATUS_LABELS[result.reviewStatus]} |
+
+### 建议动作
+
+${formatSuggestedActions(result)}
+
+## 人工复核声明
+
+${HUMAN_REVIEW_DECLARATION}
+`;
 }
 
 export function buildMarkdownReport(
@@ -154,6 +189,8 @@ ${problemExplanation}
 ## 诊断概览
 
 ${buildDiagnosisTable(result)}
+
+${buildStructuredEvidenceSection(result)}
 
 ## 现场情况
 
@@ -212,6 +249,8 @@ ${problemExplanation}
 ## 记录概览
 
 ${buildDiagnosisTable(result)}
+
+${buildStructuredEvidenceSection(result)}
 
 ## 现场情况
 

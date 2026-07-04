@@ -122,9 +122,9 @@ export function resolveScenePhotoModel(
   const before =
     result.hasIssue && result.pathStatus === "clear" ? "partial" : result.pathStatus;
   const after =
-    result.reviewStatus === "fixed"
+    result.reviewStatus === "remediated" || result.reviewStatus === "verified"
       ? "clear"
-      : result.reviewStatus === "review_pending" && before === "blocked"
+      : result.reviewStatus === "pending_remediation" && before === "blocked"
         ? "partial"
         : result.pathStatus;
 

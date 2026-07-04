@@ -4,6 +4,7 @@ import AnchorLink from "@/components/AnchorLink";
 import { UI_ASSETS } from "@/config/uiAssets";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { migrateLegacyReviewStatus } from "@/lib/ledgerStatus";
 import { getRecords } from "@/lib/recordStore";
 import { useEffect, useState } from "react";
 
@@ -50,9 +51,10 @@ function StoryStats({ compact = false }: { compact?: boolean }) {
       setStats({
         total: records.length,
         high: records.filter((r) => r.riskLevel === "高").length,
-        pending: records.filter((r) =>
-          ["pending", "review_pending", "reported"].includes(r.reviewStatus),
-        ).length,
+        pending: records.filter((r) => {
+          const status = migrateLegacyReviewStatus(r.reviewStatus);
+          return status === "pending_verification" || status === "pending_remediation";
+        }).length,
       });
     };
     sync();
