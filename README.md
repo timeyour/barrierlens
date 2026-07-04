@@ -234,4 +234,6 @@ npm run test:multiround
 
 ## License
 
-MIT · **小马过河** · Gemma 4 Hackathon 2026 上海站 · 赛道 D
+MIT · 详见 [LICENSE](./LICENSE) · **小马过河** · Gemma 4 Hackathon 2026 上海站 · 赛道 D
+
+知识产权与使用边界见 [SUBMISSION_NOTES.md](./SUBMISSION_NOTES.md#知识产权与合规说明)。
