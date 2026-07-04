@@ -2,16 +2,23 @@
 
 **Gemma 4 开发者大赛 2026 · 上海站 · Track D · AI for Social Good**
 
+> **看见问题不难，留下证据才难。**  
+> 基于 Gemma 4 的无障碍问题记录与证据生成工具 · 照片 → 结构化证据 → 时间线 → 导出 / 复查
+
 | 字段 | 内容 |
 |------|------|
 | 队伍 | 小马过河 |
-| 项目 | 无碍｜让无障碍问题被看见、被记录、被反馈 |
+| 项目 | 无碍 BarrierLens · 无障碍问题证据链工具 |
 | 主仓库 | https://github.com/timeyour/barrierlens |
-| 在线 Demo | https://barrierlens-1utx.vercel.app/#tool |
+| 在线 Demo | https://barrierlens.vercel.app/#tool |
 | Demo 视频（≤5 分钟） | https://www.bilibili.com/video/BV1LtEg6zEqS/ |
 | 技术报告 | 本目录 [TECHNICAL_REPORT.md](./TECHNICAL_REPORT.md) |
+| 演示指南 | 主仓库 [DEMO_GUIDE.md](https://github.com/timeyour/barrierlens/blob/main/DEMO_GUIDE.md) |
+| 提交说明 | 主仓库 [SUBMISSION_NOTES.md](https://github.com/timeyour/barrierlens/blob/main/SUBMISSION_NOTES.md) |
 
 > 本目录为 **方式 A（Fork & PR）** 提交包。完整源码在独立仓库 `timeyour/barrierlens`；评审请以上表 **Demo + 主仓库 + 视频 + 技术报告** 为准。
+
+备用 Demo（主域名 DNS 异常时）：https://barrierlens-1utx.vercel.app/#tool
 
 ---
 
@@ -35,7 +42,7 @@ npm run dev
 # 浏览器打开 http://127.0.0.1:3000/#tool
 ```
 
-生产 Demo 已部署，无需本地 Key 也可体验 UI；真实识图需配置 Key 或使用线上 Production（已配 Key）。
+生产 Demo 已部署。现场答辩建议优先使用 **「使用演示样例」**（约 2 秒，不依赖 API）；真实识图需配置 Key 或使用线上 Production。
 
 ---
 
@@ -44,6 +51,7 @@ npm run dev
 - 文件：`src/lib/gemma.ts`（Gemini REST `generateContent`，默认 `gemma-4-26b-a4b-it`）
 - 多模态：text prompt + inlineData 图片 → JSON → `normalizeResult`
 - **未微调**：预训练 + Prompt / JSON 约束，无 LoRA
+- 演示样例：`analysisSource=demo-mock`；真实分析：`analysisSource=gemma`
 
 证明链（主仓库）：
 
@@ -57,7 +65,7 @@ npm run dev
 
 - 不要求登录；默认 **本机 localStorage** 归档
 - 公开池需用户 **勾选同意**；位置 **自动模糊**（lat/lng 置 null）
-- 不做自动投诉 / 执法；AI 输出为记录与整改建议，需人工复核
+- 不做自动投诉 / 执法；AI 输出为辅助参考，**需人工复核**
 - 详见技术报告第 6 节
 
 ---
@@ -70,7 +78,7 @@ npm run build
 npm run test:multiround
 ```
 
-Production 验收：结果页 banner 显示 `analysisSource=gemma`（非 Mock）。见 [GEMMA4_DEPLOYMENT.md](https://github.com/timeyour/barrierlens/blob/main/docs/GEMMA4_DEPLOYMENT.md)。
+Production 验收：结果页 banner 显示 `analysisSource=gemma`（演示样例为 `demo-mock`）。见 [GEMMA4_DEPLOYMENT.md](https://github.com/timeyour/barrierlens/blob/main/docs/GEMMA4_DEPLOYMENT.md)。
 
 ---
 

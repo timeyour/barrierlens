@@ -4,9 +4,9 @@
 
 ## 1. 摘要
 
-无碍 BarrierLens 面向 Gemma 4 开发者大赛 2026 上海站赛道 D: AI for Social Good。项目聚焦公共空间无障碍通行风险，将现场照片转化为结构化证据、风险地图、公众倡导摘要和物业巡查整改单。
+无碍 BarrierLens 面向 Gemma 4 开发者大赛 2026 上海站赛道 D: AI for Social Good。项目聚焦公共空间无障碍通行风险，将现场照片转化为**结构化证据**，并支持本机时间线归档、Markdown/PDF 导出与整改复查。
 
-项目核心不是替代监管，而是降低公众和运营方记录无障碍问题的门槛，让分散发现变成可归档、可复查、可导出的证据链。
+核心口径：**看见问题不难，留下证据才难。** 项目不是单点「AI 看图 Demo」，而是「拍照 → 结构化证据 → 时间线 → 导出 / 复查」的执行链。Gemma 4 负责多模态理解与 JSON 约束输出；最终确认与验收需人工复核。
 
 ## 2. 背景
 
@@ -36,7 +36,7 @@ output: JSON text，经 normalizeResult 归一化为前端 schema
 
 **未微调**：仅使用 Gemma 4 预训练能力 + 项目 Prompt 与结构化 JSON 约束，无额外训练或 LoRA。
 
-未配置 `GEMINI_API_KEY` / `GEMMA_API_KEY` 时使用 Mock（`analysisSource=mock`）。生产环境 `ALLOW_MOCK_FALLBACK=false` 时，Gemma 失败会直接报错，不 silent 降级；本地开发环境在 Key 失败时可能返回 `analysisSource=mock_fallback`。
+未配置 `GEMINI_API_KEY` / `GEMMA_API_KEY` 时使用 Mock（UI 显示 `analysisSource=demo-mock`）。比赛现场可用工具页 **「使用演示样例」** 或时间线 **10 条演示数据** 完整跑通流程。生产环境 `ALLOW_MOCK_FALLBACK=false` 时，Gemma 失败会直接报错，不 silent 降级；本地开发环境在 Key 失败时可能返回 `analysisSource=mock_fallback`。
 
 证明链文档（主仓库）：
 
